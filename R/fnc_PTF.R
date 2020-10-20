@@ -1,0 +1,132 @@
+#' PTF application and humus layer creation
+#'
+#' This function takes the data frame of soil physics data and creates the hydraulic parameters. It further creates humus-layers using the MvG-parameters from Hammel&Kennel (2001)
+#'
+#' @param df data frame containing information on soil texture (required columns: \code{sand}, \code{silt}, \code{clay}), bulk density (column \code{bd}), and volule percent of organic carbon (column \code{oc.pct}). Another essential column is \code{humus}, containing the thickness of the humus-layer (somewhat clumsy, but building on existing it was the most convenient way).
+#' @param PTF_used PTF-options from the \code{LWFBrook90R} - package. Choices are \code{"HYPRES"}, \code{"PTFPUH2"}, or \code{"WESSOLEK"}.
+#'
+#' @references Hammel, K., & Kennel, M. (2001). Charakterisierung und Analyse der Wasserverfügbarkeit und des Wasserhaushalts von Waldstandorten in Bayern mit dem Simulationsmodell BROOK90. Frank.
+#'
+#' @return Returns a longer data.table that already includes an earlier version of ls.soils. Further processed in \code{fnc_create_soil( )}.
+#' @export
+
+fnc_PTF <- function(df, PTF_used){
+  if(PTF_used == "HYPRES"){
+    if(all(c("clay", "silt", "bd", "oc.pct") %in% names(df))){
+      df <- cbind(df, LWFBrook90R::hydpar_hypres(clay = df$clay,
+                                                 silt = df$silt,
+                                                 bd = df$bd,
+                                                 oc.pct = df$oc.pct))
+      humus <- df$humus[1]
+      df <- rbind(data.frame("ID" = df$ID[1],
+                             "mat" = 0,
+                             "upper" = humus,
+                             "lower" = 0,
+                             "sand" = NA,
+                             "silt" = NA,
+                             "clay" = NA,
+                             "gravel" = NA,
+                             "bd" = NA,
+                             "oc.pct" = NA,
+                             "aspect" = df$aspect[1],
+                             "slope" = df$slope[1],
+                             "humus" = NA,
+                             "ths" = 0.848,
+                             "thr" = 0,
+                             "alpha" = 98,
+                             "npar" = 1.191,
+                             "mpar" = 0.1603694,
+                             "ksat" = 98000,
+                             "tort" = 0.5),
+                  df) %>%
+        dplyr::select(-humus)
+      return(df)
+
+    }else{
+      missingcol <- c("clay", "silt", "bd", "oc.pct")[!c("clay", "silt", "bd", "oc.pct") %in% names(df)]
+      stop(paste0(missingcol, "is missing in df for PTF-application of ", PTF_used))
+    }
+
+  } else if (PTF_used == "PTFPUH2") {
+    if(all(c("sand","clay", "silt", "bd", "oc.pct") %in% names(df))){
+      df <- cbind(df, LWFBrook90R::hydpar_puh2(sand = df$sand,
+                                               clay = df$clay,
+                                               silt = df$silt,
+                                               bd = df$bd,
+                                               oc.pct = df$oc.pct))
+      humus <- df$humus[1]
+      df <- rbind(data.frame("ID" = df$ID[1],
+                             "mat" = 0,
+                             "upper" = humus,
+                             "lower" = 0,
+                             "sand" = NA,
+                             "silt" = NA,
+                             "clay" = NA,
+                             "gravel" = NA,
+                             "bd" = NA,
+                             "oc.pct" = NA,
+                             "aspect" = df$aspect[1],
+                             "slope" = df$slope[1],
+                             "humus" = NA,
+                             "ths" = 0.848,
+                             "thr" = 0,
+                             "alpha" = 98,
+                             "npar" = 1.191,
+                             "mpar" = 0.1603694,
+                             "ksat" = 98000,
+                             "tort" = 0.5),
+                  df) %>%
+        dplyr::select(-humus)
+      return(df)
+    }else{
+      missingcol <- c("sand", "clay", "silt", "bd", "oc.pct")[!c("sand", "clay", "silt", "bd", "oc.pct") %in% names(df)]
+      stop(paste0(missingcol, "is missing in df for PTF-application of ", PTF_used))
+    }
+
+
+  } else if (PTF_used == "WESSOLEK") {
+    if(all(c("sand","clay", "silt") %in% names(df))){
+      #Texture - from package "soiltexture":
+      sscdata <- setNames(df[c("sand", "silt", "clay")], c("SAND", "SILT", "CLAY"))
+      sscdata <- sscdata[complete.cases(sscdata),]
+
+      texture <- soiltexture::TT.points.in.classes(tri.data = as.data.frame(sscdata), class.sys = "DE.BK94.TT", text.tol = 0.01)
+      df$texture <- colnames(texture)[apply(texture,1,which.max)]
+
+      df <- cbind(df, LWFBrook90R::hydpar_wessolek_tab(tex.KA5 = df$texture)) %>%
+        dplyr::select(-texture)
+
+      humus <- df$humus[1]
+      df <- rbind(data.frame("ID" = df$ID[1],
+                             "mat" = 0,
+                             "upper" = humus,
+                             "lower" = 0,
+                             "sand" = NA,
+                             "silt" = NA,
+                             "clay" = NA,
+                             "gravel" = NA,
+                             "bd" = NA,
+                             "oc.pct" = NA,
+                             "aspect" = df$aspect[1],
+                             "slope" = df$slope[1],
+                             "humus" = NA,
+                             "ths" = 0.848,
+                             "thr" = 0,
+                             "alpha" = 98,
+                             "npar" = 1.191,
+                             "mpar" = 0.1603694,
+                             "ksat" = 98000,
+                             "tort" = 0.5),
+                  df) %>%
+        dplyr::select(-humus)
+      return(df)
+
+    }else{
+      missingcol <- c("sand", "clay", "silt")[!c("sand", "clay", "silt") %in% names(df)]
+      stop(paste0(missingcol, "is missing in df for PTF-application of ", PTF_used))
+    }
+
+  } else {
+    stop("PTF not in possible PTF-choices")
+  }
+}
