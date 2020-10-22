@@ -4,18 +4,31 @@
 \alias{fnc_create_soil}
 \title{Soil-list creation}
 \usage{
-fnc_create_soil(df.ids, soil_option, testgebiet, PTF, limit_MvG = F, ...)
+fnc_create_soil(
+  df.ids,
+  soil_option,
+  testgebiet,
+  PTF,
+  limit_MvG = F,
+  df.soils = NULL,
+  ...
+)
 }
 \arguments{
 \item{df.ids}{a data frame containing the following columns: \code{ID} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to. \code{easting} and \code{northing} - coordinates in UTM EPSG:32632}
 
-\item{soil_option}{whether BZE or STOK data should be used for modelling. While option \code{BZE} shouldn't create NAs, option \code{STOK} builds on the data of the Standortskartierung Baden-Wuerttemberg that is not available everywhere (i.e. in private forests). The functions asks the used how to deal with NAs, whether they should be excluded, or completed with BZE-data.}
+\item{soil_option}{whether BZE or STOK data should be used for modelling. While option \code{BZE} shouldn't create NAs, option \code{STOK} builds on the data of the Standortskartierung Baden-Wuerttemberg that is not available everywhere (i.e. in private forests). The functions asks the used how to deal with NAs, whether they should be excluded, or completed with BZE-data. Third option is \code{OWN}, in which case users can enter their own soil data (i.e. from lab or field experiements). If the option \code{OWN} is selected, the dataframe to be}
 
 \item{testgebiet}{at the current stage of development, we're working with test areas that have to be named here as \code{BDS} for Bodensee/07b, or \code{NPS} for National Park Schwarzwald. Eventually, this should be replaced by a BW-wide option. This parameter might be useful if a spatial pre-selection should be included for performance optimization...}
 
-\item{PTF}{the PTF to be used in the modeling process. Options are \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}}
+\item{PTF}{the PTF to be used in the modeling process. Options are \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}. Alternatively, if MvG parameters have been retrieved elsewhere (i.e. by lab analyses), \code{OWN_PARMS} can be selected to skip this.}
 
 \item{limit_MvG}{should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit_MvG}}. Default is \code{FALSE}.}
+
+\item{df.soils}{if \code{OWN} is selected at soil_option, a data frame must be given here that contains the following columns  \code{ID} - a unique ID matching the IDs of df.ids,  \code{mat} - number of soil layer starting with 1 counting upwards, \code{upper} and \code{lower} - upper and lower boundaries of soil layers in cm. If a humus layer should be added, there must be a column \code{humus}, that contains the thickness of the humuslayer in m.\cr
+Caution:\cr
+If PTFs are to be applied, the columns required in \code{\link{fnc_PTF}} must be provided. Else, if \code{PTF} is set to \code{OWN_PARMS}, the following columns must be provided NA-free: \code{ths, thr, alpha, npar, mpar, ksat}, and \code{tort}.\cr
+If roots are to be calculated, the columns required in \code{\link{fnc_roots}} must be provided. Otherwise they need to be stored in a column called \code{rootden}.}
 
 \item{...}{further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{MakeRelRootDens}}.}
 }
@@ -31,20 +44,20 @@ test.ids.bds <- data.frame("ID" = c(1,2, 3, 4, 5),
                            "northing" = c(5281811, 5292500, 5289355, 5293600, 5291700))
 
 # Leitprofil-db:
-df.LEIT.BDS <- read_excel(paste0(input_stok, "testregionen/20200129_StokDB_Leitprofile_705.xlsx"),
+df.LEIT.BDS <- readxl::read_excel(paste0(input_stok, "testregionen/20200129_StokDB_Leitprofile_705.xlsx"),
                           sheet = "LEITPROFIL")
 
-df.LEIT.NPS <- read_excel(paste0(input_stok, "testregionen/20200109_StokDB_Leitprofile_NLP.xlsx"),
+df.LEIT.NPS <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_StokDB_Leitprofile_NLP.xlsx"),
                           sheet = "LEITPROFIL")
 
 # STOKA - shapefiles
-sf.STOK.BDS <- st_read(dsn = paste0(input_gis, "Testgebiete/BDS/BDS_STOKA_Clip_UTM.shp")) \%>\%
-  st_transform(crs = 32632)
+sf.STOK.BDS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/BDS/BDS_STOKA_Clip_UTM.shp")) \%>\%
+  sf::st_transform(crs = 32632)
 sf.STOK.BDS <- sf.STOK.BDS[c("RST_F", "geometry")]
 
 
-sf.STOK.NPS <- st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NP_STOKA_Clip_UTM.shp")) \%>\%
-  st_transform(crs = 32632)
+sf.STOK.NPS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NP_STOKA_Clip_UTM.shp")) \%>\%
+  sf::st_transform(crs = 32632)
 sf.STOK.NPS <- sf.STOK.NPS[c("RST_F", "geometry")]
 
 fnc_create_soil(df.ids = test.ids.bds,
