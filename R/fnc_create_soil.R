@@ -95,6 +95,8 @@ fnc_create_soil <- function(df.ids,
         dplyr::group_split(ID)
       ls.soils <- lapply(df.soils, FUN = fnc_depth_disc)
       ls.soils <- lapply(ls.soils, FUN = dplyr::left_join, y = df.dgm, by = "ID")
+      ls.soils <- lapply(ls.soils, FUN = dplyr::mutate, upper = upper/-100)
+      ls.soils <- lapply(ls.soils, FUN = dplyr::mutate, lower = lower/-100)
 
       names(ls.soils) <- df.ids$ID
     }
