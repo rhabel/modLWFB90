@@ -2,12 +2,18 @@
 #'
 #' This function takes the data frame of soil physics data and creates the hydraulic parameters. It further creates humus-layers using the MvG-parameters from Hammel&Kennel (2001)
 #'
-#' @param df data frame containing information on soil physics in the following columns \cr \code{sand}, \code{silt}, \code{clay} - soil texture in mass \code{%})\cr \code{bd} - bulk density in \code{g cm-1} \cr \code{oc.pct} - organic carbon in mass code{%} \cr Another essential column is \code{humus}, containing the thickness of the humus-layer (somewhat clumsy, but building on existing code it was the most convenient way).
+#' @param df data frame containing information on soil physics in the following columns:
+#' \itemize{
+#'   \item sand, silt, clay - soil texture in mass %
+#'   \item bd - bulk density in g cm-1
+#'   \item oc.pct - organic carbon in mass %
+#'   \item humus - thickness of the humus-layer (repeated \code{nrow} - times. a bit clumsy, but building on existing code it was the most convenient way)
+#' }
 #' @param PTF_used PTF-options from the \code{LWFBrook90R} - package. Choices are \code{"HYPRES"}, \code{"PTFPUH2"}, or \code{"WESSOLEK"}.
 #'
 #' @references Hammel, K., & Kennel, M. (2001). Charakterisierung und Analyse der Wasserverfügbarkeit und des Wasserhaushalts von Waldstandorten in Bayern mit dem Simulationsmodell BROOK90. Frank.
 #'
-#' @return Returns a longer data.table that already includes an earlier version of ls.soils. Further processed in \code{fnc_create_soil( )}.
+#' @return Returns a longer data.table that already includes an earlier version of ls.soils. Further processed in \code{\link{fnc_create_soil}}.
 #' @export
 
 fnc_PTF <- function(df, PTF_used){
