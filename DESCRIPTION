@@ -1,17 +1,17 @@
 Package: modLWFB90
 Title: R-package for applying LWF-Brook90 directly from FVA-BW servers
 Version: 0.0.0.9000
-Authors@R: 
+Authors@R: c( 
     person(given = "Raphael",
            family = "Habel",
            role = c("aut", "cre"),
            email = "raphael.habel@forst.bwl.de",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+           comment = c(ORCID = "YOUR-ORCID-ID")),
     person(given = "Ann-Christin",
            family = "Mueller",
            role = c("aut"),
            email = "Ann-Christin.Mueller@forst.bwl.de",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+           comment = c(ORCID = "YOUR-ORCID-ID")))
 Description: The hydrological model LWF-Brook90 simulates water fluxes, soil moisture and drought stress. Within the FVA-BW it is increasingly used for research project and applications. 
   Using the FVA-servers' structure and building on pschmidtwalter's R-Package LWFBrook90R, this package is designed as a wrapper to provide guided assistance for spatially explicit soil water modelling. 
 License: `use_mit_license()`, `use_gpl3_license()` or friends to
@@ -31,10 +31,10 @@ Imports:
     readxl,
     data.table (>= 1.10.4),
     vegperiod (>= 0.3.0),
-    foreach (>= 1.5.0),
-    LWFBrook90R (>= 0.4.0)
+    foreach (>= 1.5.0)
 Depends:
-    tidyverse
+    tidyverse,
+    LWFBrook90R (>= 0.4.0)
 Suggests: 
     knitr,
     rmarkdown

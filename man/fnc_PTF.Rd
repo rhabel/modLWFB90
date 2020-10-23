@@ -7,12 +7,18 @@
 fnc_PTF(df, PTF_used)
 }
 \arguments{
-\item{df}{data frame containing information on soil texture (required columns: \code{sand}, \code{silt}, \code{clay}), bulk density (column \code{bd}), and volule percent of organic carbon (column \code{oc.pct}). Another essential column is \code{humus}, containing the thickness of the humus-layer (somewhat clumsy, but building on existing it was the most convenient way).}
+\item{df}{data frame containing information on soil physics in the following columns:
+\itemize{
+\item sand, silt, clay - soil texture in mass \%
+\item bd - bulk density in g cm-1
+\item oc.pct - organic carbon in mass \%
+\item humus - thickness of the humus-layer (repeated \code{nrow} - times. a bit clumsy, but building on existing code it was the most convenient way)
+}}
 
 \item{PTF_used}{PTF-options from the \code{LWFBrook90R} - package. Choices are \code{"HYPRES"}, \code{"PTFPUH2"}, or \code{"WESSOLEK"}.}
 }
 \value{
-Returns a longer data.table that already includes an earlier version of ls.soils. Further processed in \code{fnc_create_soil( )}.
+Returns a longer data.table that already includes an earlier version of ls.soils. Further processed in \code{\link{fnc_create_soil}}.
 }
 \description{
 This function takes the data frame of soil physics data and creates the hydraulic parameters. It further creates humus-layers using the MvG-parameters from Hammel&Kennel (2001)

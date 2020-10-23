@@ -2,12 +2,18 @@
 #'
 #' This function takes the data frame of soil physics data and creates the hydraulic parameters. It further creates humus-layers using the MvG-parameters from Hammel&Kennel (2001)
 #'
-#' @param df data frame containing information on soil texture (required columns: \code{sand}, \code{silt}, \code{clay}), bulk density (column \code{bd}), and volule percent of organic carbon (column \code{oc.pct}). Another essential column is \code{humus}, containing the thickness of the humus-layer (somewhat clumsy, but building on existing it was the most convenient way).
+#' @param df data frame containing information on soil physics in the following columns:
+#' \itemize{
+#'   \item sand, silt, clay - soil texture in mass %
+#'   \item bd - bulk density in g cm-1
+#'   \item oc.pct - organic carbon in mass %
+#'   \item humus - thickness of the humus-layer (repeated \code{nrow} - times. a bit clumsy, but building on existing code it was the most convenient way)
+#' }
 #' @param PTF_used PTF-options from the \code{LWFBrook90R} - package. Choices are \code{"HYPRES"}, \code{"PTFPUH2"}, or \code{"WESSOLEK"}.
 #'
 #' @references Hammel, K., & Kennel, M. (2001). Charakterisierung und Analyse der Wasserverfügbarkeit und des Wasserhaushalts von Waldstandorten in Bayern mit dem Simulationsmodell BROOK90. Frank.
 #'
-#' @return Returns a longer data.table that already includes an earlier version of ls.soils. Further processed in \code{fnc_create_soil( )}.
+#' @return Returns a longer data.table that already includes an earlier version of ls.soils. Further processed in \code{\link{fnc_create_soil}}.
 #' @export
 
 fnc_PTF <- function(df, PTF_used){
@@ -18,6 +24,12 @@ fnc_PTF <- function(df, PTF_used){
                                                  bd = df$bd,
                                                  oc.pct = df$oc.pct))
       humus <- df$humus[1]
+
+      #order for rbind
+      df <- df %>%
+        dplyr::select(ID, mat, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, ths, thr, alpha, npar, mpar, ksat, tort)
+
+      # rbind humus-values
       df <- rbind(data.frame("ID" = df$ID[1],
                              "mat" = 0,
                              "upper" = humus,
@@ -55,6 +67,12 @@ fnc_PTF <- function(df, PTF_used){
                                                bd = df$bd,
                                                oc.pct = df$oc.pct))
       humus <- df$humus[1]
+
+      #order for rbind
+      df <- df %>%
+        dplyr::select(ID, mat, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, ths, thr, alpha, npar, mpar, ksat, tort)
+
+      #rbind humus-values
       df <- rbind(data.frame("ID" = df$ID[1],
                              "mat" = 0,
                              "upper" = humus,
@@ -93,10 +111,13 @@ fnc_PTF <- function(df, PTF_used){
       texture <- soiltexture::TT.points.in.classes(tri.data = as.data.frame(sscdata), class.sys = "DE.BK94.TT", text.tol = 0.01)
       df$texture <- colnames(texture)[apply(texture,1,which.max)]
 
-      df <- cbind(df, LWFBrook90R::hydpar_wessolek_tab(tex.KA5 = df$texture)) %>%
-        dplyr::select(-texture)
+      #order for rbind
+      df <- cbind(df, LWFBrook90R::hydpar_wessolek_tab(tex.KA5 = df$texture))%>%
+        dplyr::select(ID, mat, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, ths, thr, alpha, npar, mpar, ksat, tort)
 
       humus <- df$humus[1]
+
+      # rbind humus-values
       df <- rbind(data.frame("ID" = df$ID[1],
                              "mat" = 0,
                              "upper" = humus,
