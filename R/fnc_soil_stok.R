@@ -16,8 +16,8 @@ fnc_soil_stok <- function(df,
       filter(RST_F == df$RST_F[i]) %>%
       mutate("ID" = df$ID[i]) %>%
 
-      dplyr::select(ID, LAGENUM, TIEFE_OG, TIEFE_UG, SAND, SCHLUFF, TON, SKELETT, TRD, SOC) %>%
-      setNames(c("ID","mat", "upper", "lower", "sand", "silt", "clay", "gravel", "bd", "oc.pct")) %>%
+      dplyr::select(ID, LAGENUM, TIEFE_OG, TIEFE_UG, SAND, SCHLUFF, TON, SKELETT, TRD, SOC, RST_F) %>%
+      setNames(c("ID","mat", "upper", "lower", "sand", "silt", "clay", "gravel", "bd", "oc.pct", "RST_F")) %>%
 
       mutate_all(as.numeric)
 
