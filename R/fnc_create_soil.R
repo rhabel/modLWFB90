@@ -70,6 +70,7 @@ fnc_create_soil <- function(df.ids,
       }
 
       if(how_to_proceed == "2"){
+        ls.soils <- list()
         ls.soils[IDs_complete] <- fnc_soil_stok(df = sf.ids[!is.na(sf.ids$RST_F),],
                                                 df.LEIT = get(paste0("df.LEIT.", testgebiet)))
         xy_gk_miss <- fnc_transf_to_gk(df = df.ids[is.na(sf.ids$RST_F),])
