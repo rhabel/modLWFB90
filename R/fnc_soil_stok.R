@@ -14,16 +14,16 @@ fnc_soil_stok <- function(df,
   for (i in 1:nrow(df)){
     df.soil <- df.LEIT %>%
       filter(RST_F == df$RST_F[i]) %>%
-      mutate("ID" = df$ID[i]) %>%
+      dplyr::mutate("ID" = df$ID[i]) %>%
 
       dplyr::select(ID, LAGENUM, TIEFE_OG, TIEFE_UG, SAND, SCHLUFF, TON, SKELETT, TRD, SOC) %>%
       setNames(c("ID","mat", "upper", "lower", "sand", "silt", "clay", "gravel", "bd", "oc.pct")) %>%
 
-      mutate_all(as.numeric)
+      dplyr::mutate_all(as.numeric)
 
     # Tiefendiskretisierung, Slope & Aspect
     df.soil <- fnc_depth_disc(df.soil) %>%
-      mutate(oc.pct = case_when(is.na(oc.pct) & PTF == "PTFPUH2" ~ 0.5,
+      dplyr::mutate(oc.pct = case_when(is.na(oc.pct) & PTF == "PTFPUH2" ~ 0.5,
                                 is.na(oc.pct) & PTF == "HYPRES" ~ 0.1,
                                 T ~ oc.pct)) %>%
       dplyr::left_join(df.dgm, by = "ID")
