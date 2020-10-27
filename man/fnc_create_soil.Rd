@@ -51,14 +51,8 @@ df.LEIT.NPS <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_Stok
                           sheet = "LEITPROFIL")
 
 # STOKA - shapefiles
-sf.STOK.BDS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/BDS/BDS_STOKA_Clip_UTM.shp")) \%>\%
-  sf::st_transform(crs = 32632)
-sf.STOK.BDS <- sf.STOK.BDS[c("RST_F", "geometry")]
-
-
-sf.STOK.NPS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NP_STOKA_Clip_UTM.shp")) \%>\%
-  sf::st_transform(crs = 32632)
-sf.STOK.NPS <- sf.STOK.NPS[c("RST_F", "geometry")]
+sf.STOK.BDS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/BDS/BDS_STOKA_Clip_UTM.shp"))
+sf.STOK.NPS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NP_STOKA_Clip_UTM.shp"))
 
 fnc_create_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
