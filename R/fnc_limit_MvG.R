@@ -9,7 +9,7 @@
 #' @return returns the same data frame, just with parameters limited as described in the function.
 #'
 #'
-fnc_limit_MvG <- function(df){
+fnc_limit <- function(df){
   df <- df %>%
     mutate(alpha = case_when(alpha < 0.1 ~ 0.1,
                              alpha > 500 ~ 500,
