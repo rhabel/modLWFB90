@@ -2,6 +2,7 @@
 
 export(fnc_MvG.swc)
 export(fnc_PTF)
+export(fnc_compare_soil)
 export(fnc_create_soil)
 export(fnc_depth_disc)
 export(fnc_roots)
