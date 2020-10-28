@@ -154,3 +154,4 @@ params_douglasfir <- LWFBrook90R::setparam_LWFB90(zw = 10,
 
 save(params_beech, params_oak, params_pine, params_spruce, params_douglasfir,
      file = "./data/params_species.rda")
+
