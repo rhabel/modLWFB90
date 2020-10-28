@@ -28,13 +28,12 @@ Imports:
     soiltexture, 
     raster, 
     sp,
-    readxl,
-    data.table (>= 1.10.4),
     vegperiod (>= 0.3.0),
     foreach (>= 1.5.0)
 Depends:
     tidyverse,
-    LWFBrook90R (>= 0.4.0)
+    LWFBrook90R (>= 0.4.0),     
+    data.table (>= 1.10.4)
 Suggests: 
     knitr,
     rmarkdown

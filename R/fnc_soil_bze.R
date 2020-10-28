@@ -9,18 +9,18 @@
 
 fnc_soil_bze <- function(df.gk){
   # einlesen aller BZEraster:
-  rasterOptions(tmpdir = getwd())
+  raster::rasterOptions(tmpdir = getwd())
   grid.files <- list.files(input_paul, pattern = ".sdat",full.names=T)
-  soilraster <- stack(grid.files)
+  soilraster <- raster::stack(grid.files)
 
   # stechen
   soil <- fnc_extract_points(lay = soilraster, xy = df.gk)
   # aufbereiten
   names(soil) <- names(soilraster) # Reihenfolge der Listenelemente entspricht Namen der Layers im Rasterstack
-  soil <- as.data.table(soil)
+  soil <- data.table::as.data.table(soil)
   soil$ID <- df.gk$ID # Reihenfoge der Werte entspricht der Reihenfolge der IDs in xy
   soil[soil ==-9999] <- NA
-  setnames(soil, paste0("constr_corg",0:4), paste0("corg",0:4)) # constr_corg umbenennen
+  data.table::setnames(soil, paste0("constr_corg",0:4), paste0("corg",0:4)) # constr_corg umbenennen
   soil[, c("corg0","corg1","corg2","corg3","corg4") := list(corg0/100,corg1/100,corg2/100,corg3/100,corg4/100)]
   soil[, c("trd0","trd1","trd2","trd3","trd4") := list(trd0/100,trd1/100,trd2/100,trd3/100,trd4/100)]
   soil[, c("gba0","gba1","gba2","gba3","gba4") := list(gba0/1000,gba1/1000,gba2/1000,gba3/1000,gba4/1000)]
@@ -32,14 +32,14 @@ fnc_soil_bze <- function(df.gk){
 
   # discretisation according to distances in fnc_depth_disrc
   thick1 <- c(rep(5,10),rep(10,5), rep(20, 5))
-  skltn1 <- data.table(upper = c(0,cumsum(thick1[1:length(thick1)-1])), lower = cumsum(thick1))
+  skltn1 <- data.table::data.table(upper = c(0,cumsum(thick1[1:length(thick1)-1])), lower = cumsum(thick1))
 
-  setkey(skltn1, upper, lower)
+  data.table::setkey(skltn1, upper, lower)
   soilsdiscrete1 <- fnc_MakeSoil_BZE(soil, skltn1)
-  setkey(soilsdiscrete1, ID)
+  data.table::setkey(soilsdiscrete1, ID)
 
   soilsdiscrete1 <- soilsdiscrete1[order(ID, i.upper),] #sortieren
-  setkey(soilsdiscrete1, ID, i.lower)
+  data.table::setkey(soilsdiscrete1, ID, i.lower)
   soilsdiscrete1[, i.upper := c(0,i.lower[1:.N-1]), by = ID]
   soilsdiscrete1[, depth := as.numeric(depth)+1] # make room for depth_0 - Humus
 
