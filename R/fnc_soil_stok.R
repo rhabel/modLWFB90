@@ -9,7 +9,8 @@
 #' @export
 
 fnc_soil_stok <- function(df,
-                          df.LEIT){
+                          df.LEIT,
+                          PTF_to_use){
   ls.soils.tmp <- list()
   for (i in 1:nrow(df)){
     df.soil <- df.LEIT %>%
@@ -23,8 +24,8 @@ fnc_soil_stok <- function(df,
 
     # Tiefendiskretisierung, Slope & Aspect
     df.soil <- fnc_depth_disc(df.soil) %>%
-      dplyr::mutate(oc.pct = case_when(is.na(oc.pct) & PTF == "PTFPUH2" ~ 0.5,
-                                is.na(oc.pct) & PTF == "HYPRES" ~ 0.1,
+      dplyr::mutate(oc.pct = case_when(is.na(oc.pct) & PTF_to_use == "PTFPUH2" ~ 0.5,
+                                is.na(oc.pct) & PTF_to_use == "HYPRES" ~ 0.1,
                                 T ~ oc.pct)) %>%
       dplyr::left_join(df.dgm, by = "ID")
 
