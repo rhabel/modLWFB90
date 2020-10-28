@@ -8,7 +8,7 @@ fnc_create_soil(
   df.ids,
   soil_option,
   testgebiet,
-  PTF,
+  PTF_to_use,
   limit_MvG = F,
   df.soils = NULL,
   ...
@@ -21,13 +21,13 @@ fnc_create_soil(
 
 \item{testgebiet}{at the current stage of development, we're working with test areas that have to be named here as \code{BDS} for Bodensee/07b, or \code{NPS} for National Park Schwarzwald. Eventually, this should be replaced by a BW-wide option. This parameter might be useful if a spatial pre-selection should be included for performance optimization...}
 
-\item{PTF}{the PTF to be used in the modeling process. Options are \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}. Alternatively, if MvG parameters have been retrieved elsewhere (i.e. by lab analyses), \code{OWN_PARMS} can be selected to skip this.}
+\item{PTF_to_use}{the PTF to be used in the modeling process. Options are \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}. Alternatively, if MvG parameters have been retrieved elsewhere (i.e. by lab analyses), \code{OWN_PARMS} can be selected to skip this.}
 
 \item{limit_MvG}{should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit_MvG}}. Default is \code{FALSE}.}
 
 \item{df.soils}{if \code{OWN} is selected at soil_option, a data frame must be given here that contains the following columns  \code{ID} - a unique ID matching the IDs of df.ids,  \code{mat} - number of soil layer starting with 1 counting upwards, \code{upper} and \code{lower} - upper and lower boundaries of soil layers in cm. If a humus layer should be added, there must be a column \code{humus}, that contains the thickness of the humuslayer in m.\cr
 Caution:\cr
-If PTFs are to be applied, the columns required in \code{\link{fnc_PTF}} must be provided. Else, if \code{PTF} is set to \code{OWN_PARMS}, the following columns must be provided NA-free: \code{ths, thr, alpha, npar, mpar, ksat}, and \code{tort}.\cr
+If PTFs are to be applied, the columns required in \code{\link{fnc_PTF}} must be provided. Else, if \code{PTF_to_use} is set to \code{OWN_PARMS}, the following columns must be provided NA-free: \code{ths, thr, alpha, npar, mpar, ksat}, and \code{tort}.\cr
 If roots are to be calculated, the columns required in \code{\link{fnc_roots}} must be provided. Otherwise they need to be stored in a column called \code{rootden}.}
 
 \item{...}{further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{MakeRelRootDens}}.}
@@ -57,19 +57,41 @@ sf.STOK.NPS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NP_STOKA_Cli
 fnc_create_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
                 testgebiet = "BDS",
-                PTF = "HYPRES",
+                PTF_to_use = "HYPRES",
                 rootsmethod = "hartmann",
                 humus_roots = F)
 fnc_create_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
                 testgebiet = "BDS",
-                PTF = "HYPRES",
+                PTF_to_use = "HYPRES",
                 rootsmethod = "betamodel",
                 beta = 0.95)
 fnc_create_soil(df.ids = test.ids.bds,
                 soil_option = "BZE",
                 testgebiet = "BDS",
-                PTF = "HYPRES",
+                PTF_to_use = "HYPRES",
+                rootsmethod = "betamodel",
+                beta = 0.95)
+
+
+# sample data frame with "own" data
+df.own.test <- data.frame("ID" = c(rep(1,4), rep(2,4), rep(3,4), rep(4,4), rep(5,4)),
+                          "mat" = rep(1:4, 5),
+                          "upper" = c(0,5,10,30, 0,10,50,60, 0,5,10,30, 0,10,50,60, 0,15,20,70),
+                          "lower" = c(5,10,30,60, 10,50,60,100, 5,10,30,60, 10,50,60,100, 15,20,70,100),
+                          "sand" = rep(30, 20),
+                          "silt" = rep(40, 20),
+                          "clay" = rep(30, 20),
+                          "oc.pct" = c(5,2,1,0,4,1,0,0, 5,2,1,0,4,1,0,0,8,2,0,0),
+                          "bd" = c(1.1,1.2,1.4,1.5,1,1.2, 1.2, 1.3, 1.1,1.2,1.4,1.5,1,1.2, 1.2, 1.3, 1.1,1.4, 1.6, 1.6 ),
+                          "gravel" = c(1,5,5,20, 0,0,10,15, 5,8,8,10, 20,20,25,60,0,0,0,0) ,
+                          "humus" = c(rep(0.04,4), rep(0.06, 4), rep(0.04,4), rep(0.1, 4), rep(0.05, 4)))
+
+fnc_create_soil(df.ids = test.ids.bds,
+                soil_option = "OWN",
+                testgebiet = "BDS",
+                PTF_to_use = "HYPRES",
+                df.soils = df.own.test,
                 rootsmethod = "betamodel",
                 beta = 0.95)
 }
