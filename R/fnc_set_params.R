@@ -65,5 +65,3 @@ fnc_set_params <- function(df.ids,
 
   return(ls.param)
 }
-
-
