@@ -33,7 +33,8 @@ Imports:
 Depends:
     tidyverse,
     LWFBrook90R (>= 0.4.0),     
-    data.table (>= 1.10.4)
+    data.table (>= 1.10.4), 
+    RSQLite
 Suggests: 
     knitr,
     rmarkdown
