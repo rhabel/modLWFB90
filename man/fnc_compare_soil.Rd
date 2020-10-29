@@ -34,7 +34,9 @@ fnc_compare_soil(
 
 \item{soiloption_to_use}{which soil data should the PTFs in \code{PTF_to_test} be applied to. Must be one of \code{STOK}, \code{BZE}, or \code{OWN} if data is supplied at \code{df.soils}}
 
-\item{limit_MvG}{should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit_MvG}}. Default is \code{FALSE}.}
+\item{limit_MvG}{should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{limit_MvG}}. Default is \code{FALSE}.}
+
+\item{df.soils}{if \code{OWN} is selected in \code{soiloptions_to_test}, or \code{OWN_PARMS}  is selected in \code{PTF_to_test}, these information must be provided here as a dataframe that contains the following columns: \code{ID} - a unique ID matching the IDs of df.ids,  \code{mat} - number of soil layer starting with 1 counting upwards, \code{upper} and \code{lower} - upper and lower boundaries of soil layers in cm. Finally, a column \code{humus}, that contains the thickness of the humuslayer in m.\cr Caution: \cr If PTFs are to be applied here, the columns \code{sand, silt, clay, oc.pct} in \%, and \code{bd} in g m-1 must be provided. \cr Else, if \code{PTF_to_test} includes \code{OWN_PARMS}, the following columns must be provided NA-free: \code{ths, thr, alpha, npar, mpar, ksat}, and \code{tort}.}
 
 \item{output_path}{path to the folder where imaged shall be printed to}
 
