@@ -1,13 +1,15 @@
 #' Soil-list creation from BZE data
 #'
-#' This function is a wrapper of several smaller functions and chunks of code, all retrieved from "U:\\Brook90_2018\\paul_schmidt_walter_2018\\Dokumentation\\2_Bodenparameter.nb". Combining all this code into one function, it takes a spatialpointsdataframe of coordinates in GK-3 and returns a list of soil data frames. Those are further processed in \code{\link{fnc_create_soil}} by adding soil hydraulic information, humus, and fine roots and can then be read by \code{\link[LWFBrook90]{msiterunLWFB90}}.
+#' This function is a wrapper of several smaller functions and chunks of code, all retrieved from "U:\\Brook90_2018\\paul_schmidt_walter_2018\\Dokumentation\\2_Bodenparameter.nb". Combining all this code into one function, it takes a spatialpointsdataframe of coordinates in GK-3 and returns a list of soil data frames. Those are further processed in \code{\link{fnc_get_soil}} by adding soil hydraulic information, humus, and fine roots and can then be read by \code{\link[LWFBrook90]{msiterunLWFB90}}.
 #'
 #' @param df.gk A spatialpointsdataframe with the desired points in GK-3.
+#' @param df.assign a dataframe containing the corresponding ID_custom for the IDs in \code{df.gk}
 #'
 #' @return Returns a list of soil data frames.
-#' @export
 
-fnc_soil_bze <- function(df.gk){
+
+fnc_soil_bze <- function(df.gk,
+                         df.assign){
   # einlesen aller BZEraster:
   raster::rasterOptions(tmpdir = getwd())
   grid.files <- list.files(input_paul, pattern = ".sdat",full.names=T)
@@ -48,10 +50,17 @@ fnc_soil_bze <- function(df.gk){
     dplyr::mutate(gba = gba*100,
                   i.upper = i.upper/-100,
                   i.lower = i.lower/-100,
-                  profile_top = profile_top/100) %>%
-    dplyr::select(ID, depth, i.upper, i.lower, sand, schluff, ton, gba, trd, corg, aspect, slope, profile_top ) %>%
-    setNames(c("ID", "mat", "upper", "lower", "sand", "silt", "clay", "gravel", "bd", "oc.pct", "aspect" ,"slope" ,"humus")) %>%
+                  profile_top = profile_top/100,
+                  gba = gba / 100) %>%
+    dplyr::left_join(df.assign[c("ID", "ID_custom")], by = "ID") %>%
+    dplyr::mutate(ID_custom = as.character(ID_custom)) %>%
+    dplyr::select(ID, ID_custom, depth, i.upper, i.lower, sand, schluff, ton, gba, trd, corg, aspect, slope, profile_top ) %>%
+    setNames(c("ID", "ID_custom", "mat", "upper", "lower", "sand", "silt", "clay", "gravel", "bd", "oc.pct", "aspect" ,"slope" ,"humus")) %>%
     dplyr::group_split(ID)
+
+  # names correct...
+  ls.soils <- lapply(ls.soils, as.data.frame, stringsAsFactors = F)
+  names(ls.soils) <- unlist(lapply(ls.soils, function(x) unique(x$ID_custom)))
 
   return(ls.soils)
 }

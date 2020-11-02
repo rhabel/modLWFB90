@@ -2,7 +2,11 @@
 #'
 #' This function takes the data frame of soil physics data and creates the hydraulic parameters. It further creates humus-layers using the MvG-parameters from Hammel&Kennel (2001)
 #'
-#' @param df.ids a data frame containing the following columns: \code{ID} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to. \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
+#' @param df.ids a data frame containing the following columns:
+#' \itemize{
+#' \item \code{ID_custom} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to.
+#' \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
+#' }
 #' @param mindate first day of modelling time period as \code{Date}- object
 #' @param maxdate last day of modelling time period as \code{Date}- object
 #' @param path_std path to standard locations directory
@@ -21,6 +25,10 @@ fnc_get_clim <- function(df.ids,
                          path_std = "R:/klima/whh/brook90_input/locations",
                          path_climdb = "R:/klima/whh/brook90_input/db/") {
 
+  # IDs okay? ---------- ####
+  # sort dfs according to IDs
+  df.ids$ID <- 1:nrow(df.ids)
+
   minyear <- format(mindate, "%Y")
   maxyear <- format(maxdate, "%Y")
   needed_cols <- c("grhds", "rrds", "sddm", "tadm", "tadn", "tadx", "wsdm")
@@ -30,7 +38,7 @@ fnc_get_clim <- function(df.ids,
 
   # initialise list
   ls.clim <- vector("list", length = nrow(df.ids))
-  names(ls.clim) <- df.ids$ID
+  names(ls.clim) <- df.ids$ID_custom
 
   for(tranche in sort(unique(df.clim.ids$tranche))){
 
@@ -47,7 +55,7 @@ fnc_get_clim <- function(df.ids,
                                                ") AND (id = ", paste(ids_in_tranche, collapse = " OR id = "), ")")) %>%
       dplyr::arrange(id, year, month, day) %>%
       dplyr::mutate_at(vars(all_of(needed_cols)),
-                       .funs = funs(. / 100)) %>%
+                       list(~ . / 100)) %>%
       dplyr::rename(tmax = tadx,
                     tmin = tadn,
                     tmean = tadm,
@@ -61,24 +69,24 @@ fnc_get_clim <- function(df.ids,
                     vappres = case_when(tmean > 0 ~ (ewasser-sddm)*0.1, # kPa
                                         T ~ (eeis-sddm)*0.1),
                     id_standard = as.character(id_standard)) %>%
-      dplyr::left_join(df.clim.ids[c("ID", "id_standard")], by = "id_standard") %>%
-      dplyr::select(ID, id_standard, dates, year, month, day, globrad, prec, tmean, tmin, tmax, wind, vappres) %>%
+      dplyr::left_join(df.clim.ids[c("ID", "ID_custom", "id_standard")], by = "id_standard") %>%
+      dplyr::mutate(ID_custom= as.character(ID_custom)) %>%
+      dplyr::select(ID, ID_custom, id_standard, dates, year, month, day, globrad, prec, tmean, tmin, tmax, wind, vappres) %>%
       dplyr::filter(dates >= mindate & dates <= maxdate) %>%
 
       dplyr::group_split(id_standard)
-    dbDisconnect(con)
 
-    # names correct...
-    names(ls.clim.tmp) <- unlist(lapply(ls.clim.tmp, function(x) unique(x$ID)))
+    RSQLite::dbDisconnect(con)
 
+    # names ang assigning correct...
+    names(ls.clim.tmp) <- unlist(lapply(ls.clim.tmp, function(x) unique(x$ID_custom)))
 
-    ls.clim[match(names(ls.clim.tmp), df.ids$ID)] <- ls.clim.tmp
+    ls.clim[match(names(ls.clim.tmp), df.ids$ID_custom)] <- ls.clim.tmp
 
 
   }
 
-
-
+  ls.clim <- lapply(ls.clim, as.data.frame, stringsAsFactors = F)
   # return resulting list
   return(ls.clim)
 }

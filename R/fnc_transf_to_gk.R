@@ -11,7 +11,7 @@
 #' @example inst/examples/fnc_transf_to_gk_ex.R
 #'
 fnc_transf_to_gk <- function(df){
-  df_gk <- data.frame("ID" = df$ID,
+  df_gk <- cbind(df,
                       "coords_x" = numeric(nrow(df)),
                       "coords_y" = numeric(nrow(df)))
   df_gk$coords_x <- as.numeric(df$easting) # Koordinaten aus IDs extrahieren
