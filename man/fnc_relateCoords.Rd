@@ -7,7 +7,12 @@
 fnc_relateCoords(df.ids, path_std = "R:/klima/whh/brook90_input/locations")
 }
 \arguments{
-\item{df.ids}{a data frame containing the following columns: \code{ID} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to. \code{easting} and \code{northing} - coordinates in UTM EPSG:32632}
+\item{df.ids}{a data frame containing the following columns:
+\itemize{
+\item \code{ID} - a numbered ID that is created in fnc_get_clim for unique assignment within functions
+\item \code{ID_custom} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to.
+\item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
+}}
 
 \item{path_std}{path to standard locations directory}
 }

@@ -4,12 +4,16 @@
 \alias{fnc_soil_stok}
 \title{Soil-list creation from STOKA data}
 \usage{
-fnc_soil_stok(df, df.LEIT, PTF_to_use)
+fnc_soil_stok(df, df.LEIT, PTF_to_use, dgm)
 }
 \arguments{
-\item{df}{A data frame containing the columns \code{ID} as distinct assignment from the initial \code{df.ids} dataframe and the column \code{RST_F}, which is created in \code{\link{fnc_create_soil}} through a spatial join of the coordinates with the STOK-BW shapefile (or, at this stage, the shapefile of test areas).}
+\item{df}{A data frame containing the columns \code{ID} and \code{ID_custom} as distinct assignment from the initial \code{df.ids} dataframe and the column \code{RST_F}, which is created in \code{\link{fnc_create_soil}} through a spatial join of the coordinates with the STOK-BW shapefile (or, at this stage, the shapefile of test areas).}
 
 \item{df.LEIT}{a data frame containing LEITPROFILE. At this stage of development, the comprehensive BW-wide database is not complete yet, so the test area needs to be assigned here. However, this is done automatically in  \code{\link{fnc_create_soil}}.}
+
+\item{PTF_to_use}{which PTF will later be used in \code{\link{fnc_get_soil}} has an impact on the setting of oc.pct, so this information is passed down from \code{\link{fnc_get_soil}} here.}
+
+\item{dgm}{df.dgm gets created in \code{\link{fnc_get_soil}} and is passed here to avoid complications with potential df.dgms in the global environment.}
 }
 \value{
 Returns a list of soil data frames.

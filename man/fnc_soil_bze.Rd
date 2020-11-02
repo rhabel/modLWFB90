@@ -4,14 +4,16 @@
 \alias{fnc_soil_bze}
 \title{Soil-list creation from BZE data}
 \usage{
-fnc_soil_bze(df.gk)
+fnc_soil_bze(df.gk, df.assign)
 }
 \arguments{
 \item{df.gk}{A spatialpointsdataframe with the desired points in GK-3.}
+
+\item{df.assign}{a dataframe containing the corresponding ID_custom for the IDs in \code{df.gk}}
 }
 \value{
 Returns a list of soil data frames.
 }
 \description{
-This function is a wrapper of several smaller functions and chunks of code, all retrieved from "U:\\Brook90_2018\\paul_schmidt_walter_2018\\Dokumentation\\2_Bodenparameter.nb". Combining all this code into one function, it takes a spatialpointsdataframe of coordinates in GK-3 and returns a list of soil data frames. Those are further processed in \code{\link{fnc_create_soil}} by adding soil hydraulic information, humus, and fine roots and can then be read by \code{\link[LWFBrook90]{msiterunLWFB90}}.
+This function is a wrapper of several smaller functions and chunks of code, all retrieved from "U:\\Brook90_2018\\paul_schmidt_walter_2018\\Dokumentation\\2_Bodenparameter.nb". Combining all this code into one function, it takes a spatialpointsdataframe of coordinates in GK-3 and returns a list of soil data frames. Those are further processed in \code{\link{fnc_get_soil}} by adding soil hydraulic information, humus, and fine roots and can then be read by \code{\link[LWFBrook90]{msiterunLWFB90}}.
 }
