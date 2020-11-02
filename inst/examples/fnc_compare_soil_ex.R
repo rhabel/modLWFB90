@@ -1,9 +1,10 @@
 # create folder for testfiles
-dir.create("./testfiles_PTF/")
-dir.create("./testfiles_SOIL/")
-output1 <- paste0(getwd(), "/testfiles_SOIL/")
-output2 <- paste0(getwd(), "/testfiles_PTF/")
-# PTFs
+dir.create("./testfiles/SOIL/", recursive = T)
+dir.create("./testfiles/PTF/", recursive = T)
+output1 <- paste0(getwd(), "/testfiles/SOIL/")
+output2 <- paste0(getwd(), "/testfiles/PTF/")
+
+# comparing the different soil data provided by STOK, BZE and OWN with HYPRES as PTF
 fnc_compare_soil(df.ids = test.ids.bds,
                  testgebiet = "BDS",
                  what_to_test = "SOILDATA",
@@ -15,7 +16,9 @@ fnc_compare_soil(df.ids = test.ids.bds,
 
                  limit_MvG = F,
                  df.soils = df.own.test,
-                 output_path = output)
+                 output_path = output1)
+
+# comparing how the three PTF options implemented in LWFBrook90 perform with the soil data from STOK
 fnc_compare_soil(df.ids = test.ids.bds,
                  testgebiet = "BDS",
                  what_to_test = "PTFs",
@@ -26,4 +29,4 @@ fnc_compare_soil(df.ids = test.ids.bds,
 
                  limit_MvG = F,
                  df.soils = NULL,
-                 output_path = output)
+                 output_path = output2)
