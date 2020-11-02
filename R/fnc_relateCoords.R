@@ -11,7 +11,7 @@
 #' @param path_std path to standard locations directory
 #' @details Spatial resolution of the underlying raster data and therefore the grid of standard locations is 250 m. Coordinates reference system of the raster data is WGS84-UTM32N, EPSG:32632.
 #' @details The climatic database provides daily information for several climatic variables at standard locations as input for the Brook90-model. The population of almost 230.000 standard locations is spatialised to 9 tranches, each tranche including approximately 25.000 locations.
-#' @details Raster representation in the relation of custom to standard location is ensured [Value = 1], as long as the custom location is inside the raster cell underlying the standard location. Therefore the distance from custom location to nearest standard location has to be <= sqrt((250/2)^2*2)) [m].
+#' @details Raster representation in the relation of custom to standard location is ensured \code{Value = 1}, as long as the custom location is inside the raster cell underlying the standard location. Therefore the distance from custom location to nearest standard location has to be <= sqrt((250/2)^2*2)) [m].
 #' @references Dietrich, H., Wolf, T., Kawohl, T., Wehberg, J., Kändler, G., Mette, T., Röder, A., Böhner, J. (2019): “Temporal and spatial high-resolution climate data from 1961 to 2100 for the German National Forest Inventory (NFI)”, Annals of Forest Sience, 76:6. https://doi.org/10.1007/s13595-018-0788-5
 #' @author Thilo Wolf <thilo.wolf@@forst.bwl.de>, adjusted by Raphael Habel <raphael.habel@@forst.bwl.de>
 #' @return A data frame containing:

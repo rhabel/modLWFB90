@@ -18,7 +18,7 @@ fnc_PTF(df, PTF_used)
 \item{PTF_used}{PTF-options from the \code{LWFBrook90R} - package. Choices are \code{"HYPRES"}, \code{"PTFPUH2"}, or \code{"WESSOLEK"}.}
 }
 \value{
-Returns a longer data.table that already includes an earlier version of ls.soils. Further processed in \code{\link{fnc_create_soil}}.
+Returns a longer data.table that already includes an earlier version of ls.soils. Further processed in \code{\link{fnc_get_soil}}.
 }
 \description{
 This function takes the data frame of soil physics data and creates the hydraulic parameters. It further creates humus-layers using the MvG-parameters from Hammel&Kennel (2001)

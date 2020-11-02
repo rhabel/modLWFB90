@@ -16,7 +16,7 @@
 #' @param MvG_own_vals if \code{what_to_test} is \code{SOILDATA} and \code{soiloption_to_test} includes \code{OWN}: \cr will MvG parameters be provided (i.e. from lab analyses) or shall the PTF in \code{PTF_to_use} also be applied to the soil data in \code{df.soils}
 #' @param PTF_to_test if \code{what_to_test} is \code{PTFs}: \cr which PTFs should be compared. Must be any combination of \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK} and can include \code{OWN_PARMS} if own MvG parameters are given in \code{df.soils}
 #' @param soiloption_to_use which soil data should the PTFs in \code{PTF_to_test} be applied to. Must be one of \code{STOK}, \code{BZE}, or \code{OWN} if data is supplied at \code{df.soils}
-#' @param limit_MvG should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{limit_MvG}}. Default is \code{FALSE}.
+#' @param limit_MvG should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit}}. Default is \code{FALSE}.
 #' @param df.soils if \code{OWN} is selected in \code{soiloptions_to_test}, or \code{OWN_PARMS}  is selected in \code{PTF_to_test}, these information must be provided here as a dataframe that contains the following columns:\cr
 #' \itemize{
 #' \item \code{ID} - a unique ID matching the IDs of df.ids

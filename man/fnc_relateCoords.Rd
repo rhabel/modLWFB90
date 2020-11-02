@@ -45,7 +45,7 @@ Spatial resolution of the underlying raster data and therefore the grid of stand
 
 The climatic database provides daily information for several climatic variables at standard locations as input for the Brook90-model. The population of almost 230.000 standard locations is spatialised to 9 tranches, each tranche including approximately 25.000 locations.
 
-Raster representation in the relation of custom to standard location is ensured \link{Value = 1}, as long as the custom location is inside the raster cell underlying the standard location. Therefore the distance from custom location to nearest standard location has to be <= sqrt((250/2)^2*2)) \link{m}.
+Raster representation in the relation of custom to standard location is ensured \code{Value = 1}, as long as the custom location is inside the raster cell underlying the standard location. Therefore the distance from custom location to nearest standard location has to be <= sqrt((250/2)^2*2)) \link{m}.
 }
 \examples{
 

@@ -38,7 +38,7 @@ fnc_compare_soil(
 
 \item{soiloption_to_use}{which soil data should the PTFs in \code{PTF_to_test} be applied to. Must be one of \code{STOK}, \code{BZE}, or \code{OWN} if data is supplied at \code{df.soils}}
 
-\item{limit_MvG}{should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{limit_MvG}}. Default is \code{FALSE}.}
+\item{limit_MvG}{should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit}}. Default is \code{FALSE}.}
 
 \item{df.soils}{if \code{OWN} is selected in \code{soiloptions_to_test}, or \code{OWN_PARMS}  is selected in \code{PTF_to_test}, these information must be provided here as a dataframe that contains the following columns:\cr
 \itemize{
