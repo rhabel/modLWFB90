@@ -1,7 +1,13 @@
 #' @title Relate coordinates to locations in climatic database
 #' @description Relate custom locations of interest to standard locations present in a climatic database by nearest neighbour operation.
 #' @description The standard locations represent the center points of underlying climatic raster data cells located in forest areas of Baden-Württemberg.
-#' @param df.ids a data frame containing the following columns: \code{ID} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to. \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
+#'
+#' @param df.ids a data frame containing the following columns:
+#' \itemize{
+#' \item \code{ID} - a numbered ID that is created in fnc_get_clim for unique assignment within functions
+#' \item \code{ID_custom} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to.
+#' \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
+#' }
 #' @param path_std path to standard locations directory
 #' @details Spatial resolution of the underlying raster data and therefore the grid of standard locations is 250 m. Coordinates reference system of the raster data is WGS84-UTM32N, EPSG:32632.
 #' @details The climatic database provides daily information for several climatic variables at standard locations as input for the Brook90-model. The population of almost 230.000 standard locations is spatialised to 9 tranches, each tranche including approximately 25.000 locations.
@@ -13,7 +19,6 @@
 #' @return - membership of location in tranche.
 #' @return - distance of custom location to the nearest standard location.
 #' @return - raster representation in relation of locations.
-#' @export
 #' @import sf
 #' @import tidyverse
 #' @examples
@@ -93,6 +98,7 @@ fnc_relateCoords <- function(df.ids,
     # concatenate relations ----
     location_relations <- cbind(standard_locations_sample,
                                 df.ids$ID,
+                                df.ids$ID_custom,
                                 sf::st_coordinates(custom_locations_sf),
                                 distance,
                                 distance_threshold)
@@ -110,16 +116,17 @@ fnc_relateCoords <- function(df.ids,
                                       "x_standard",
                                       "y_standard",
                                       "tranche",
-                                      "id_custom",
+                                      "ID",
+                                      "ID_custom",
                                       "x_custom",
                                       "y_custom",
                                       "distance",
                                       "distance_threshold",
                                       "raster_representation"
                                       )
+
     location_relations <- location_relations %>%
-      dplyr::select(id_custom, x_custom, y_custom, tranche, id_standard, x_standard, y_standard, distance, distance_threshold, raster_representation) %>%
-      dplyr::rename(ID = id_custom) %>%
+      dplyr::select(ID, ID_custom, x_custom, y_custom, tranche, id_standard, x_standard, y_standard, distance, distance_threshold, raster_representation) %>%
       dplyr::mutate(id_standard = as.character(id_standard))
 
 
