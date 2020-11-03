@@ -19,25 +19,28 @@ fnc_soil_stok <- function(df,
       filter(RST_F == df$RST_F[i]) %>%
       dplyr::mutate("ID" = df$ID[i],
                     "ID_custom" = as.character(df$ID_custom[i])) %>%
+      dplyr::mutate(TRD = round(as.numeric(TRD), 3)) %>%
 
-      dplyr::select(ID, ID_custom, LAGENUM, TIEFE_OG, TIEFE_UG, SAND, SCHLUFF, TON, SKELETT, TRD, SOC) %>%
-      setNames(c("ID", "ID_custom", "mat", "upper", "lower", "sand", "silt", "clay", "gravel", "bd", "oc.pct")) %>%
+      dplyr::select(ID, ID_custom, LAGENUM, TIEFE_OG, TIEFE_UG, SAND, SCHLUFF, TON, SKELETT, TRD, SOC, humusform) %>%
+      setNames(c("ID", "ID_custom", "mat", "upper", "lower", "sand", "silt", "clay", "gravel", "bd", "oc.pct", "humusform")) %>%
 
-      dplyr::mutate_at(vars(-matches("ID_custom")), as.numeric)
+      dplyr::mutate_at(vars(-all_of(c("ID_custom", "humusform"))), as.numeric)
 
     # Tiefendiskretisierung, Slope & Aspect
     df.soil <- fnc_depth_disc(df.soil) %>%
       dplyr::mutate(oc.pct = case_when(is.na(oc.pct) & PTF_to_use == "PTFPUH2" ~ 0.5,
-                                is.na(oc.pct) & PTF_to_use == "HYPRES" ~ 0.1,
-                                T ~ oc.pct)) %>%
-      dplyr::left_join(dgm, by = "ID")
-
-    # Humus: ...
-    df.soil <- df.soil %>%
-      dplyr::mutate(humus = 0.05,
+                                       is.na(oc.pct) & PTF_to_use == "HYPRES" ~ 0.1,
+                                       T ~ oc.pct),
+                    humus = case_when(humusform == "Mull" ~ 0.03,
+                                      humusform == "Mullmoder" ~ 0.067,
+                                      humusform == "Moder" ~ 0.045,
+                                      humusform == "Rohhumusartiger Moder" ~ 0.06,
+                                      humusform == "Rohhumus" ~ 0.07,
+                                      T ~ 0),
                     upper = upper/-100,
                     lower = lower/-100,
                     gravel = gravel / 100) %>%
+      dplyr::left_join(dgm, by = "ID") %>%
       dplyr::select(ID, ID_custom, mat, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus)
 
 
