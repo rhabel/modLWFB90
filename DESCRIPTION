@@ -11,6 +11,11 @@ Authors@R: c(
            family = "Mueller",
            role = c("aut"),
            email = "Ann-Christin.Mueller@forst.bwl.de",
+           comment = c(ORCID = "YOUR-ORCID-ID")), 
+    person(given = "Thilo",
+           family = "Wolf",
+           role = c("aut"),
+           email = "thilo.wolf@forst.bwl.de",
            comment = c(ORCID = "YOUR-ORCID-ID")))
 Description: The hydrological model LWF-Brook90 simulates water fluxes, soil moisture and drought stress. Within the FVA-BW it is increasingly used for research project and applications. 
   Using the FVA-servers' structure and building on pschmidtwalter's R-Package LWFBrook90R, this package is designed as a wrapper to provide guided assistance for spatially explicit soil water modelling. 
@@ -33,7 +38,8 @@ Imports:
 Depends:
     tidyverse,
     LWFBrook90R (>= 0.4.0),     
-    data.table (>= 1.10.4)
+    data.table (>= 1.10.4), 
+    RSQLite
 Suggests: 
     knitr,
     rmarkdown

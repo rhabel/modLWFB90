@@ -13,7 +13,7 @@
 #'
 #' @references Hammel, K., & Kennel, M. (2001). Charakterisierung und Analyse der Wasserverfügbarkeit und des Wasserhaushalts von Waldstandorten in Bayern mit dem Simulationsmodell BROOK90. Frank.
 #'
-#' @return Returns a longer data.table that already includes an earlier version of ls.soils. Further processed in \code{\link{fnc_create_soil}}.
+#' @return Returns a longer data.table that already includes an earlier version of ls.soils. Further processed in \code{\link{fnc_get_soil}}.
 #' @export
 
 fnc_PTF <- function(df, PTF_used){
@@ -27,22 +27,23 @@ fnc_PTF <- function(df, PTF_used){
 
       #order for rbind
       df <- df %>%
-        dplyr::select(ID, mat, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, ths, thr, alpha, npar, mpar, ksat, tort)
+        dplyr::select(ID, ID_custom, mat, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, ths, thr, alpha, npar, mpar, ksat, tort)
 
       # rbind humus-values
       df <- rbind(data.frame("ID" = df$ID[1],
+                             "ID_custom" = as.character(df$ID_custom[1]),
                              "mat" = 0,
                              "upper" = humus,
                              "lower" = 0,
-                             "sand" = NA,
-                             "silt" = NA,
-                             "clay" = NA,
-                             "gravel" = NA,
-                             "bd" = NA,
-                             "oc.pct" = NA,
+                             "sand" = 0,
+                             "silt" = 0,
+                             "clay" = 0,
+                             "gravel" = 0,
+                             "bd" = 0,
+                             "oc.pct" = 0,
                              "aspect" = df$aspect[1],
                              "slope" = df$slope[1],
-                             "humus" = NA,
+                             "humus" = 0,
                              "ths" = 0.848,
                              "thr" = 0,
                              "alpha" = 98,
@@ -70,22 +71,23 @@ fnc_PTF <- function(df, PTF_used){
 
       #order for rbind
       df <- df %>%
-        dplyr::select(ID, mat, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, ths, thr, alpha, npar, mpar, ksat, tort)
+        dplyr::select(ID, ID_custom, mat, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, ths, thr, alpha, npar, mpar, ksat, tort)
 
       #rbind humus-values
       df <- rbind(data.frame("ID" = df$ID[1],
+                             "ID_custom" = as.character(df$ID_custom[1]),
                              "mat" = 0,
                              "upper" = humus,
                              "lower" = 0,
-                             "sand" = NA,
-                             "silt" = NA,
-                             "clay" = NA,
-                             "gravel" = NA,
-                             "bd" = NA,
-                             "oc.pct" = NA,
+                             "sand" = 0,
+                             "silt" = 0,
+                             "clay" = 0,
+                             "gravel" = 0,
+                             "bd" = 0,
+                             "oc.pct" = 0,
                              "aspect" = df$aspect[1],
                              "slope" = df$slope[1],
-                             "humus" = NA,
+                             "humus" = 0,
                              "ths" = 0.848,
                              "thr" = 0,
                              "alpha" = 98,
@@ -113,24 +115,25 @@ fnc_PTF <- function(df, PTF_used){
 
       #order for rbind
       df <- cbind(df, LWFBrook90R::hydpar_wessolek_tab(tex.KA5 = df$texture))%>%
-        dplyr::select(ID, mat, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, ths, thr, alpha, npar, mpar, ksat, tort)
+        dplyr::select(ID, ID_custom, mat, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, ths, thr, alpha, npar, mpar, ksat, tort)
 
       humus <- df$humus[1]
 
       # rbind humus-values
       df <- rbind(data.frame("ID" = df$ID[1],
+                             "ID_custom" = as.character(df$ID_custom[1]),
                              "mat" = 0,
                              "upper" = humus,
                              "lower" = 0,
-                             "sand" = NA,
-                             "silt" = NA,
-                             "clay" = NA,
-                             "gravel" = NA,
-                             "bd" = NA,
-                             "oc.pct" = NA,
+                             "sand" = 0,
+                             "silt" = 0,
+                             "clay" = 0,
+                             "gravel" = 0,
+                             "bd" = 0,
+                             "oc.pct" = 0,
                              "aspect" = df$aspect[1],
                              "slope" = df$slope[1],
-                             "humus" = NA,
+                             "humus" = 0,
                              "ths" = 0.848,
                              "thr" = 0,
                              "alpha" = 98,

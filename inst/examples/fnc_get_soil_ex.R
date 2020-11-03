@@ -1,4 +1,4 @@
-test.ids.bds <- data.frame("ID" = c(1,2, 3, 4, 5),
+test.ids.bds <- data.frame("ID_custom" = LETTERS[5:1],
                            "easting" = c(493497, 503000, 515138, 501000, 503330),
                            "northing" = c(5281811, 5292500, 5289355, 5293600, 5291700))
 
@@ -13,19 +13,19 @@ df.LEIT.NPS <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_Stok
 sf.STOK.BDS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/BDS/BDS_STOKA_Clip_UTM.shp"))
 sf.STOK.NPS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NP_STOKA_Clip_UTM.shp"))
 
-fnc_create_soil(df.ids = test.ids.bds,
+fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
                 testgebiet = "BDS",
                 PTF_to_use = "HYPRES",
                 rootsmethod = "hartmann",
                 humus_roots = F)
-fnc_create_soil(df.ids = test.ids.bds,
+fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
                 testgebiet = "BDS",
                 PTF_to_use = "HYPRES",
                 rootsmethod = "betamodel",
-                beta = 0.95)
-fnc_create_soil(df.ids = test.ids.bds,
+                beta = 0.95) # specification from LWFBrook90::MakeRelRootDens
+fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "BZE",
                 testgebiet = "BDS",
                 PTF_to_use = "HYPRES",
@@ -34,7 +34,7 @@ fnc_create_soil(df.ids = test.ids.bds,
 
 
 # sample data frame with "own" data
-df.own.test <- data.frame("ID" = c(rep(1,4), rep(2,4), rep(3,4), rep(4,4), rep(5,4)),
+df.own.test <- data.frame("ID_custom" = c(rep("E",4), rep("D",4), rep("C",4), rep("B",4), rep("A",4)),
                           "mat" = rep(1:4, 5),
                           "upper" = c(0,5,10,30, 0,10,50,60, 0,5,10,30, 0,10,50,60, 0,15,20,70),
                           "lower" = c(5,10,30,60, 10,50,60,100, 5,10,30,60, 10,50,60,100, 15,20,70,100),
@@ -46,7 +46,7 @@ df.own.test <- data.frame("ID" = c(rep(1,4), rep(2,4), rep(3,4), rep(4,4), rep(5
                           "gravel" = c(1,5,5,20, 0,0,10,15, 5,8,8,10, 20,20,25,60,0,0,0,0) ,
                           "humus" = c(rep(0.04,4), rep(0.06, 4), rep(0.04,4), rep(0.1, 4), rep(0.05, 4)))
 
-fnc_create_soil(df.ids = test.ids.bds,
+fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "OWN",
                 testgebiet = "BDS",
                 PTF_to_use = "HYPRES",

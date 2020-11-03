@@ -20,41 +20,57 @@ fnc_compare_soil(
 )
 }
 \arguments{
-\item{df.ids}{a data frame containing the following columns: \code{ID} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to. \code{easting} and \code{northing} - coordinates in UTM EPSG:32632}
+\item{df.ids}{a data frame containing the following columns:
+\itemize{
+\item \code{ID_custom} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to
+\item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
+}}
 
 \item{testgebiet}{at the current stage of development, we're working with test areas that have to be named here as \code{BDS} for Bodensee/07b, or \code{NPS} for National Park Schwarzwald. Eventually, this should be replaced by a BW-wide option. This parameter might be useful if a spatial pre-selection should be included for performance optimization...}
 
 \item{what_to_test}{sets the main selection, whether soil data or PTF behaviour should be investigated. \cr Must be one of \code{SOILDATA} or \code{PTFs}.}
 
-\item{MvG_own_vals}{if \code{what_to_test} is \code{SOILDATA} and \code{soiloption_to_test} includes \code{OWN}. Are MvG provided (i.e. from lab analyses) or shall the \code{PTF_to_use} also be applied to the data in \code{df.soils}.}
+\item{MvG_own_vals}{if \code{what_to_test} is \code{SOILDATA} and \code{soiloption_to_test} includes \code{OWN}: \cr will MvG parameters be provided (i.e. from lab analyses) or shall the PTF in \code{PTF_to_use} also be applied to the soil data in \code{df.soils}}
 
 \item{PTF_to_use}{which PTF should be applied for creating hydraulic information from soil data in \code{soiloption_to_test}. Must be one of \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}.}
 
-\item{PTF_to_test}{if \code{what_to_test} is \code{PTFs}: which PTFs should be compared. Must be any combination of \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK} and can include \code{OWN_PARMS} if own MvG parameters are given in \code{df.soils}}
+\item{PTF_to_test}{if \code{what_to_test} is \code{PTFs}: \cr which PTFs should be compared. Must be any combination of \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK} and can include \code{OWN_PARMS} if own MvG parameters are given in \code{df.soils}}
 
 \item{soiloption_to_use}{which soil data should the PTFs in \code{PTF_to_test} be applied to. Must be one of \code{STOK}, \code{BZE}, or \code{OWN} if data is supplied at \code{df.soils}}
 
-\item{limit_MvG}{should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit_MvG}}. Default is \code{FALSE}.}
+\item{limit_MvG}{should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit}}. Default is \code{FALSE}.}
 
-\item{output_path}{path to the folder where imaged shall be printed to}
+\item{df.soils}{if \code{OWN} is selected in \code{soiloptions_to_test}, or \code{OWN_PARMS}  is selected in \code{PTF_to_test}, these information must be provided here as a dataframe that contains the following columns:\cr
+\itemize{
+\item \code{ID} - a unique ID matching the IDs of df.ids
+\item \code{mat} - number of soil layer starting with 1 counting upwards
+\item \code{upper} and \code{lower} - upper and lower boundaries of soil layers in cm
+\item \code{humus} - thickness of the humuslayer in m
+}
+Caution: \cr If PTFs are to be applied here, the columns \code{sand, silt, clay, oc.pct} in \%, and \code{bd} in g m-1 must be provided. \cr Else, if \code{PTF_to_test} includes \code{OWN_PARMS}, the following columns must be provided NA-free: \code{ths, thr, alpha, npar, mpar, ksat}, and \code{tort}.}
+
+\item{output_path}{path to the folder where images shall be printed to}
 
 \item{depth_to_test}{the depth in which comparisons should be made in m negative downwards from the surface. Default is \code{c(-0.15, -0.30, -0.60)}.}
 
-\item{soiloption_to_test}{if \code{what_to_test} is \code{SOILDATA}: which datasets should be compared. At least two of \code{STOK}, \code{BZE}, or \code{OWN} if own soil data is available.}
+\item{soiloption_to_test}{if \code{what_to_test} is \code{SOILDATA}: \cr which datasets should be compared. At least two of \code{STOK}, \code{BZE}, or \code{OWN} if own soil data is available.}
 }
 \value{
 Returns one image for each ID in df.ids, showing water retention and conductivity curves if \code{PTFs} are investigated. If soil data is compared, soil texture triangle, bd, oc.pct and gravel are also shown.
 }
 \description{
-This function enables the user to visually compare modelling options. As the soil input is likely to be very influencial for the model's output, this is also a reason to check for potentially confusing results. The two main options are comparing the soil data itself, and comparing what the PTFs do with the data at hand.
+This function enables the user to visually compare modelling options. As the soil input is likely to be very influencial for the model's output, this is also a reason to check for potentially confusing results.
+
+The two main options are comparing the soil data itself, and comparing what the PTFs do with the data at hand.
 }
 \examples{
 # create folder for testfiles
-dir.create("./testfiles_PTF/")
-dir.create("./testfiles_SOIL/")
-output1 <- paste0(getwd(), "/testfiles_SOIL/")
-output2 <- paste0(getwd(), "/testfiles_PTF/")
-# PTFs
+dir.create("./testfiles/SOIL/", recursive = T)
+dir.create("./testfiles/PTF/", recursive = T)
+output1 <- paste0(getwd(), "/testfiles/SOIL/")
+output2 <- paste0(getwd(), "/testfiles/PTF/")
+
+# comparing the different soil data provided by STOK, BZE and OWN with HYPRES as PTF
 fnc_compare_soil(df.ids = test.ids.bds,
                  testgebiet = "BDS",
                  what_to_test = "SOILDATA",
@@ -66,7 +82,9 @@ fnc_compare_soil(df.ids = test.ids.bds,
 
                  limit_MvG = F,
                  df.soils = df.own.test,
-                 output_path = output)
+                 output_path = output1)
+
+# comparing how the three PTF options implemented in LWFBrook90 perform with the soil data from STOK
 fnc_compare_soil(df.ids = test.ids.bds,
                  testgebiet = "BDS",
                  what_to_test = "PTFs",
@@ -77,5 +95,5 @@ fnc_compare_soil(df.ids = test.ids.bds,
 
                  limit_MvG = F,
                  df.soils = NULL,
-                 output_path = output)
+                 output_path = output2)
 }
