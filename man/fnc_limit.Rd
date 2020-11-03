@@ -15,3 +15,13 @@ returns the same data frame, just with parameters limited as described in the fu
 \description{
 The function fnc_PTF creates Mualem-vanGenuchten parameters from physical soil properties. Since some of these PTFs may extrapolate to values that are unrealistic, this function, if activated through \code{limit_mvG} in \code{fnc_create_boden}(), limits the parameters to parameter ranges as described in "U:\\Brook90_2018\\paul_schmidt_walter_2018\\Dokumentation\\2_Bodenparameter.nb".
 }
+\details{
+ranges are as follows:
+\itemize{
+\item alpha - between 0.1 and 500 m-1
+\item gravel - max 95\% if gravel > 95\%
+\item npar - max 2 if npar > 2
+\item ksat - min 0.01 mm/d if ksat < 0.01
+\item tort - between -3 and 6
+}
+}
