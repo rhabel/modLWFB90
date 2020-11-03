@@ -87,7 +87,7 @@ check_packages <- function(pkg){
 }
 
 # example: 
-check_packages(c("tidyr", "tidyverse", "tictoc", "sf"))
+check_packages(c("tidyverse", "LWFBrook90R"))
 ```
   
   
@@ -192,7 +192,7 @@ Finally, we need to set the modelling options. This is done with the function `s
   
 ***
 # Example
-```{r}
+```{r, eval = FALSE}
 # create ID-dataframe
 df.ids = test.ids.bds
 
