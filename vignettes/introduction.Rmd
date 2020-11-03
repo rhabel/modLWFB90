@@ -1,19 +1,244 @@
 ---
-title: "introduction"
-output: rmarkdown::html_vignette
+title: "Introduction to modLWFB90"
+output: 
+  rmarkdown::html_vignette:
+    number_sections: true
+    toc: true
+
 vignette: >
-  %\VignetteIndexEntry{introduction}
+  %\VignetteIndexEntry{Introduction to modLWFB90}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 ```
 
-```{r setup}
+This vignette shall serve as an introduction to the *modLWFB90* package. It shows how to use its essential functions and how to specify certain aspects if desired.
+
+  
+  
+  
+***
+# Introduction
+
+The hydrological model LWFBrook90 is increasingly used at the FVA-BW in various projects and applications. It is a dynamic 1-D model that, through a large number of settings, allows for a detailed representation of soil, climate, and vegetation conditions. Hence, it is pretty useful for soil water modeling in the forest background we're working in. 
+
+Paul Schmidt-Walter at the NW-FVA developed an R-package that serves as an R-wrapper for LWFBrook90.exe. *LWFBrook90R* makes it possible and relatively easy to use and work with LWFBrook90 from within Rstudio.
+
+The package in front of you, *modLWFB90*, even goes one step further: It uses the whole functionality of *LWFBrook90R*, but adds a link to soil data and climate data available on the FVA-BW servers. This way users can do hydrological modelling by just giving the desired methods as arguments. All you need is one tidy data frame with the points you want to model in the following form:
+
+* `ID_custom`   - a unique ID that all intermediate products as well as the results will be assigned to 
+* `easting` and 
+* `northing`    - coordinates in UTM 32N EPSG:32632
+ 
+Then, all you need to specify is the time period and a number of settings (the origin of the soil data, the PTF to be used, the type of forest you want to model, etc.).
+  
+  
+  
+***
+# Available Settings
+ 
+## Vegetation
+In the course of the project WHH-KW, parametrisation settings for the main tree species (beech - Buche, spruce - Fichte, larch - Laerche) were agreed upon and can be selected in modLWFB90.
+
+## Climate data
+For WHH-KW the UHH Hamburg created a new and improved climate data set containing regionalised 250m-raster climate data for the historic time period 1961-2018, as well as the following climate scenarios: 
+
+* ...
+
+The link to the databases containing the raster data for the forest area in BW is included in modLWFB90, together with functions to retrieve climate data. 
+
+## Soil data
+The following soil options can be selected: 
+
+* STOK - Data from the Standortskartierung (add description...)
+* BZE  - regionlised BZE-II data (add description...)
+* OWN  - you can provide your own soil data
+
+There's also a function to compare the three soil data outputs.    
+  
+  
+  
+***
+# Basic Usage
+ 
+## Getting the packages up and running
+First of all, get the latest release of LWFBrook90R (at the time of creation v.0.4.0 from github). [github:pschmidtwalter/LWFBrook90R](https://github.com/pschmidtwalter/LWFBrook90R) 
+Then, install modLWFB90, together with the dependency packages, which are required and will be installed automatically.
+
+```{r, warning = F, message = F}
 library(modLWFB90)
+```
+
+You might encounter issues with updates that can't be overwritten and other R-package-problems, in which case the following function might help you install the missing packages quicker (no install.packages(x); library(x) over and over again): 
+
+```{r, warning = F, message = F}
+check_packages <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg))
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+
+}
+
+# example: 
+check_packages(c("tidyr", "tidyverse", "tictoc", "sf"))
+```
+  
+  
+## Input opjects
+Essential for hydrological modelling are three datasets: Soil, Climate, and Parameters. This is how to get them the simplest possible way. First, we need sample data. `test.ids.bds` includes five points in the forest near Lake Constance (Bodensee). 
+```{r}
+test.ids.bds
+```
+<!-- # ```{r} -->
+<!-- # test.ids.bds -->
+<!-- #  -->
+<!-- # # for an overview:  -->
+<!-- # check_packages(c("sf", "mapview")) -->
+<!-- # mapview::mapview(sf::st_as_sf(test.ids.bds, -->
+<!-- #                               coords = c("easting", "northing"), -->
+<!-- #                               crs = 32632),  -->
+<!-- #                  viewer.suppress = T) -->
+<!-- #  -->
+<!-- # ``` -->
+
+  
+### Soil data
+The function to create soil data is called fnc_get_soil and returns a list of soil data frames, so best assign it to a list object like this: 
+```{r, warning = F, message = F}
+ls.soil <- fnc_get_soil(df.ids = test.ids.bds, 
+                        soil_option = "BZE", 
+                        testgebiet = "BDS", 
+                        PTF_to_use = "HYPRES", 
+                        limit_MvG = F
+                        )
+ls.soil[[1]]
+```
+
+There's a number of options to choose from: 
+
+* df.ids - your data frame with `ID_custom`, `easting` and `northing` 
+* soil_option - either `STOK`, `BZE`, or `OWN`, if own you need to specify own soil data through df.soils. For more information see `?fnc_get_soil`
+* testgebiet - currently in development stage either `BDS` (Bodensee) or `NPS` (Nationalpark Schwarzwald), shall at some point be replaced by all of BW
+* PTF_to_use - either `HYPRES`, `PTFPUH2` or `WESSOLEK`
+* limit_MvG - limit results of PTF application to "reasonable" ranges, see `?fnc_limit` for more information
+
+Since not all points are mapped by STOK, you can choose between filling non-mapped points with BZE data or not modeling those points to keep it consistent. If you want to model with STOK, you first need to run these lines of code: They load the STOK-shapefiles and the LEITPROFIL-dbs. The input-paths are included in the package and lead to the current location of the files, so they might need to get adjusted at some point in the future.
+
+```{r}
+# Leitprofil-db:
+df.LEIT.BDS <- readxl::read_excel(paste0(input_stok, "testregionen/20200129_StokDB_Leitprofile_705.xlsx"),
+                                  sheet = "LEITPROFIL")
+
+df.LEIT.NPS <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_StokDB_Leitprofile_NLP.xlsx"),
+                                  sheet = "LEITPROFIL")
+
+# STOKA - shapefiles
+sf.STOK.BDS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/BDS/BDS_STOKA_Clip_UTM.shp"))
+sf.STOK.NPS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NP_STOKA_Clip_UTM.shp"))
+```
+
+***
+There's also the option to compare the soil data created by the different options. Plus, the option to compare the hydraulic parameters created by the differnt PTFs. See `?fnc_compare_soil` for more information.
+  
+  
+  
+***
+### Climate data
+The function to create climate data is called `fnc_get_climate` and works the same way: 
+```{r }
+ls.clim <- fnc_get_clim(df.ids = test.ids.bds, 
+                        mindate = as.Date("2010-01-01"), 
+                        maxdate = as.Date("2010-12-31"))
+```
+  
+Here you can only specify the time period for which you need climate data. The additional arguments `path_std` and `path_climdb` lead to the current position of the climate databases on the FVA-Servers and may need to be adjusted at some point.   
+
+  
+  
+  
+***
+### Parameters
+The list of parameters you can pass to LWFBrook90 is pretty exhaustive. See `LWFBrook90R::setparam_LWFB90` for a complete list. In the project WHH-KW, a set of parameters was agreed upon for the most relevant tree species (Buche - `beech`, Eiche - `oak`, Fichte - `spruce`, Douglasie - `douglas`, Kiefer - `pine`). They can be used by specifying the argument `tree_species` either as one value for all points, or as a vector of values for each individual point. Additional information on the modelling points can be passed with the argument `df.ind.info`. See `?fnc_get_params` to find out how to do this.  
+  
+  The default setting for spruce would look like this: 
+
+```{r}
+ls.parms <- fnc_get_params(df.ids = test.ids.bds, 
+                           tree_species = "spruce")
+```
+
+
+  
+  
+  
+***
+### Options
+Finally, we need to set the modelling options. This is done with the function `setoptions_LWFB90` from the *LWFBrook90* package. If you use *modLWFB90* the only settings you need to adjust are
+
+* `budburst.method` and `leaffall.method` - if you want something other than `fixed`
+* `startdate` and `enddate` - as desired
+* `root.method` - set this to `soilvar`, because roots are created in `fnc_get_soil`, see its help page on how to adjust settings for roots
+
+
+  
+  
+  
+***
+# Example
+```{r}
+# create ID-dataframe
+df.ids = test.ids.bds
+
+# load STOK-Shapefiles:
+# Leitprofil-db:
+df.LEIT.BDS <- readxl::read_excel(paste0(input_stok, "testregionen/20200129_StokDB_Leitprofile_705.xlsx"),
+                                  sheet = "LEITPROFIL")
+
+df.LEIT.NPS <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_StokDB_Leitprofile_NLP.xlsx"),
+                                  sheet = "LEITPROFIL")
+
+# STOKA - shapefiles
+sf.STOK.BDS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/BDS/BDS_STOKA_Clip_UTM.shp"))
+sf.STOK.NPS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NP_STOKA_Clip_UTM.shp"))
+
+# set options
+options.b90 <- setoptions_LWFB90(budburst.method = "Menzel",
+                                 leaffall.method = "vonWilpert",
+                                 startdate = as.Date("2010-01-01"),
+                                 enddate = as.Date("2010-12-31"),
+                                 root.method = "soilvar")
+
+
+# create data
+ls.parms <- fnc_get_params(df.ids = test.ids.bds,
+                           tree_species = "spruce")
+ls.clim <- fnc_get_clim(df.ids = test.ids.bds)
+ls.soil <- fnc_get_soil(df.ids = test.ids.bds,
+                           soil_option = "STOK",
+                           testgebiet = "NPS",
+                           PTF_to_use = "HYPRES")
+
+# this chunk of code removes non-mapped STOK-points, if there are any and 
+# the BZE-filling option was not selected. Otherwise it doesn't do anything.
+ls.clim <- ls.clim[which(!unlist(lapply(ls.soil, is.null))==T)]
+ls.parms <- ls.parms[which(!unlist(lapply(ls.soil, is.null))==T)]
+ls.soil <- ls.soil[which(!unlist(lapply(ls.soil, is.null))==T)]
+
+
+# Run: 
+res <- msiterunLWFB90(options.b90 = options.b90,
+                      output = -1,
+                      param.b90 = ls.parms,
+                      climate = ls.clim,
+                      soil = ls.soil,
+                      all_combinations = F,
+                      cores = 1) 
+# if you have more than one core available, this will speed things up significantly
 ```
