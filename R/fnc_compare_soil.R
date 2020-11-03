@@ -19,7 +19,7 @@
 #' @param limit_MvG should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit}}. Default is \code{FALSE}.
 #' @param df.soils if \code{OWN} is selected in \code{soiloptions_to_test}, or \code{OWN_PARMS}  is selected in \code{PTF_to_test}, these information must be provided here as a dataframe that contains the following columns:\cr
 #' \itemize{
-#' \item \code{ID} - a unique ID matching the IDs of df.ids
+#' \item \code{ID_custom} - a unique custom ID matching the ID_custom of df.ids
 #' \item \code{mat} - number of soil layer starting with 1 counting upwards
 #' \item \code{upper} and \code{lower} - upper and lower boundaries of soil layers in cm
 #' \item \code{humus} - thickness of the humuslayer in m
