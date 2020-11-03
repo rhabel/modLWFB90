@@ -5,6 +5,16 @@
 #'
 #' @param df a data frame containing soil properties including MvG-alpha (column \code{alpha}), MvG-alpha (column \code{alpha}), stone vol_% (column \code{gravel}), MvG-npar (column \code{npar}), saturated conductivity (column \code{ksat}), and tortuousity (column \code{tort}).
 #'
+#' @details
+#' ranges are as follows:
+#' \itemize{
+#' \item alpha - between 0.1 and 500 m-1
+#' \item gravel - max 95% if gravel > 95%
+#' \item npar - max 2 if npar > 2
+#' \item ksat - min 0.01 mm/d if ksat < 0.01
+#' \item tort - between -3 and 6
+#' }
+#'
 #'
 #' @return returns the same data frame, just with parameters limited as described in the function.
 #'
@@ -14,7 +24,7 @@ fnc_limit <- function(df){
     mutate(alpha = case_when(alpha < 0.1 ~ 0.1,
                              alpha > 500 ~ 500,
                              T ~ alpha),
-           gravel = case_when(gravel > 95 ~ 95,
+           gravel = case_when(gravel > 0.95 ~ 0.95,
                               T ~ gravel),
            npar = case_when(npar > 2 ~ 2,
                             T ~ npar),
