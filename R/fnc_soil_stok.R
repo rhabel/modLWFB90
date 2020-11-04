@@ -15,36 +15,45 @@ fnc_soil_stok <- function(df,
                           dgm){
   ls.soils.tmp <- list()
   for (i in 1:nrow(df)){
-    df.soil <- df.LEIT %>%
-      filter(RST_F == df$RST_F[i]) %>%
-      dplyr::mutate("ID" = df$ID[i],
-                    "ID_custom" = as.character(df$ID_custom[i])) %>%
-      dplyr::mutate(TRD = round(as.numeric(TRD), 3)) %>%
+    df.soil <- tryCatch({
+      df.tmp <- df.LEIT %>%
+        filter(RST_F == df$RST_F[i]) %>%
+        dplyr::mutate("ID" = df$ID[i],
+                      "ID_custom" = as.character(df$ID_custom[i])) %>%
+        dplyr::mutate(TRD = round(as.numeric(TRD), 3)) %>%
 
-      dplyr::select(ID, ID_custom, LAGENUM, TIEFE_OG, TIEFE_UG, SAND, SCHLUFF, TON, SKELETT, TRD, SOC, humusform) %>%
-      setNames(c("ID", "ID_custom", "mat", "upper", "lower", "sand", "silt", "clay", "gravel", "bd", "oc.pct", "humusform")) %>%
+        dplyr::select(ID, ID_custom, LAGENUM, TIEFE_OG, TIEFE_UG, SAND, SCHLUFF, TON, SKELETT, TRD, SOC, humusform) %>%
+        setNames(c("ID", "ID_custom", "mat", "upper", "lower", "sand", "silt", "clay", "gravel", "bd", "oc.pct", "humusform")) %>%
 
-      dplyr::mutate_at(vars(-all_of(c("ID_custom", "humusform"))), as.numeric)
+        dplyr::mutate_at(vars(-all_of(c("ID_custom", "humusform"))), as.numeric)
 
-    # Tiefendiskretisierung, Slope & Aspect
-    df.soil <- fnc_depth_disc(df.soil) %>%
-      dplyr::mutate(oc.pct = case_when(is.na(oc.pct) & PTF_to_use == "PTFPUH2" ~ 0.5,
-                                       is.na(oc.pct) & PTF_to_use == "HYPRES" ~ 0.1,
-                                       T ~ oc.pct),
-                    humus = case_when(humusform == "Mull" ~ 0.03,
-                                      humusform == "Mullmoder" ~ 0.067,
-                                      humusform == "Moder" ~ 0.045,
-                                      humusform == "Rohhumusartiger Moder" ~ 0.06,
-                                      humusform == "Rohhumus" ~ 0.07,
-                                      T ~ 0),
-                    upper = upper/-100,
-                    lower = lower/-100,
-                    gravel = gravel / 100) %>%
-      dplyr::left_join(dgm, by = "ID") %>%
-      dplyr::select(ID, ID_custom, mat, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus)
+      # Tiefendiskretisierung, Slope & Aspect
+      df.tmp <- fnc_depth_disc(df.tmp) %>%
+        dplyr::mutate(oc.pct = case_when((is.na(oc.pct)|oc.pct==-9999) & PTF_to_use == "PTFPUH2" ~ 0.5,
+                                         (is.na(oc.pct)|oc.pct==-9999) & PTF_to_use == "HYPRES" ~ 0.1,
+                                         T ~ oc.pct),
+                      humus = case_when(humusform == "Mull" ~ 0.03,
+                                        humusform == "Mullmoder" ~ 0.067,
+                                        humusform == "Moder" ~ 0.045,
+                                        humusform == "Rohhumusartiger Moder" ~ 0.06,
+                                        humusform == "Rohhumus" ~ 0.07,
+                                        T ~ 0),
+                      upper = upper/-100,
+                      lower = lower/-100,
+                      gravel = gravel / 100) %>%
+        dplyr::left_join(dgm, by = "ID") %>%
+        dplyr::select(ID, ID_custom, mat, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus) %>%
+        as_tibble()
 
+    },
+    error = function(cond){
+      message(cat("\n RST_F ", df$RST_F[i], " seems to cause issues. row ", i))
+      message(cond)
+      return(NULL)
+    })
 
-    ls.soils.tmp[[i]] <- as_tibble(df.soil)
+    ls.soils.tmp[[i]] <- df.soil
+
   }
   return(ls.soils.tmp)
 }
