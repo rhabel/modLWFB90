@@ -77,7 +77,7 @@ fnc_get_soil <- function(df.ids,
       names(ls.soils) <- df.ids$ID_custom
 
     } else {
-      cat("IDs ", as.character(df.ids[IDs_miss, "ID_custom"]), " are not mapped by STOKA. How do you wish to proceed? \nPress \"1\" for not modelling missing IDs.\nPress \"2\" for using regionalised BZE-Data for missing IDs.")
+      cat("IDs ", as.character(as.data.frame(df.ids)[IDs_miss, "ID_custom"]), " are not mapped by STOKA. How do you wish to proceed? \nPress \"1\" for not modelling missing IDs.\nPress \"2\" for using regionalised BZE-Data for missing IDs.")
       how_to_proceed <- readline(prompt = "Continue with ")
 
       if(how_to_proceed == "1"){
