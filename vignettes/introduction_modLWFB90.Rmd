@@ -131,15 +131,26 @@ There's a number of options to choose from:
 
 Since not all points are mapped by STOK, you can choose between filling non-mapped points with BZE data or not modeling those points to keep it consistent. If you want to model with STOK, you first need to run these lines of code: They load the STOK-shapefiles and the LEITPROFIL-dbs. The input-paths are included in the package and lead to the current location of the files, so they might need to get adjusted at some point in the future.
 
-```{r}
-# Leitprofil-db:
+```{r, eval = F}
+# load Leitprofil-db:
+df.LEIT.hum <- readxl::read_excel(paste0(input_stok, "testregionen/20200129_StokDB_Leitprofile_705.xlsx"),
+                                  sheet = "STANDORTSEINHEITEN") %>%
+  dplyr::select(RST_F, RST_DritteZeileHumus) %>%
+  setNames(c("RST_F", "humusform"))
 df.LEIT.BDS <- readxl::read_excel(paste0(input_stok, "testregionen/20200129_StokDB_Leitprofile_705.xlsx"),
-                                  sheet = "LEITPROFIL")
+                                  sheet = "LEITPROFIL") %>%
+  dplyr::left_join(df.LEIT.hum, by = "RST_F")
 
+
+df.LEIT.hum <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_StokDB_Leitprofile_NLP.xlsx"),
+                                  sheet = "STANDORTSEINHEITEN") %>%
+  dplyr::select(RST_F, RST_DritteZeileHumus) %>%
+  setNames(c("RST_F", "humusform"))
 df.LEIT.NPS <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_StokDB_Leitprofile_NLP.xlsx"),
-                                  sheet = "LEITPROFIL")
+                                  sheet = "LEITPROFIL")%>%
+  dplyr::left_join(df.LEIT.hum, by = "RST_F")
 
-# STOKA - shapefiles
+# load STOK-Shapefiles:
 sf.STOK.BDS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/BDS/BDS_STOKA_Clip_UTM.shp"))
 sf.STOK.NPS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NP_STOKA_Clip_UTM.shp"))
 ```
@@ -155,7 +166,7 @@ The function to create climate data is called `fnc_get_climate` and works the sa
 ```{r }
 ls.clim <- fnc_get_clim(df.ids = test.ids.bds, 
                         mindate = as.Date("2010-01-01"), 
-                        maxdate = as.Date("2010-12-31"))
+                        maxdate = as.Date("2011-12-31"))
 ```
   
 Here you can only specify the time period for which you need climate data. The additional arguments `path_std` and `path_climdb` lead to the current position of the climate databases on the FVA-Servers and may need to be adjusted at some point.   
@@ -223,7 +234,7 @@ sf.STOK.NPS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NP_STOKA_Cli
 options.b90 <- setoptions_LWFB90(budburst.method = "Menzel",
                                  leaffall.method = "vonWilpert",
                                  startdate = as.Date("2010-01-01"),
-                                 enddate = as.Date("2010-12-31"),
+                                 enddate = as.Date("2011-12-31"),
                                  root.method = "soilvar")
 
 

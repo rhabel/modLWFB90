@@ -49,18 +49,25 @@ Returns a list of soil data frames completely processed to be further used in \c
 This function is a wrapper of several functions and chunks of code and the main point of access for the final user. It takes a dataframe of coordinates of the points to be modeled and returns a list of soil data frames as required by \code{LWFBrook90R}. Adjustment options exist for the origin of soil data, the PTF to be used, whether MvG-parameters should be limited to a certain range, as well as all options for roots included in \code{\link[LWFBrook90R]{MakeRelRootDens}} and \link{fnc_roots} that can be passed down from here.
 }
 \examples{
-test.ids.bds <- data.frame("ID_custom" = LETTERS[5:1],
-                           "easting" = c(493497, 503000, 515138, 501000, 503330),
-                           "northing" = c(5281811, 5292500, 5289355, 5293600, 5291700))
-
-# Leitprofil-db:
+# load Leitprofil-db:
+df.LEIT.hum <- readxl::read_excel(paste0(input_stok, "testregionen/20200129_StokDB_Leitprofile_705.xlsx"),
+                                  sheet = "STANDORTSEINHEITEN") \%>\%
+  dplyr::select(RST_F, RST_DritteZeileHumus) \%>\%
+  setNames(c("RST_F", "humusform"))
 df.LEIT.BDS <- readxl::read_excel(paste0(input_stok, "testregionen/20200129_StokDB_Leitprofile_705.xlsx"),
-                          sheet = "LEITPROFIL")
+                                  sheet = "LEITPROFIL") \%>\%
+  dplyr::left_join(df.LEIT.hum, by = "RST_F")
 
+
+df.LEIT.hum <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_StokDB_Leitprofile_NLP.xlsx"),
+                                  sheet = "STANDORTSEINHEITEN") \%>\%
+  dplyr::select(RST_F, RST_DritteZeileHumus) \%>\%
+  setNames(c("RST_F", "humusform"))
 df.LEIT.NPS <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_StokDB_Leitprofile_NLP.xlsx"),
-                          sheet = "LEITPROFIL")
+                                  sheet = "LEITPROFIL")\%>\%
+  dplyr::left_join(df.LEIT.hum, by = "RST_F")
 
-# STOKA - shapefiles
+# load STOKA - shapefiles
 sf.STOK.BDS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/BDS/BDS_STOKA_Clip_UTM.shp"))
 sf.STOK.NPS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NP_STOKA_Clip_UTM.shp"))
 
