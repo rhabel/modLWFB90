@@ -14,6 +14,7 @@
 #' @param soiloption_to_test if \code{what_to_test} is \code{SOILDATA}: \cr which datasets should be compared. At least two of \code{STOK}, \code{BZE}, or \code{OWN} if own soil data is available.
 #' @param PTF_to_use which PTF should be applied for creating hydraulic information from soil data in \code{soiloption_to_test}. Must be one of \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}.
 #' @param MvG_own_vals if \code{what_to_test} is \code{SOILDATA} and \code{soiloption_to_test} includes \code{OWN}: \cr will MvG parameters be provided (i.e. from lab analyses) or shall the PTF in \code{PTF_to_use} also be applied to the soil data in \code{df.soils}
+#' @param bze_buffer whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur in {m}, default is \code{NA}
 #' @param PTF_to_test if \code{what_to_test} is \code{PTFs}: \cr which PTFs should be compared. Must be any combination of \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK} and can include \code{OWN_PARMS} if own MvG parameters are given in \code{df.soils}
 #' @param soiloption_to_use which soil data should the PTFs in \code{PTF_to_test} be applied to. Must be one of \code{STOK}, \code{BZE}, or \code{OWN} if data is supplied at \code{df.soils}
 #' @param limit_MvG should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit}}. Default is \code{FALSE}.
@@ -48,7 +49,8 @@ fnc_compare_soil <- function(df.ids,
 
                             limit_MvG = F,
                             df.soils = NULL,
-                            output_path ){
+                            output_path,
+                            bze_buffer = NA){
 
   # add / to path if not given with a / at the end
   if(stringr::str_sub(output_path,-1) != "/"){
@@ -80,7 +82,7 @@ fnc_compare_soil <- function(df.ids,
 
       dgm.stack <- raster::stack(list.files(input_paul, pattern = "aspect.sdat|slope.sdat", full.names=T))
       df.dgm <- cbind("ID" = df.ids$ID,
-                      as.data.frame(fnc_extract_points(lay = dgm.stack, xy = xy_gk)))
+                      as.data.frame(fnc_extract_points(lay = dgm.stack, xy = xy_gk, buffering = T)))
 
       # create data:  ------------------------------------------ ####
 
@@ -123,7 +125,9 @@ fnc_compare_soil <- function(df.ids,
 
       if (any(stringr::str_detect(soiloptions_to_test, "BZE"))) {
         ls.BZE <- fnc_soil_bze(df.gk = xy_gk,
-                               df.assign = df.ids)
+                               df.assign = df.ids,
+                               buffering = (!is.na(bze_buffer)),
+                               buff_width = bze_buffer)
 
       }
 
@@ -380,7 +384,7 @@ fnc_compare_soil <- function(df.ids,
 
       dgm.stack <- raster::stack(list.files(input_paul, pattern = "aspect.sdat|slope.sdat", full.names=T))
       df.dgm <- cbind("ID" = df.ids$ID,
-                      as.data.frame(fnc_extract_points(lay = dgm.stack, xy = xy_gk)))
+                      as.data.frame(fnc_extract_points(lay = dgm.stack, xy = xy_gk, buffering = T)))
 
       # choice of data origin:  -------------------------------- ####
 
@@ -429,7 +433,9 @@ fnc_compare_soil <- function(df.ids,
                                                     dgm = df.dgm)
             xy_gk_miss <- fnc_transf_to_gk(df = df.ids[is.na(sf.ids$RST_F),])
             ls.soils[IDs_miss] <- fnc_soil_bze(df.gk = xy_gk_miss,
-                                               df.assign = df.ids)
+                                               df.assign = df.ids,
+                                               buffering = (!is.na(bze_buffer)),
+                                               buff_width = bze_buffer)
 
             names(ls.soils) <- df.ids$ID
             val_IDs <- df.ids$ID_custom
@@ -441,7 +447,9 @@ fnc_compare_soil <- function(df.ids,
 
       } else if (soiloption_to_use == "BZE") {
         ls.soils <- fnc_soil_bze(df.gk = xy_gk,
-                                 df.assign = df.ids)
+                                 df.assign = df.ids,
+                                 buffering = (!is.na(bze_buffer)),
+                                 buff_width = bze_buffer)
         val_IDs <- df.ids$ID_custom
 
       } else if (soiloption_to_use == "OWN") {

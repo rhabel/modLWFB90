@@ -4,12 +4,14 @@
 \alias{fnc_soil_bze}
 \title{Soil-list creation from BZE data}
 \usage{
-fnc_soil_bze(df.gk, df.assign)
+fnc_soil_bze(df.gk, df.assign, ...)
 }
 \arguments{
 \item{df.gk}{A spatialpointsdataframe with the desired points in GK-3.}
 
 \item{df.assign}{a dataframe containing the corresponding ID_custom for the IDs in \code{df.gk}}
+
+\item{...}{whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur, options are \code{buffering} as \code{TRUE} or \code{FALSE}, and \code{buff_width} in \code{m}}
 }
 \value{
 Returns a list of soil data frames.

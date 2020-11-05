@@ -4,19 +4,23 @@
 #'
 #' @param df.gk A spatialpointsdataframe with the desired points in GK-3.
 #' @param df.assign a dataframe containing the corresponding ID_custom for the IDs in \code{df.gk}
+#' @param ... whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur, options are \code{buffering} as \code{TRUE} or \code{FALSE}, and \code{buff_width} in \code{m}
 #'
 #' @return Returns a list of soil data frames.
 
 
 fnc_soil_bze <- function(df.gk,
-                         df.assign){
+                         df.assign,
+                         ...){
   # einlesen aller BZEraster:
   raster::rasterOptions(tmpdir = getwd())
   grid.files <- list.files(input_paul, pattern = ".sdat",full.names=T)
   soilraster <- raster::stack(grid.files)
 
   # stechen
-  soil <- fnc_extract_points(lay = soilraster, xy = df.gk)
+  soil <- fnc_extract_points(lay = soilraster,
+                             xy = df.gk,
+                             ...)
   # aufbereiten
   names(soil) <- names(soilraster) # Reihenfolge der Listenelemente entspricht Namen der Layers im Rasterstack
   soil <- data.table::as.data.table(soil)
@@ -46,7 +50,7 @@ fnc_soil_bze <- function(df.gk,
   soilsdiscrete1[, depth := as.numeric(depth)+1] # make room for depth_0 - Humus
 
 
-  ls.soils <- tibble::as_tibble(soilsdiscrete1) %>%
+  ls.soils.tmp <- tibble::as_tibble(soilsdiscrete1) %>%
     dplyr::mutate(gba = gba*100,
                   i.upper = i.upper/-100,
                   i.lower = i.lower/-100,
@@ -59,8 +63,14 @@ fnc_soil_bze <- function(df.gk,
     dplyr::group_split(ID)
 
   # names correct...
-  ls.soils <- lapply(ls.soils, as.data.frame, stringsAsFactors = F)
-  names(ls.soils) <- unlist(lapply(ls.soils, function(x) unique(x$ID_custom)))
+  ls.soils.tmp <- lapply(ls.soils.tmp, as.data.frame, stringsAsFactors = F)
+  which.na <- which(unlist(lapply(ls.soils.tmp, function(x) any(is.na(x)))==T))
+  names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
+  ls.soils.tmp[which.na] <- list(NULL)
+  if(length(which.na) != 0){
+    message(paste0("IDs: ", names(ls.soils.tmp)[which.na], " cause NAs in BZE raster files and won't be modelled.\n"))
+  }
 
-  return(ls.soils)
+
+  return(ls.soils.tmp)
 }

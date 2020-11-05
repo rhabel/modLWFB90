@@ -4,12 +4,14 @@
 \alias{fnc_extract_points}
 \title{Extract BZE information from raster stack}
 \usage{
-fnc_extract_points(lay, xy, buff_width = 50)
+fnc_extract_points(lay, xy, buffering = F, buff_width = 50)
 }
 \arguments{
 \item{lay}{rasterstack}
 
 \item{xy}{Spaitalpointsdataframe containing points in GK3}
+
+\item{buffering}{should most common value in \code{buff_width} buffer distance be used if \code{NA}}
 
 \item{buff_width}{buffer width}
 }
