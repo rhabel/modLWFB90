@@ -13,12 +13,14 @@ fnc_AWC <- function(data, nFK = F) {
     for (i in c(1 : length(data))) {
       data[[i]]$fc <- fnc_MvG.swc(psi = 63,
                                   alpha = data[[i]]$alpha,
+                                  alpha = data[[i]]$alpha/100,
                                   ThS = data[[i]]$ths,
                                   ThR = data[[i]]$thr,
                                   n = data[[i]]$npar)
 
       data[[i]]$pwp <- fnc_MvG.swc(psi = 15000,
                                    alpha = data[[i]]$alpha,
+                                   alpha = data[[i]]$alpha/100,
                                    ThS = data[[i]]$ths,
                                    ThR = data[[i]]$thr,
                                    n = data[[i]]$npar)
@@ -29,6 +31,12 @@ fnc_AWC <- function(data, nFK = F) {
     nFK <- c()
     for(i in c(1: length(data))){
       sum <- sum(data[[i]]$AWC)
+      sum <- if(min(data[[i]]$lower) > -1.0){
+                sum(data[[i]]$AWC[data[[i]]$lower >= -1.0]) * min(data[[i]]$lower)*(-1)
+             }
+             else{
+               sum(data[[i]]$AWC[data[[i]]$lower >= -1.0])
+             }
       nFK <- append(nFK, sum)
     }
     return(nFK)
