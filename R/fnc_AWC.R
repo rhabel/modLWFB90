@@ -12,14 +12,12 @@ fnc_AWC <- function(data, nFK = F) {
   if(nFK == T){
     for (i in c(1 : length(data))) {
       data[[i]]$fc <- fnc_MvG.swc(psi = 63,
-                                  alpha = data[[i]]$alpha,
                                   alpha = data[[i]]$alpha/100,
                                   ThS = data[[i]]$ths,
                                   ThR = data[[i]]$thr,
                                   n = data[[i]]$npar)
 
       data[[i]]$pwp <- fnc_MvG.swc(psi = 15000,
-                                   alpha = data[[i]]$alpha,
                                    alpha = data[[i]]$alpha/100,
                                    ThS = data[[i]]$ths,
                                    ThR = data[[i]]$thr,
@@ -47,13 +45,13 @@ fnc_AWC <- function(data, nFK = F) {
 
     for (i in c(1 : length(data))) {
       data[[i]]$fc <- fnc_MvG.swc(psi = 63,
-                                  alpha = data[[i]]$alpha,
+                                  alpha = data[[i]]$alpha/100,
                                   ThS = data[[i]]$ths,
                                   ThR = data[[i]]$thr,
                                   n = data[[i]]$npar)
 
       data[[i]]$pwp <- fnc_MvG.swc(psi = 15000,
-                                   alpha = data[[i]]$alpha,
+                                   alpha = data[[i]]$alpha/100,
                                    ThS = data[[i]]$ths,
                                    ThR = data[[i]]$thr,
                                    n = data[[i]]$npar)
