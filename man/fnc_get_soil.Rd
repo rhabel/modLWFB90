@@ -10,7 +10,7 @@ fnc_get_soil(
   testgebiet,
   PTF_to_use,
   bze_buffer = NA,
-  limit_MvG = F,
+  limit_MvG = T,
   df.soils = NULL,
   ...
 )
