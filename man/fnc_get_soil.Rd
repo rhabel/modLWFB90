@@ -9,6 +9,7 @@ fnc_get_soil(
   soil_option,
   testgebiet,
   PTF_to_use,
+  bze_buffer = NA,
   limit_MvG = F,
   df.soils = NULL,
   ...
@@ -26,6 +27,8 @@ fnc_get_soil(
 \item{testgebiet}{at the current stage of development, we're working with test areas that have to be named here as \code{BDS} for Bodensee/07b, or \code{NPS} for National Park Schwarzwald. Eventually, this should be replaced by a BW-wide option. This parameter might be useful if a spatial pre-selection should be included for performance optimization...}
 
 \item{PTF_to_use}{the PTF to be used in the modeling process. Options are \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}. Alternatively, if MvG parameters have been retrieved elsewhere (i.e. by lab analyses), \code{OWN_PARMS} can be selected to skip this.}
+
+\item{bze_buffer}{whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur in {m}, default is \code{NA}}
 
 \item{limit_MvG}{should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit}}. Default is \code{FALSE}.}
 

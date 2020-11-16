@@ -13,6 +13,7 @@
 #' @param PTF_to_use the PTF to be used in the modeling process. Options are \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}. Alternatively, if MvG parameters have been retrieved elsewhere (i.e. by lab analyses), \code{OWN_PARMS} can be selected to skip this.
 #' @param limit_MvG should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit}}. Default is \code{FALSE}.
 #' @param ... further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{MakeRelRootDens}}.
+#' @param bze_buffer whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur in {m}, default is \code{NA}
 #' @param df.soils if \code{OWN} is selected at soil_option, a data frame must be given here that contains the following columns
 #' \itemize{
 #' \item \code{ID} - a unique ID matching the IDs of df.ids
@@ -33,6 +34,7 @@ fnc_get_soil <- function(df.ids,
                          soil_option,
                          testgebiet,
                          PTF_to_use,
+                         bze_buffer = NA,
                          limit_MvG = F,
                          df.soils = NULL,
                          ...){
@@ -45,7 +47,9 @@ fnc_get_soil <- function(df.ids,
 
   dgm.stack <- raster::stack(list.files(input_paul, pattern = "aspect.sdat|slope.sdat", full.names=T))
   df.dgm <- cbind("ID" = df.ids$ID,
-                  as.data.frame(fnc_extract_points(lay = dgm.stack, xy = xy_gk)))
+                  as.data.frame(fnc_extract_points(lay = dgm.stack,
+                                                   xy = xy_gk,
+                                                   buffering = T)))
 
   # initialise list
   ls.soils <- vector("list", length = nrow(df.ids))
@@ -64,8 +68,8 @@ fnc_get_soil <- function(df.ids,
       sf::st_drop_geometry() %>%
       dplyr::select(ID, ID_custom, RST_F)
 
-    IDs_miss <- sf.ids$ID[is.na(sf.ids$RST_F)]
-    IDs_complete <- which(!is.na(sf.ids$RST_F)) # IDs good
+    IDs_miss <- sf.ids$ID[(is.na(sf.ids$RST_F)| sf.ids$RST_F %in% c(39272, 39273, 0, 39343))] # remove non-forest-rst_fs
+    IDs_complete <- which(!(is.na(sf.ids$RST_F)| sf.ids$RST_F %in% c(39272, 39273, 0, 39343))) # IDs good
 
     # all IDs mapped by STOKA
     if(length(IDs_miss) == 0){
@@ -81,7 +85,7 @@ fnc_get_soil <- function(df.ids,
       how_to_proceed <- readline(prompt = "Continue with ")
 
       if(how_to_proceed == "1"){
-        sf.ids <- sf.ids[complete.cases(sf.ids),] # remove missing IDs
+        sf.ids <- sf.ids[-IDs_miss,] # remove missing IDs
         ls.soils.tmp <- fnc_soil_stok(df = sf.ids,
                                   df.LEIT = get(paste0("df.LEIT.", testgebiet)),
                                   PTF_to_use = PTF_to_use,
@@ -93,13 +97,15 @@ fnc_get_soil <- function(df.ids,
       }
 
       if(how_to_proceed == "2"){
-        ls.soils[IDs_complete] <- fnc_soil_stok(df = sf.ids[!is.na(sf.ids$RST_F),],
+        ls.soils[IDs_complete] <- fnc_soil_stok(df = sf.ids[IDs_complete,],
                                                 df.LEIT = get(paste0("df.LEIT.", testgebiet)),
                                                 PTF_to_use = PTF_to_use,
                                                 dgm = df.dgm)
-        xy_gk_miss <- fnc_transf_to_gk(df = df.ids[is.na(sf.ids$RST_F),])
+        xy_gk_miss <- fnc_transf_to_gk(df = df.ids[IDs_miss,])
         ls.soils[IDs_miss] <- fnc_soil_bze(df.gk = xy_gk_miss,
-                                           df.assign = df.ids)
+                                           df.assign = df.ids[IDs_miss,],
+                                           buffering = (!is.na(bze_buffer)),
+                                           buff_width = bze_buffer)
 
         names(ls.soils) <- df.ids$ID_custom
 
@@ -109,7 +115,9 @@ fnc_get_soil <- function(df.ids,
 
   } else if (soil_option == "BZE") {
     ls.soils <- fnc_soil_bze(df.gk = xy_gk,
-                             df.assign = df.ids)
+                             df.assign = df.ids,
+                             buffering = (!is.na(bze_buffer)),
+                             buff_width = bze_buffer)
 
 
   } else if (soil_option == "OWN") {

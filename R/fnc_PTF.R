@@ -19,8 +19,14 @@
 fnc_PTF <- function(df, PTF_used){
   if(PTF_used == "HYPRES"){
     if(all(c("clay", "silt", "bd", "oc.pct") %in% names(df))){
-      df <- cbind(df, LWFBrook90R::hydpar_hypres(clay = df$clay,
-                                                 silt = df$silt,
+
+      test <- data.frame("CLAY" = df$clay, "SILT" = df$silt, "SAND" = df$sand)
+      transftt <- soiltexture::TT.text.transf(tri.data = test,
+                                              base.css.ps.lim = c(0,2,50,2000),
+                                              dat.css.ps.lim = c(0,2,63,2000))
+
+      df <- cbind(df, LWFBrook90R::hydpar_hypres(clay = transftt$CLAY,
+                                                 silt = transftt$SILT,
                                                  bd = df$bd,
                                                  oc.pct = df$oc.pct))
       humus <- df$humus[1]

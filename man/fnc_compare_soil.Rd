@@ -16,7 +16,8 @@ fnc_compare_soil(
   soiloption_to_use = "STOK",
   limit_MvG = F,
   df.soils = NULL,
-  output_path
+  output_path,
+  bze_buffer = NA
 )
 }
 \arguments{
@@ -50,6 +51,8 @@ fnc_compare_soil(
 Caution: \cr If PTFs are to be applied here, the columns \code{sand, silt, clay, oc.pct} in \%, and \code{bd} in g m-1 must be provided. \cr Else, if \code{PTF_to_test} includes \code{OWN_PARMS}, the following columns must be provided NA-free: \code{ths, thr, alpha, npar, mpar, ksat}, and \code{tort}.}
 
 \item{output_path}{path to the folder where images shall be printed to}
+
+\item{bze_buffer}{whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur in {m}, default is \code{NA}}
 
 \item{depth_to_test}{the depth in which comparisons should be made in m negative downwards from the surface. Default is \code{c(-0.15, -0.30, -0.60)}.}
 
