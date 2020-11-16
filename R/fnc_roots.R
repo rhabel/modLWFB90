@@ -40,7 +40,7 @@ fnc_roots <- function(df,
       dplyr::rename(rootden = fwd_brt)
     return(df)
   }else{
-    rootden <- LWFBrook90R::MakeRelRootDens(soilnodes = df$lower[-1], method = rootsmethod, ...)
+    rootden <- LWFBrook90R::MakeRelRootDens(soilnodes = df$lower, method = rootsmethod, ...)
     df$rootden <- c(ifelse(humus_roots == T, max(rootden), 0),
                     rootden)
     return(df)
