@@ -187,5 +187,14 @@ fnc_depth_disc <- function(df,
     dplyr::mutate(lower = upper+thickness) %>%
     dplyr::select(-thickness)
 
+  # add rows in 1m depth
+  if (!(100 %in% df.soil$lower)){
+    cross_1m <- which(df.soil$lower>100 & df.soil$upper<100)
+    df.soil <- rbind(df.soil[1:(cross_1m-1), ],
+                     c(df.soil$mat[cross_1m], df.soil$lower[cross_1m-1], 100, as.character(df.soil$texture[cross_1m])),
+                     c(df.soil$mat[cross_1m], 100, df.soil$lower[cross_1m], as.character(df.soil$texture[cross_1m])),
+                     df.soil[(cross_1m+1):nrow(df.soil), ])
+  }
+
   return(df.soil)
 }
