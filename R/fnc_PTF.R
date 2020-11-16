@@ -23,12 +23,22 @@ fnc_PTF <- function(df, PTF_used){
       test <- data.frame("CLAY" = df$clay, "SILT" = df$silt, "SAND" = df$sand)
       transftt <- soiltexture::TT.text.transf(tri.data = test,
                                               base.css.ps.lim = c(0,2,50,2000),
-                                              dat.css.ps.lim = c(0,2,63,2000))
+                                              dat.css.ps.lim = c(0,2,63,2000),
+                                              text.tol = 1)
 
-      df <- cbind(df, LWFBrook90R::hydpar_hypres(clay = transftt$CLAY,
-                                                 silt = transftt$SILT,
-                                                 bd = df$bd,
-                                                 oc.pct = df$oc.pct))
+      # which are from topsoil... (>25 cm depth)
+      which.topsoil <- which(df$lower >= -0.25)
+
+      df <- cbind(df, rbind(LWFBrook90R::hydpar_hypres(clay = transftt$CLAY[which.topsoil],
+                                                       silt = transftt$SILT[which.topsoil],
+                                                       bd = df$bd[which.topsoil],
+                                                       oc.pct = df$oc.pct[which.topsoil],
+                                                       topsoil = T),
+                            LWFBrook90R::hydpar_hypres(clay = transftt$CLAY[-which.topsoil],
+                                                       silt = transftt$SILT[-which.topsoil],
+                                                       bd = df$bd[-which.topsoil],
+                                                       oc.pct = df$oc.pct[-which.topsoil],
+                                                       topsoil = F)))
       humus <- df$humus[1]
 
       #order for rbind
