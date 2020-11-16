@@ -35,7 +35,7 @@ fnc_get_soil <- function(df.ids,
                          testgebiet,
                          PTF_to_use,
                          bze_buffer = NA,
-                         limit_MvG = F,
+                         limit_MvG = T,
                          df.soils = NULL,
                          ...){
 
@@ -151,12 +151,15 @@ fnc_get_soil <- function(df.ids,
     stop("missing columns")
 
   } else {
-    ls.soils[as.numeric(which(!unlist(lapply(ls.soils, is.null))==T))] <- lapply(ls.soils[as.numeric(which(!unlist(lapply(ls.soils, is.null))==T))], FUN = fnc_PTF, PTF_used = PTF_to_use)
+    ls.soils[as.numeric(which(!unlist(lapply(ls.soils, is.null))==T))] <- lapply(ls.soils[as.numeric(which(!unlist(lapply(ls.soils, is.null))==T))],
+                                                                                 FUN = fnc_PTF,
+                                                                                 PTF_used = PTF_to_use)
   }
 
   # MvG-limitation if desired: ------------------------------- ####
   if(limit_MvG){
-    ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)], FUN = fnc_limit)
+    ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)],
+                                                                     FUN = fnc_limit)
   }
 
 
