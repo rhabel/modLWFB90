@@ -8,7 +8,7 @@
 #' \item \code{ID_custom} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to.
 #' \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
 #' }
-#' @param soil_option whether BZE or STOK data should be used for modelling. While option \code{BZE} shouldn't create NAs, option \code{STOK} builds on the data of the Standortskartierung Baden-Wuerttemberg that is not available everywhere (i.e. in private forests). The functions asks the used how to deal with NAs, whether they should be excluded, or completed with BZE-data. Third option is \code{OWN}, in which case users can enter their own soil data (i.e. from lab or field experiements). If the option \code{OWN} is selected, the dataframe to be
+#' @param soil_option whether BZE or STOK data should be used for modelling. While option \code{BZE} with a buffer of 50 shouldn't create NAs, option \code{STOK} builds on the data of the Standortskartierung Baden-Wuerttemberg that is not available everywhere (i.e. in private forests). Option \code{STOK_BZE} will complete the missing STOK-points with BZE-data. The final option is \code{OWN}, in which case users can enter their own soil data (i.e. from lab or field experiements). If the option \code{OWN} is selected, the dataframes must be passed at \code{df.soils}.
 #' @param testgebiet at the current stage of development, we're working with test areas that have to be named here as \code{BDS} for Bodensee/07b, or \code{NPS} for National Park Schwarzwald. Eventually, this should be replaced by a BW-wide option. This parameter might be useful if a spatial pre-selection should be included for performance optimization...
 #' @param PTF_to_use the PTF to be used in the modeling process. Options are \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}. Alternatively, if MvG parameters have been retrieved elsewhere (i.e. by lab analyses), \code{OWN_PARMS} can be selected to skip this.
 #' @param limit_MvG should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit}}. Default is \code{FALSE}.
@@ -58,7 +58,7 @@ fnc_get_soil <- function(df.ids,
 
   # choice of data origin:  ---------------------------------- ####
 
-  if(soil_option == "STOK"){
+  if(str_detect(soil_option == "STOK")){
 
     # subset currently still active for faster processing - to be expanded to BW in the future
     sf.testgeb <- get(paste0("sf.STOK.", testgebiet))
@@ -82,6 +82,7 @@ fnc_get_soil <- function(df.ids,
 
     # all IDs mapped by STOKA
     if(length(IDs_miss) == 0){
+
       ls.soils <- fnc_soil_stok(df = sf.ids,
                                 df.LEIT = get(paste0("df.LEIT.", testgebiet)),
                                 PTF_to_use = PTF_to_use,
@@ -90,22 +91,24 @@ fnc_get_soil <- function(df.ids,
       names(ls.soils) <- df.ids$ID_custom
 
     } else {
-      cat("IDs ", as.character(as.data.frame(df.ids)[IDs_miss, "ID_custom"]), " are not mapped by STOKA. How do you wish to proceed? \nPress \"1\" for not modelling missing IDs.\nPress \"2\" for using regionalised BZE-Data for missing IDs.")
-      how_to_proceed <- readline(prompt = "Continue with ")
 
-      if(how_to_proceed == "1"){
+      if(soil_option == "STOK"){
+
+        cat("IDs \n", as.character(as.data.frame(df.ids)[IDs_miss, "ID_custom"]), " \nare not mapped by STOKA. They will no be modelled.")
+
         sf.ids <- sf.ids[-IDs_miss,] # remove missing IDs
         ls.soils.tmp <- fnc_soil_stok(df = sf.ids,
-                                  df.LEIT = get(paste0("df.LEIT.", testgebiet)),
-                                  PTF_to_use = PTF_to_use,
-                                  dgm = df.dgm)
+                                      df.LEIT = get(paste0("df.LEIT.", testgebiet)),
+                                      PTF_to_use = PTF_to_use,
+                                      dgm = df.dgm)
         names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
 
         ls.soils[match(names(ls.soils.tmp), names(ls.soils))] <- ls.soils.tmp
 
-      }
+      } else if (soil_option == "STOK_BZE"){
 
-      if(how_to_proceed == "2"){
+        cat("IDs \n", as.character(as.data.frame(df.ids)[IDs_miss, "ID_custom"]), " \nare not mapped by STOKA. They will be modelled using regionlized BZE data.")
+
         ls.soils[IDs_complete] <- fnc_soil_stok(df = sf.ids[IDs_complete,],
                                                 df.LEIT = get(paste0("df.LEIT.", testgebiet)),
                                                 PTF_to_use = PTF_to_use,
