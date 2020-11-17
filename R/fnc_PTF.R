@@ -39,37 +39,8 @@ fnc_PTF <- function(df, PTF_used){
                                                        bd = df$bd[-which.topsoil],
                                                        oc.pct = df$oc.pct[-which.topsoil],
                                                        topsoil = F)))
-      humus <- df$humus[1]
 
-      #order for rbind
-      df <- df %>%
-        dplyr::select(ID, ID_custom, mat, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, ths, thr, alpha, npar, mpar, ksat, tort)
 
-      # rbind humus-values
-      df <- rbind(data.frame("ID" = df$ID[1],
-                             "ID_custom" = as.character(df$ID_custom[1]),
-                             "mat" = 0,
-                             "upper" = humus,
-                             "lower" = 0,
-                             "sand" = 0,
-                             "silt" = 0,
-                             "clay" = 0,
-                             "gravel" = 0,
-                             "bd" = 0,
-                             "oc.pct" = 0,
-                             "aspect" = df$aspect[1],
-                             "slope" = df$slope[1],
-                             "humus" = 0,
-                             "ths" = 0.848,
-                             "thr" = 0,
-                             "alpha" = 98,
-                             "npar" = 1.191,
-                             "mpar" = 0.1603694,
-                             "ksat" = 98000,
-                             "tort" = 0.5),
-                  df) %>%
-        dplyr::select(-humus)
-      return(df)
 
     }else{
       missingcol <- c("clay", "silt", "bd", "oc.pct")[!c("clay", "silt", "bd", "oc.pct") %in% names(df)]
@@ -83,37 +54,6 @@ fnc_PTF <- function(df, PTF_used){
                                                silt = df$silt,
                                                bd = df$bd,
                                                oc.pct = df$oc.pct))
-      humus <- df$humus[1]
-
-      #order for rbind
-      df <- df %>%
-        dplyr::select(ID, ID_custom, mat, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, ths, thr, alpha, npar, mpar, ksat, tort)
-
-      #rbind humus-values
-      df <- rbind(data.frame("ID" = df$ID[1],
-                             "ID_custom" = as.character(df$ID_custom[1]),
-                             "mat" = 0,
-                             "upper" = humus,
-                             "lower" = 0,
-                             "sand" = 0,
-                             "silt" = 0,
-                             "clay" = 0,
-                             "gravel" = 0,
-                             "bd" = 0,
-                             "oc.pct" = 0,
-                             "aspect" = df$aspect[1],
-                             "slope" = df$slope[1],
-                             "humus" = 0,
-                             "ths" = 0.848,
-                             "thr" = 0,
-                             "alpha" = 98,
-                             "npar" = 1.191,
-                             "mpar" = 0.1603694,
-                             "ksat" = 98000,
-                             "tort" = 0.5),
-                  df) %>%
-        dplyr::select(-humus)
-      return(df)
     }else{
       missingcol <- c("sand", "clay", "silt", "bd", "oc.pct")[!c("sand", "clay", "silt", "bd", "oc.pct") %in% names(df)]
       stop(paste0(missingcol, "is missing in df for PTF-application of ", PTF_used))
@@ -130,36 +70,8 @@ fnc_PTF <- function(df, PTF_used){
       df$texture <- colnames(texture)[apply(texture,1,which.max)]
 
       #order for rbind
-      df <- cbind(df, LWFBrook90R::hydpar_wessolek_tab(tex.KA5 = df$texture))%>%
-        dplyr::select(ID, ID_custom, mat, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, ths, thr, alpha, npar, mpar, ksat, tort)
+      df <- cbind(df, LWFBrook90R::hydpar_wessolek_tab(tex.KA5 = df$texture))
 
-      humus <- df$humus[1]
-
-      # rbind humus-values
-      df <- rbind(data.frame("ID" = df$ID[1],
-                             "ID_custom" = as.character(df$ID_custom[1]),
-                             "mat" = 0,
-                             "upper" = humus,
-                             "lower" = 0,
-                             "sand" = 0,
-                             "silt" = 0,
-                             "clay" = 0,
-                             "gravel" = 0,
-                             "bd" = 0,
-                             "oc.pct" = 0,
-                             "aspect" = df$aspect[1],
-                             "slope" = df$slope[1],
-                             "humus" = 0,
-                             "ths" = 0.848,
-                             "thr" = 0,
-                             "alpha" = 98,
-                             "npar" = 1.191,
-                             "mpar" = 0.1603694,
-                             "ksat" = 98000,
-                             "tort" = 0.5),
-                  df) %>%
-        dplyr::select(-humus)
-      return(df)
 
     }else{
       missingcol <- c("sand", "clay", "silt")[!c("sand", "clay", "silt") %in% names(df)]
@@ -169,4 +81,43 @@ fnc_PTF <- function(df, PTF_used){
   } else {
     stop("PTF not in possible PTF-choices")
   }
+
+  # same order
+  df <- df %>%
+    dplyr::select(ID, ID_custom, mat, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, ths, thr, alpha, npar, mpar, ksat, tort)
+
+  # Humus:
+  humus <- df$humus[1]
+
+  if (humus != 0){
+    # rbind humus-values
+    df <- rbind(data.frame("ID" = df$ID[1],
+                           "ID_custom" = as.character(df$ID_custom[1]),
+                           "mat" = 0,
+                           "upper" = humus,
+                           "lower" = 0,
+                           "sand" = 0,
+                           "silt" = 0,
+                           "clay" = 0,
+                           "gravel" = 0,
+                           "bd" = 0,
+                           "oc.pct" = 0,
+                           "aspect" = df$aspect[1],
+                           "slope" = df$slope[1],
+                           "humus" = 0,
+                           "ths" = 0.848,
+                           "thr" = 0,
+                           "alpha" = 98,
+                           "npar" = 1.191,
+                           "mpar" = 0.1603694,
+                           "ksat" = 98000,
+                           "tort" = 0.5),
+                df)
+
+  }
+
+  df <- df %>%
+    dplyr::select(-humus)
+
+  return(df)
 }
