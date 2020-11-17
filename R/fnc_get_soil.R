@@ -69,8 +69,16 @@ fnc_get_soil <- function(df.ids,
       sf::st_drop_geometry() %>%
       dplyr::select(ID, ID_custom, RST_F)
 
-    IDs_miss <- sf.ids$ID[(is.na(sf.ids$RST_F)| sf.ids$RST_F %in% c(39272, 39273, 0, 39343))] # remove non-forest-rst_fs
-    IDs_complete <- which(!(is.na(sf.ids$RST_F)| sf.ids$RST_F %in% c(39272, 39273, 0, 39343))) # IDs good
+    # no forest
+    RST_noforest <- c(39272, 39273, 0, 39343, 42046)
+    # swamp
+    test <- df.LEIT %>% filter(humusform == "Moor")
+    RST_moor <- unique(test$RST_F)
+    RST_miss <- c(RST_moor, RST_noforest)
+    rm(list = c("RST_noforest", "RST_moor", "test"))
+
+    IDs_miss <- sf.ids$ID[(is.na(sf.ids$RST_F) | sf.ids$RST_F %in% RST_miss)] # remove non-forest-rst_fs
+    IDs_complete <- which(!(is.na(sf.ids$RST_F)| sf.ids$RST_F %in% RST_miss)) # IDs good
 
     # all IDs mapped by STOKA
     if(length(IDs_miss) == 0){
