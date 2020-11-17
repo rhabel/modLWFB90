@@ -35,6 +35,7 @@ fnc_AWC <- function(data, nFK = F) {
              else{
                sum(data[[i]]$AWC[data[[i]]$lower >= -1.0])
              }
+      sum <- sum(data[[i]]$AWC[data[[i]]$lower >= -1.0])
       nFK <- append(nFK, sum)
     }
     return(nFK)
