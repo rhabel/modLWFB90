@@ -58,7 +58,7 @@ fnc_get_soil <- function(df.ids,
 
   # choice of data origin:  ---------------------------------- ####
 
-  if(str_detect(soil_option == "STOK")){
+  if(str_detect(soil_option, "STOK")){
 
     # subset currently still active for faster processing - to be expanded to BW in the future
     sf.testgeb <- get(paste0("sf.STOK.", testgebiet))
@@ -146,6 +146,7 @@ fnc_get_soil <- function(df.ids,
       ls.soils <- lapply(ls.soils, FUN = dplyr::left_join, y = df.dgm, by = "ID")
       ls.soils <- lapply(ls.soils, FUN = dplyr::mutate, upper = upper/-100)
       ls.soils <- lapply(ls.soils, FUN = dplyr::mutate, lower = lower/-100)
+      ls.soils <- lapply(ls.soils, function(x){cbind(x[,1:3], "nl" = 1:nrow(x), x[4:ncol(x)])})
 
       names(ls.soils) <- df.ids$ID_custom
     }
