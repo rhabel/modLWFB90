@@ -22,7 +22,7 @@ fnc_get_soil(
 \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
 }}
 
-\item{soil_option}{whether BZE or STOK data should be used for modelling. While option \code{BZE} shouldn't create NAs, option \code{STOK} builds on the data of the Standortskartierung Baden-Wuerttemberg that is not available everywhere (i.e. in private forests). The functions asks the used how to deal with NAs, whether they should be excluded, or completed with BZE-data. Third option is \code{OWN}, in which case users can enter their own soil data (i.e. from lab or field experiements). If the option \code{OWN} is selected, the dataframe to be}
+\item{soil_option}{whether BZE or STOK data should be used for modelling. While option \code{BZE} with a buffer of 50 shouldn't create NAs, option \code{STOK} builds on the data of the Standortskartierung Baden-Wuerttemberg that is not available everywhere (i.e. in private forests). Option \code{STOK_BZE} will complete the missing STOK-points with BZE-data. The final option is \code{OWN}, in which case users can enter their own soil data (i.e. from lab or field experiements). If the option \code{OWN} is selected, the dataframes must be passed at \code{df.soils}.}
 
 \item{testgebiet}{at the current stage of development, we're working with test areas that have to be named here as \code{BDS} for Bodensee/07b, or \code{NPS} for National Park Schwarzwald. Eventually, this should be replaced by a BW-wide option. This parameter might be useful if a spatial pre-selection should be included for performance optimization...}
 

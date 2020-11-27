@@ -50,33 +50,35 @@ fnc_get_clim <- function(df.ids,
                               dbname = paste0(path_climdb, "climate_daily_obs_base_tr",tranche,".sqlite"))
 
     # get climate data
-    ls.clim.tmp <- RSQLite::dbGetQuery(con, paste0("SELECT * FROM climate_daily WHERE ( year >= ", minyear,
+    clim.tmp <- RSQLite::dbGetQuery(con, paste0("SELECT * FROM climate_daily WHERE ( year >= ", minyear,
                                                " AND year <=", maxyear,
-                                               ") AND (id = ", paste(ids_in_tranche, collapse = " OR id = "), ")")) %>%
-      dplyr::arrange(id, year, month, day) %>%
-      dplyr::mutate_at(vars(all_of(needed_cols)),
-                       list(~ . / 100)) %>%
-      dplyr::rename(tmax = tadx,
-                    tmin = tadn,
-                    tmean = tadm,
-                    wind = wsdm,
-                    prec = rrds,
-                    globrad = grhds,
-                    id_standard = id) %>%
-      dplyr::mutate(dates = as.Date(paste0(year, "-", month, "-", day), format = "%Y-%m-%d"),
-                    ewasser = 6.11*10^(7.5*tmean/(273.5+tmean)),
-                    eeis = 6.11*10^(9.5*tmean/(265.5+tmean)),
-                    vappres = case_when(tmean > 0 ~ (ewasser-sddm)*0.1, # kPa
-                                        T ~ (eeis-sddm)*0.1),
-                    id_standard = as.character(id_standard)) %>%
-      dplyr::left_join(df.clim.ids[c("ID", "ID_custom", "id_standard")], by = "id_standard") %>%
-      dplyr::mutate(ID_custom= as.character(ID_custom)) %>%
-      dplyr::select(ID, ID_custom, id_standard, dates, year, month, day, globrad, prec, tmean, tmin, tmax, wind, vappres) %>%
-      dplyr::filter(dates >= mindate & dates <= maxdate) %>%
-
-      dplyr::group_split(id_standard)
+                                               ") AND (id = ", paste(ids_in_tranche, collapse = " OR id = "), ")"))
 
     RSQLite::dbDisconnect(con)
+
+    ls.clim.tmp <- as.data.table(clim.tmp)
+    ls.clim.tmp <- setorder(ls.clim.tmp, id, year, month, day)
+    ls.clim.tmp[ , (needed_cols) := lapply(.SD, "*", 0.01), .SDcols = needed_cols]
+    data.table::setnames(ls.clim.tmp, c("id_standard", "year", "month", "day", "globrad", "grids", "prec", "sddm","tmean", "tmin", "tmax", "wind" )) # constr_corg umbenennen
+    ls.clim.tmp[, dates := as.Date(paste0(year, "-", month, "-", day), format = "%Y-%m-%d")]
+    ls.clim.tmp[, ewasser := 6.11*10^(7.5*tmean/(273.5+tmean))]
+    ls.clim.tmp[, eeis := 6.11*10^(9.5*tmean/(265.5+tmean))]
+    ls.clim.tmp[, vappres :=  ifelse(tmean > 0, (ewasser-sddm)*0.1, (eeis-sddm)*0.1)]
+    ls.clim.tmp[, id_standard :=  as.character(id_standard)]
+
+    # join
+    df.clim.ids.j <- as.data.table(df.clim.ids[c("ID", "ID_custom", "id_standard")])
+    setkey(df.clim.ids.j, id_standard)
+    setkey(ls.clim.tmp, id_standard)
+
+    ls.clim.tmp <- ls.clim.tmp[df.clim.ids.j]
+    ls.clim.tmp[, ID_custom := as.character(ID_custom)]
+    ls.clim.tmp <- ls.clim.tmp[,.(ID, ID_custom, id_standard, dates, year, month, day, globrad, prec, tmean, tmin, tmax, wind, vappres)]
+    ls.clim.tmp <- ls.clim.tmp[dates>= mindate & dates <= maxdate]
+
+    ls.clim.tmp <- split(ls.clim.tmp, ls.clim.tmp$id_standard)
+
+
 
     # names ang assigning correct...
     names(ls.clim.tmp) <- unlist(lapply(ls.clim.tmp, function(x) unique(x$ID_custom)))

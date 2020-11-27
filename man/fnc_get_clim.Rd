@@ -7,7 +7,7 @@
 fnc_get_clim(
   df.ids,
   mindate = as.Date("2010-01-01"),
-  maxdate = as.Date("2011-12-31"),
+  maxdate = as.Date("2011-12-28"),
   path_std = "R:/klima/whh/brook90_input/locations",
   path_climdb = "R:/klima/whh/brook90_input/db/"
 )

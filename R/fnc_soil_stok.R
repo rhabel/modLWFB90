@@ -40,9 +40,11 @@ fnc_soil_stok <- function(df,
                                         T ~ 0),
                       upper = upper/-100,
                       lower = lower/-100,
-                      gravel = gravel / 100) %>%
+                      gravel = gravel / 100)
+      df.tmp <- df.tmp %>%
+        dplyr::mutate(nl = 1:nrow(df.tmp)) %>%
         dplyr::left_join(dgm, by = "ID") %>%
-        dplyr::select(ID, ID_custom, mat, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus) %>%
+        dplyr::select(ID, ID_custom, mat, nl, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus) %>%
         dplyr::mutate(ID_custom = as.character(ID_custom)) %>%
         as_tibble()
 

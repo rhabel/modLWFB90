@@ -84,7 +84,7 @@ fnc_PTF <- function(df, PTF_used){
 
   # same order
   df <- df %>%
-    dplyr::select(ID, ID_custom, mat, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, ths, thr, alpha, npar, mpar, ksat, tort)
+    dplyr::select(ID, ID_custom, mat, nl, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, ths, thr, alpha, npar, mpar, ksat, tort)
 
   # Humus:
   humus <- df$humus[1]
@@ -94,6 +94,7 @@ fnc_PTF <- function(df, PTF_used){
     df <- rbind(data.frame("ID" = df$ID[1],
                            "ID_custom" = as.character(df$ID_custom[1]),
                            "mat" = 0,
+                           "nl" = 0,
                            "upper" = humus,
                            "lower" = 0,
                            "sand" = 0,
@@ -117,6 +118,7 @@ fnc_PTF <- function(df, PTF_used){
   }
 
   df <- df %>%
+    dplyr::mutate(nl = nl+1) %>%
     dplyr::select(-humus)
 
   return(df)

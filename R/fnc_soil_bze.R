@@ -64,6 +64,7 @@ fnc_soil_bze <- function(df.gk,
 
   # names correct...
   ls.soils.tmp <- lapply(ls.soils.tmp, as.data.frame, stringsAsFactors = F)
+  ls.soils.tmp <- lapply(ls.soils.tmp, function(x){cbind(x[,1:3], "nl" = 1:nrow(x), x[4:ncol(x)])})
   which.na <- which(unlist(lapply(ls.soils.tmp, function(x) any(is.na(x)))==T))
   names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
   ls.soils.tmp[which.na] <- list(NULL)
