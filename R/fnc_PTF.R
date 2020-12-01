@@ -118,7 +118,7 @@ fnc_PTF <- function(df, PTF_used){
   }
 
   df <- df %>%
-    dplyr::mutate(nl = nl+1) %>%
+    dplyr::mutate(nl = 1:nrow(df)) %>%
     dplyr::select(-humus)
 
   return(df)
