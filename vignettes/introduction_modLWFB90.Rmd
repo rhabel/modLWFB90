@@ -69,12 +69,26 @@ There's also a function to compare the three soil data outputs.
  
 ## Getting the packages up and running
 First of all, get the latest release of LWFBrook90R (at the time of creation v.0.4.0 from github). [github:pschmidtwalter/LWFBrook90R](https://github.com/pschmidtwalter/LWFBrook90R) 
-Then, install modLWFB90, together with the dependency packages, which are required and will be installed automatically.
+Then, install modLWFB90, together with the dependency packages, which are required and will be installed automatically. The easiest way to install from github is with the following line of code: 
+
+```{r, eval = F}
+if(!require("remotes")) install.packages("remotes")
+# HTTPS not supported when installing from gis:  
+Sys.getenv("HTTPS_PROXY")                           # look up IP here
+Sys.setenv(HTTPS_PROXY='http://XX.XXX.XXX.XX:XXXX') # insert IP here 
+
+remotes::install_github(repo="pschmidtwalter/LWFBrook90R", build_vignettes=TRUE) 
+remotes::install_github(repo="rhabel/modLWFB90", build_vignettes=T)
+```
+
+As https is not supported from FVA-servers, this first has to be overwritten...
+   
 
 ```{r, warning = F, message = F}
 library(modLWFB90)
 ```
 
+As https is not supported from FVA-servers, this first has to be overwritten 
 You might encounter issues with updates that can't be overwritten and other R-package-problems, in which case the following function might help you install the missing packages quicker (no install.packages(x); library(x) over and over again): 
 
 ```{r, warning = F, message = F}
@@ -116,8 +130,7 @@ ls.soil <- fnc_get_soil(df.ids = test.ids.bds,
                         soil_option = "BZE", 
                         testgebiet = "BDS", 
                         PTF_to_use = "HYPRES", 
-                        limit_MvG = F
-                        )
+                        limit_MvG = T)
 ls.soil[[1]]
 ```
 
@@ -180,7 +193,7 @@ The list of parameters you can pass to LWFBrook90 is pretty exhaustive. See `LWF
   
   The default setting for spruce would look like this: 
 
-```{r}
+```{r, warning=F}
 ls.parms <- fnc_get_params(df.ids = test.ids.bds, 
                            tree_species = "spruce")
 ```

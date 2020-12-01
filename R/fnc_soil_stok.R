@@ -29,8 +29,8 @@ fnc_soil_stok <- function(df,
 
       # Tiefendiskretisierung, Slope & Aspect
       df.tmp <- fnc_depth_disc(df.tmp) %>%
-        dplyr::mutate(oc.pct = case_when((is.na(oc.pct)|oc.pct==-9999) & PTF_to_use == "PTFPUH2" ~ 0.5,
-                                         (is.na(oc.pct)|oc.pct==-9999) & PTF_to_use == "HYPRES" ~ 0.1,
+        dplyr::mutate(oc.pct = case_when((is.na(oc.pct)|(oc.pct < 0)) & PTF_to_use == "PTFPUH2" ~ 0.5,
+                                         (is.na(oc.pct)|(oc.pct < 0)) & PTF_to_use %in% c("HYPRES", "WESSOLEK") ~ 0.1,
                                          T ~ oc.pct),
                       humus = case_when(humusform == "Mull" ~ 0.03,
                                         humusform == "Mullmoder" ~ 0.067,
