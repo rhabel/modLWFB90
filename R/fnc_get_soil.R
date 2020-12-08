@@ -35,16 +35,19 @@ fnc_get_soil <- function(df.ids,
                          soil_option,
                          testgebiet,
                          PTF_to_use,
+
                          bze_buffer = NA,
                          limit_MvG = T,
                          df.soils = NULL,
+
+                         meta.out = NA,
                          ...){
 
   # sort dfs according to IDs
   df.ids$ID <- 1:nrow(df.ids)
 
   # transformation of ids to GK3 for slope & aspect ---------- ####
-  xy_gk <- fnc_transf_to_gk(df = df.ids)
+  xy_gk <- fnc_transf_crs(df = df.ids)
 
   dgm.stack <- raster::stack(list.files(input_paul, pattern = "aspect.sdat|slope.sdat", full.names=T))
   df.dgm <- cbind("ID" = df.ids$ID,
@@ -126,10 +129,16 @@ fnc_get_soil <- function(df.ids,
     }
 
   } else if (soil_option == "BZE") {
-    ls.soils <- fnc_soil_bze(df.gk = xy_gk,
+    df.ids <- df.ids %>%
+      dplyr::left_join(df.dgm, by = "ID")
+    xy_proj <- fnc_transf_crs(df = df.ids,
+                              to_crs = "UTM_25832")
+    ls.soils <- fnc_soil_bze(df.utm = xy_proj,
                              df.assign = df.ids,
                              buffering = (!is.na(bze_buffer)),
-                             buff_width = bze_buffer)
+                             buff_width = bze_buffer,
+
+                             meta.out = meta.out)
 
 
   } else if (soil_option == "OWN") {
