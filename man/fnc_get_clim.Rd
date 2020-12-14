@@ -2,7 +2,7 @@
 % Please edit documentation in R/fnc_get_clim.R
 \name{fnc_get_clim}
 \alias{fnc_get_clim}
-\title{PTF application and humus layer creation}
+\title{Creation of Climate Data}
 \usage{
 fnc_get_clim(
   df.ids,
@@ -28,12 +28,12 @@ fnc_get_clim(
 \item{path_climdb}{path to climate-db directory}
 }
 \value{
-Returns a named list (names from \code{df.ids$ID}) of climate data
+Returns a named list (names from \code{df.ids$ID_custom}) of climate data
 }
 \description{
-This function takes the data frame of soil physics data and creates the hydraulic parameters. It further creates humus-layers using the MvG-parameters from Hammel&Kennel (2001)
+This function creates Climate Data in the format required by \code{\link[LWFBrook90R]{runLWFB90}} and \code{\link[LWFBrook90R]{msiterunLWFB90}}.
 }
 \examples{
-
 fnc_get_clim(df.ids = test.ids.bds, mindate = as.Date("2010-01-01"), maxdate = as.Date("2011-12-31"))
+
 }
