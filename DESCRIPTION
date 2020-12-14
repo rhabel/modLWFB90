@@ -34,6 +34,7 @@ Imports:
     raster, 
     doParallel,
     parallel,
+    rgeos,
     sp,
     vegperiod (>= 0.3.0),
     foreach (>= 1.5.0)
