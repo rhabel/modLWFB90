@@ -32,11 +32,11 @@ fnc_get_params <- function(df.ids,
 
 
   # SLOPE & ASPECT ------ ####
-  xy_gk <- fnc_transf_to_gk(df = df.ids)
+  xy_gk <- fnc_transf_crs(df = df.ids)
 
   dgm.stack <- raster::stack(list.files(input_paul, pattern = "aspect.sdat|slope.sdat", full.names=T))
   df.dgm <- cbind("ID" = df.ids$ID,
-                  as.data.frame(fnc_extract_points(lay = dgm.stack, xy = xy_gk)))
+                  as.data.frame(fnc_extract_points_dgm(lay = dgm.stack, xy = xy_gk)))
 
   # LAT & LON ------------ ####
   sf.ids <- st_as_sf(df.ids, coords = c("easting", "northing"), crs = 32632)
