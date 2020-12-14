@@ -2,31 +2,61 @@
 #'
 #' This function is a wrapper of several smaller functions and chunks of code, all retrieved from "U:\\Brook90_2018\\paul_schmidt_walter_2018\\Dokumentation\\2_Bodenparameter.nb". Combining all this code into one function, it takes a spatialpointsdataframe of coordinates in GK-3 and returns a list of soil data frames. Those are further processed in \code{\link{fnc_get_soil}} by adding soil hydraulic information, humus, and fine roots and can then be read by \code{\link[LWFBrook90]{msiterunLWFB90}}.
 #'
-#' @param df.gk A spatialpointsdataframe with the desired points in GK-3.
+#' @param df.gk A spatialpointsdataframe with the desired points in UTM25832.
 #' @param df.assign a dataframe containing the corresponding ID_custom for the IDs in \code{df.gk}
+#' @param meta.out a string containing a path passed down from \code{fnc_get_soil}. Saving location of metadata.
 #' @param ... whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur, options are \code{buffering} as \code{TRUE} or \code{FALSE}, and \code{buff_width} in \code{m}
 #'
 #' @return Returns a list of soil data frames.
+#'
+#' @import parallel doParallel raster foreach utils
+#'
+#' @export
 
-
-fnc_soil_bze <- function(df.gk,
+fnc_soil_bze <- function(df.utm,
                          df.assign,
+
+                         meta.out,
                          ...){
+
+  load("./data/paths.rda")
+
   # einlesen aller BZEraster:
-  raster::rasterOptions(tmpdir = getwd())
-  grid.files <- list.files(input_paul, pattern = ".sdat",full.names=T)
-  soilraster <- raster::stack(grid.files)
+  a <- c("bodtief",
+         "corg0", "corg1", "corg2", "corg3", "corg4",
+         "lof_cm", "oh_cm",
+         "trdfb0", "trdfb1", "trdfb2", "trdfb3", "trdfb4",
+         "grobv0", "grobv1", "grobv2", "grobv3", "grobv4",
+         "s0", "s1", "s2", "s3", "s4",
+         "t0", "t1", "t2", "t3", "t4",
+         "u0", "u1", "u2", "u3", "u4")
+
+  cl <- parallel::makeCluster(parallel::detectCores())  #Cluster mit verfügbarer Anzahl von Kernen starten
+  doParallel::registerDoParallel(cl)
+  ls.text <- foreach::foreach(i = a, .combine = cbind, .packages = "raster") %dopar% {
+    rs.files <- lapply(paste0(input_bze, i, "_strt/hdr.adf"), raster)
+  }
+  stopCluster(cl)
+
+  soilraster <- stack(unlist(ls.text))
+  names(soilraster) <- a
 
   # stechen
-  soil <- fnc_extract_points(lay = soilraster,
-                             xy = df.gk,
+  soil <- fnc_extract_points_bze(lay = soilraster,
+                             xy = df.utm,
+                             meta.out = meta.out,
                              ...)
   # aufbereiten
-  names(soil) <- names(soilraster) # Reihenfolge der Listenelemente entspricht Namen der Layers im Rasterstack
+  #names(soil) <- c("aspect", "slope", names(soilraster)) # Reihenfolge der Listenelemente entspricht Namen der Layers im Rasterstack
   soil <- data.table::as.data.table(soil)
-  soil$ID <- df.gk$ID # Reihenfoge der Werte entspricht der Reihenfolge der IDs in xy
+  soil$ID <- df.utm$ID # Reihenfoge der Werte entspricht der Reihenfolge der IDs in xy
   soil[soil ==-9999] <- NA
-  data.table::setnames(soil, paste0("constr_corg",0:4), paste0("corg",0:4)) # constr_corg umbenennen
+
+  data.table::setnames(soil, paste0("trdfb",0:4), paste0("trd",0:4)) # constr_corg umbenennen
+  data.table::setnames(soil, paste0("grobv",0:4), paste0("gba",0:4)) # constr_corg umbenennen
+  data.table::setnames(soil, paste0("s",0:4), paste0("sand",0:4)) # constr_corg umbenennen
+  data.table::setnames(soil, paste0("t",0:4), paste0("schluff",0:4)) # constr_corg umbenennen
+  data.table::setnames(soil, paste0("u",0:4), paste0("ton",0:4)) # constr_corg umbenennen
   soil[, c("corg0","corg1","corg2","corg3","corg4") := list(corg0/100,corg1/100,corg2/100,corg3/100,corg4/100)]
   soil[, c("trd0","trd1","trd2","trd3","trd4") := list(trd0/100,trd1/100,trd2/100,trd3/100,trd4/100)]
   soil[, c("gba0","gba1","gba2","gba3","gba4") := list(gba0/1000,gba1/1000,gba2/1000,gba3/1000,gba4/1000)]
@@ -69,7 +99,7 @@ fnc_soil_bze <- function(df.gk,
   names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
   ls.soils.tmp[which.na] <- list(NULL)
   if(length(which.na) != 0){
-    message(paste0("IDs: ", names(ls.soils.tmp)[which.na], " cause NAs in BZE raster files and won't be modelled.\n"))
+    message(paste0("ID: ", names(ls.soils.tmp)[which.na], " won't be modelled. There's no BZE_R data at coordinate + set buffer width. \n"))
   }
 
 
