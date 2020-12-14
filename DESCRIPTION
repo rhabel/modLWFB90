@@ -32,6 +32,8 @@ Imports:
     readxl, 
     soiltexture, 
     raster, 
+    doParallel,
+    parallel,
     sp,
     vegperiod (>= 0.3.0),
     foreach (>= 1.5.0)
