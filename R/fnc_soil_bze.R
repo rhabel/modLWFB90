@@ -8,9 +8,10 @@
 #' @param ... whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur, options are \code{buffering} as \code{TRUE} or \code{FALSE}, and \code{buff_width} in \code{m}
 #'
 #' @return Returns a list of soil data frames.
-#' @import parallel
-#' @import doParallel
-
+#'
+#' @import parallel doParallel raster foreach utils
+#'
+#' @export
 
 fnc_soil_bze <- function(df.utm,
                          df.assign,
@@ -18,6 +19,7 @@ fnc_soil_bze <- function(df.utm,
                          meta.out,
                          ...){
 
+  load("./data/paths.rda")
 
   # einlesen aller BZEraster:
   a <- c("bodtief",
@@ -29,9 +31,9 @@ fnc_soil_bze <- function(df.utm,
          "t0", "t1", "t2", "t3", "t4",
          "u0", "u1", "u2", "u3", "u4")
 
-  cl <- makeCluster(parallel::detectCores())  #Cluster mit verfügbarer Anzahl von Kernen starten
-  registerDoParallel(cl)
-  ls.text <- foreach(i = a, .combine = cbind, .packages = "raster") %dopar% {
+  cl <- parallel::makeCluster(parallel::detectCores())  #Cluster mit verfügbarer Anzahl von Kernen starten
+  doParallel::registerDoParallel(cl)
+  ls.text <- foreach::foreach(i = a, .combine = cbind, .packages = "raster") %dopar% {
     rs.files <- lapply(paste0(input_bze, i, "_strt/hdr.adf"), raster)
   }
   stopCluster(cl)
@@ -40,7 +42,7 @@ fnc_soil_bze <- function(df.utm,
   names(soilraster) <- a
 
   # stechen
-  soil <- fnc_extract_points(lay = soilraster,
+  soil <- fnc_extract_points_bze(lay = soilraster,
                              xy = df.utm,
                              meta.out = meta.out,
                              ...)
