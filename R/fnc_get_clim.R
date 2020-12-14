@@ -1,6 +1,6 @@
-#' PTF application and humus layer creation
+#' Creation of Climate Data
 #'
-#' This function takes the data frame of soil physics data and creates the hydraulic parameters. It further creates humus-layers using the MvG-parameters from Hammel&Kennel (2001)
+#' This function creates Climate Data in the format required by \code{\link[LWFBrook90R]{runLWFB90}} and \code{\link[LWFBrook90R]{msiterunLWFB90}}.
 #'
 #' @param df.ids a data frame containing the following columns:
 #' \itemize{
@@ -12,12 +12,12 @@
 #' @param path_std path to standard locations directory
 #' @param path_climdb path to climate-db directory
 #'
-#'
-#' @return Returns a named list (names from \code{df.ids$ID}) of climate data
-#' @export
+#' @import data.table
+#' @return Returns a named list (names from \code{df.ids$ID_custom}) of climate data
 #' @examples
-#'
 #' fnc_get_clim(df.ids = test.ids.bds, mindate = as.Date("2010-01-01"), maxdate = as.Date("2011-12-31"))
+#'
+#' @export
 
 fnc_get_clim <- function(df.ids,
                          mindate = as.Date("2010-01-01"),
@@ -56,8 +56,8 @@ fnc_get_clim <- function(df.ids,
 
     RSQLite::dbDisconnect(con)
 
-    ls.clim.tmp <- as.data.table(clim.tmp)
-    ls.clim.tmp <- setorder(ls.clim.tmp, id, year, month, day)
+    ls.clim.tmp <- data.table::as.data.table(clim.tmp)
+    ls.clim.tmp <- data.table::setorder(ls.clim.tmp, id, year, month, day)
     ls.clim.tmp[ , (needed_cols) := lapply(.SD, "*", 0.01), .SDcols = needed_cols]
     data.table::setnames(ls.clim.tmp, c("id_standard", "year", "month", "day", "globrad", "grids", "prec", "sddm","tmean", "tmin", "tmax", "wind" )) # constr_corg umbenennen
     ls.clim.tmp[, dates := as.Date(paste0(year, "-", month, "-", day), format = "%Y-%m-%d")]
@@ -67,18 +67,23 @@ fnc_get_clim <- function(df.ids,
     ls.clim.tmp[, id_standard :=  as.character(id_standard)]
 
     # join
-    df.clim.ids.j <- as.data.table(df.clim.ids[c("ID", "ID_custom", "id_standard")])
-    setkey(df.clim.ids.j, id_standard)
-    setkey(ls.clim.tmp, id_standard)
+    df.clim.ids.j <- data.table::as.data.table(df.clim.ids[c("ID", "ID_custom", "id_standard")])
+    data.table::setkey(df.clim.ids.j, id_standard)
+    data.table::setkey(ls.clim.tmp, id_standard)
 
-    ls.clim.tmp <- ls.clim.tmp[df.clim.ids.j]
-    ls.clim.tmp[, ID_custom := as.character(ID_custom)]
+    ls.clim.tmp <- merge(x = ls.clim.tmp, y = df.clim.ids.j, by = "id_standard", all.x = TRUE, allow.cartesian = T)
+    # ls.clim.tmp <- ls.clim.tmp[df.clim.ids.j]
+
+    data.table::setorder(ls.clim.tmp, ID_custom, year, month, day)
+    #
+    ls.clim.tmp[, ID_custom := factor(ID_custom, levels = unique(ID_custom))]
+
     ls.clim.tmp <- ls.clim.tmp[,.(ID, ID_custom, id_standard, dates, year, month, day, globrad, prec, tmean, tmin, tmax, wind, vappres)]
     ls.clim.tmp <- ls.clim.tmp[dates>= mindate & dates <= maxdate]
 
-    ls.clim.tmp <- split(ls.clim.tmp, ls.clim.tmp$id_standard)
+    ls.clim.tmp <- split(ls.clim.tmp, ls.clim.tmp$ID_custom)
 
-
+    # is.data.table(ls.clim.tmp)
 
     # names ang assigning correct...
     names(ls.clim.tmp) <- unlist(lapply(ls.clim.tmp, function(x) unique(x$ID_custom)))
