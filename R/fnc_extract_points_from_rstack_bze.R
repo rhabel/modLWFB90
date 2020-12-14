@@ -11,7 +11,7 @@
 #' @return Set of soil information that is further processed in function fnc_soil_bze()
 #' @import rgeos
 #'
-fnc_extract_points <- function(lay,
+fnc_extract_points_bze <- function(lay,
                                xy,
                                meta.out,
                                buffering = F,
@@ -24,8 +24,8 @@ fnc_extract_points <- function(lay,
   val_miss <- val2[!complete.cases(val2),]
 
   #NAs & -9999: ziehe die häufigsten Werte im Umkreis von 50 m
-  if(any(is.na(val2$bodtief) == T) ){
-    which_missing <- which(is.na(val2$bodtief))
+  if(nrow(val_miss) > 0 ){
+    which_missing <- which(!complete.cases(val2))
 
     if(buffering == T ){
 
