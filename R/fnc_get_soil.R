@@ -28,8 +28,7 @@
 #'
 #' @return Returns a list of soil data frames completely processed to be further used in \code{\link[LWFBrook90R]{msiterunLWFB90}} or \code{\link[LWFBrook90R]{runLWFB90}}
 #'
-#' @import doParallel
-#' @import foreach
+#' @import doParallel foreach parallel
 #'
 #' @example inst/examples/fnc_get_soil_ex.R
 #' @export
@@ -55,7 +54,7 @@ fnc_get_soil <- function(df.ids,
   dgm.stack <- raster::stack(list.files(input_paul, pattern = "aspect.sdat|slope.sdat", full.names=T))
   df.dgm <- cbind("ID" = df.ids$ID,
                   as.data.frame(fnc_extract_points_dgm(lay = dgm.stack,
-                                                   xy = xy_gk)))
+                                                       xy = xy_gk)))
 
   # initialise list
   ls.soils <- vector("list", length = nrow(df.ids))
