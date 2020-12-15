@@ -4,7 +4,7 @@
 #'
 #'
 #' @param lay rasterstack
-#' @param xy Spaitalpointsdataframe containing points in UTM25832
+#' @param xy Spatialpointsdataframe containing points in UTM25832
 #' @param buffering should most common value in \code{buff_width} buffer distance be used if \code{NA}
 #' @param buff_width buffer width
 #'
