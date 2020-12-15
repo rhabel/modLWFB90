@@ -31,8 +31,8 @@ Imports:
     sf, 
     readxl, 
     soiltexture, 
-    raster, 
     doParallel,
+    rgdal,
     parallel,
     rgeos,
     sp,
@@ -42,7 +42,8 @@ Depends:
     tidyverse,
     LWFBrook90R (>= 0.4.0),     
     data.table (>= 1.10.4), 
-    RSQLite
+    RSQLite, 
+    raster
 Suggests: 
     knitr,
     rmarkdown
