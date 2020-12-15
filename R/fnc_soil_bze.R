@@ -38,7 +38,7 @@ fnc_soil_bze <- function(df.utm,
   }
   stopCluster(cl)
 
-  soilraster <- stack(unlist(ls.text))
+  soilraster <- raster::stack(unlist(ls.text))
   names(soilraster) <- a
 
   # stechen
