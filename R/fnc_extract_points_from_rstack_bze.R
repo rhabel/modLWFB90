@@ -98,6 +98,9 @@ fnc_extract_points_bze <- function(lay,
 
 
 
+  }else{
+    val2 <- as.data.frame(cbind(xy@data[c("aspect", "slope")],
+                                val2))
   }
 
   return(val2)
