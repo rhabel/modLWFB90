@@ -9,7 +9,7 @@ fnc_extract_points_bze(lay, xy, meta.out, buffering = F, buff_width = 50)
 \arguments{
 \item{lay}{rasterstack}
 
-\item{xy}{Spaitalpointsdataframe containing points in UTM25832}
+\item{xy}{Spatialpointsdataframe containing points in UTM25832}
 
 \item{buffering}{should most common value in \code{buff_width} buffer distance be used if \code{NA}}
 

@@ -4,15 +4,15 @@
 \alias{fnc_transf_crs}
 \title{UTM-GK3 transformation function}
 \usage{
-fnc_transf_crs(df, to_crs = "GK")
+fnc_transf_crs(df, to_crs = "GK3")
 }
 \arguments{
 \item{df}{a data frame containing the name of the ids \code{ID}, as well as the UTM-Coordinates in columns named \code{easting} and  \code{northing}.}
 
-\item{to_crs}{a string containing the coordinate system to be projected to. Either \code{GK}, \code{latlon}, or \code{UTM_25832}.}
+\item{to_crs}{a string containing the coordinate system to be projected to. Either \code{GK3}, \code{latlon}, or \code{UTM_25832}. \code{GK3} by default}
 }
 \value{
-A spatialpointsdataframe with the projected points in GK3. Data type changes because of further processing within fnc_soil_bze( ).
+A spatialpointsdataframe with the projected points in the respective.  Data type changes because of further processing within fnc_soil_bze( ).
 }
 \description{
 Some of the data (i.e. DGM, regionalised BZE-data) is stored at the FVA in rasters with GK-3 projection. This function takes a dataframe of Coordinates in UTM (EPSG:32632) and projects them to GK-3 for data extraction of GK-3 rasters.
