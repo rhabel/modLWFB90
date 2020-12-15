@@ -24,6 +24,7 @@
 #' @examples
 #'
 #' fnc_relateCoords(df.ids = test.ids.bds)
+#' @export
 
 
 
