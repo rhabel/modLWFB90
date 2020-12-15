@@ -86,6 +86,9 @@ fnc_soil_bze <- function(df.utm,
                   i.lower = i.lower/-100,
                   profile_top = profile_top/100,
                   gba = gba / 100) %>%
+    dplyr::group_by(ID) %>%
+    dplyr::mutate(i.lower = case_when((i.lower == min(i.lower)) & (i.lower != max(lower)*-0.01) ~ max(lower)*-0.01, T~i.lower   )) %>%
+    dplyr::ungroup() %>%
     dplyr::left_join(df.assign[c("ID", "ID_custom")], by = "ID") %>%
     dplyr::mutate(ID_custom = as.character(ID_custom)) %>%
     dplyr::select(ID, ID_custom, depth, i.upper, i.lower, sand, schluff, ton, gba, trd, corg, aspect, slope, profile_top ) %>%
