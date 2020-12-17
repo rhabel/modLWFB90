@@ -38,14 +38,15 @@ fnc_soil_bze <- function(df.utm,
   }
   stopCluster(cl)
 
-  soilraster <- stack(unlist(ls.text))
+  soilraster <- raster::stack(unlist(ls.text))
   names(soilraster) <- a
 
   # stechen
   soil <- fnc_extract_points_bze(lay = soilraster,
-                             xy = df.utm,
-                             meta.out = meta.out,
-                             ...)
+                                 xy = df.utm,
+                                 meta.out = meta.out,
+                                 ...)
+
   # aufbereiten
   #names(soil) <- c("aspect", "slope", names(soilraster)) # Reihenfolge der Listenelemente entspricht Namen der Layers im Rasterstack
   soil <- data.table::as.data.table(soil)
@@ -86,6 +87,10 @@ fnc_soil_bze <- function(df.utm,
                   i.lower = i.lower/-100,
                   profile_top = profile_top/100,
                   gba = gba / 100) %>%
+    dplyr::group_by(ID) %>%
+    dplyr::mutate(i.lower = case_when((i.lower == min(i.lower)) & (i.lower != max(lower)*-0.01) ~ max(lower)*-0.01, T~i.lower   )) %>%
+    dplyr::filter(i.lower >= roots_bottom_rnd*-0.01) %>%
+    dplyr::ungroup() %>%
     dplyr::left_join(df.assign[c("ID", "ID_custom")], by = "ID") %>%
     dplyr::mutate(ID_custom = as.character(ID_custom)) %>%
     dplyr::select(ID, ID_custom, depth, i.upper, i.lower, sand, schluff, ton, gba, trd, corg, aspect, slope, profile_top ) %>%

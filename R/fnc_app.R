@@ -17,7 +17,6 @@
 #'
 #' @return An SQLite Database with the tables soil, and daily and/or layer outputs.
 #'
-#' @example
 #' @import LWFBrook90R
 #' @export
 fnc_app <- function(df.ids,

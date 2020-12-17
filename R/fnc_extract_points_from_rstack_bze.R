@@ -4,7 +4,7 @@
 #'
 #'
 #' @param lay rasterstack
-#' @param xy Spaitalpointsdataframe containing points in UTM25832
+#' @param xy Spatialpointsdataframe containing points in UTM25832
 #' @param buffering should most common value in \code{buff_width} buffer distance be used if \code{NA}
 #' @param buff_width buffer width
 #'
@@ -98,6 +98,9 @@ fnc_extract_points_bze <- function(lay,
 
 
 
+  }else{
+    val2 <- as.data.frame(cbind(xy@data[c("aspect", "slope")],
+                                val2))
   }
 
   return(val2)
