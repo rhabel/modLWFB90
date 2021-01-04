@@ -9,7 +9,6 @@
 #' @param buff_width buffer width
 #'
 #' @return Set of soil information that is further processed in function fnc_soil_bze()
-#' @import rgeos
 #'
 fnc_extract_points_bze <- function(lay,
                                xy,
@@ -74,7 +73,7 @@ fnc_extract_points_bze <- function(lay,
         val_miss$num <- which_missing
 
         meta <- xy@data[c("ID_custom", "easting", "northing" )] %>%
-          dplyr::mutate(num = 1:nrow( xy@data),
+          dplyr::mutate(num = 1:nrow(xy@data),
                         buffered = ifelse(num %in% which_missing, T, F)) %>%
           dplyr::left_join(val_miss[c("x", "y", "dist", "num")], by = "num") %>%
           dplyr::mutate(buffer_success = dplyr::case_when(buffered == F ~ NA,
