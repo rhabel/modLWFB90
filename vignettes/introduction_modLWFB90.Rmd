@@ -129,7 +129,7 @@ The function to create soil data is called fnc_get_soil and returns a list of so
 ls.soil <- fnc_get_soil(df.ids = test.ids.bds, 
                         soil_option = "BZE", 
                         testgebiet = "BDS", 
-                        PTF_to_use = "HYPRES", 
+                        PTF_to_use = "WESSOLEK", 
                         limit_MvG = T)
 ls.soil[[1]]
 ```
@@ -165,7 +165,7 @@ df.LEIT.NPS <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_Stok
 
 # load STOK-Shapefiles:
 sf.STOK.BDS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/BDS/BDS_STOKA_Clip_UTM.shp"))
-sf.STOK.NPS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NP_STOKA_Clip_UTM.shp"))
+sf.STOK.NPS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NPS_STOKA_Clip_UTM.shp"))
 ```
 
 ***
@@ -257,8 +257,8 @@ ls.parms <- fnc_get_params(df.ids = test.ids.bds,
 ls.clim <- fnc_get_clim(df.ids = test.ids.bds)
 ls.soil <- fnc_get_soil(df.ids = test.ids.bds,
                            soil_option = "STOK",
-                           testgebiet = "NPS",
-                           PTF_to_use = "HYPRES")
+                           testgebiet = "BDS",
+                           PTF_to_use = "WESSOLEK")
 
 # this chunk of code removes non-mapped STOK-points, if there are any and 
 # the BZE-filling option was not selected. Otherwise it doesn't do anything.
