@@ -18,7 +18,9 @@ fnc_get_params <- function(df.ids,
                           tree_species,
                           df.ind.info = NULL){
 
-
+  if(!(paste0("params_", tree_species) %in% ls())){
+    load("./data/params_species.rda")
+  }
   # IDs okay? ---------- ####
   # sort dfs according to IDs
   df.ids$ID <- 1:nrow(df.ids)
@@ -69,7 +71,8 @@ fnc_get_params <- function(df.ids,
 
   # ls.param list creation ---- ####
   ls.param <- lapply(df.ids$ID, function(x, df.site.infos) {
-    parms <- get(paste0("params_",  df.site.infos[df.site.infos$ID == x, "tree_species"]))
+    parms <- get(paste0("params_",  df.site.infos[df.site.infos$ID == x, "tree_species"]),
+                 envir = .GlobalEnv)
     parms[match(names(df.site.infos),names(parms), nomatch = 0)] <-
       df.site.infos[df.site.infos$ID == x, which(names(df.site.infos) %in% names(parms))]
     return(parms)
