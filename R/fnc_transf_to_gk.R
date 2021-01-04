@@ -25,6 +25,7 @@ fnc_transf_crs <- function(df,
   }else{
     stop("please provide valid CRS...")
   }
+  df_gk <- dplyr::left_join(df_gk, df[,c("ID_custom", "easting", "northing")], by = "ID_custom")
   df_gk <- sf::as_Spatial(df_gk)
   return(df_gk)
 }

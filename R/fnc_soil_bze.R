@@ -9,8 +9,6 @@
 #'
 #' @return Returns a list of soil data frames.
 #'
-#' @import parallel doParallel raster foreach utils
-#'
 #' @export
 
 fnc_soil_bze <- function(df.utm,

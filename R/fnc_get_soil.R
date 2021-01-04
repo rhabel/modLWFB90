@@ -28,7 +28,6 @@
 #'
 #' @return Returns a list of soil data frames completely processed to be further used in \code{\link[LWFBrook90R]{msiterunLWFB90}} or \code{\link[LWFBrook90R]{runLWFB90}}
 #'
-#' @import doParallel foreach parallel
 #'
 #' @example inst/examples/fnc_get_soil_ex.R
 #' @export
