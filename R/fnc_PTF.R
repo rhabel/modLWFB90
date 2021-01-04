@@ -70,7 +70,7 @@ fnc_PTF <- function(df, PTF_used){
       df$texture <- colnames(texture)[apply(texture,1,which.max)]
 
       #order for rbind
-      df <- cbind(df, LWFBrook90R::hydpar_wessolek_tab(tex.KA5 = df$texture))
+      df <- cbind(df, LWFBrook90R::hydpar_wessolek_tab(texture = df$texture))
 
 
     }else{

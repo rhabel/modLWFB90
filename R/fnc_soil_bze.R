@@ -8,6 +8,7 @@
 #' @param ... whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur, options are \code{buffering} as \code{TRUE} or \code{FALSE}, and \code{buff_width} in \code{m}
 #'
 #' @return Returns a list of soil data frames.
+#' @import doParallel parallel foreach
 #'
 #' @export
 
@@ -34,7 +35,7 @@ fnc_soil_bze <- function(df.utm,
   ls.text <- foreach::foreach(i = a, .combine = cbind, .packages = "raster") %dopar% {
     rs.files <- lapply(paste0(input_bze, i, "_strt/hdr.adf"), raster)
   }
-  stopCluster(cl)
+  parallel::stopCluster(cl)
 
   soilraster <- raster::stack(unlist(ls.text))
   names(soilraster) <- a
