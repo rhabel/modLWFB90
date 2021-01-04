@@ -9,9 +9,7 @@ fnc_get_clim(
   mindate = as.Date("2010-01-01"),
   maxdate = as.Date("2011-12-31"),
   path_std = "R:/klima/whh/brook90_input/locations",
-  path_climdb = "R:/klima/whh/brook90_input/db/",
-  as = "list",
-  db_path = NA
+  path_climdb = "R:/klima/whh/brook90_input/db/"
 )
 }
 \arguments{
@@ -28,8 +26,6 @@ fnc_get_clim(
 \item{path_std}{path to standard locations directory}
 
 \item{path_climdb}{path to climate-db directory}
-
-\item{as}{one of \code{list} or  \code{db}. Whether climate data should be written to a db, or kept in the R-sessions memory. If written to db, one has to handle db-querys in order to examine climate data. Yet, should be set to \code{db} the more points and years you model, as memory space fills quickly through climate data.}
 }
 \value{
 Returns a named list (names from \code{df.ids$ID_custom}) of climate data

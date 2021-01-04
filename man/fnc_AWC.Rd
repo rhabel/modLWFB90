@@ -9,7 +9,7 @@ fnc_AWC(data, nFK = F)
 \arguments{
 \item{data}{is the list of soil properties calculated by \code{\link{fnc_get_soil}}}
 
-\item{nFK}{indicates whether the AWC is calculated for the whole soil depth (\code{nFK = T}), returning a vector with one vector element for each list element. \code{nFK = F} returns the initial list with the additional columns: \code{fc} (vol. water content at 63 hPa), \code{pwp} (vol. water content at 15000 hPa) and \code{AWC} (AWC in mm per m^2 and depth of the soil layer)}
+\item{nFK}{indicates whether the AWC is calculated for 1 m soil depth (\code{nFK = T}), returning a vector with one vector element for each list element. \code{nFK = F} returns the initial list with the additional columns: \code{fc} (vol. water content at 63 hPa), \code{pwp} (vol. water content at 15000 hPa) and \code{AWC} (AWC in mm per m^2 and depth of the soil layer)}
 }
 \value{
 Returns either the expanded input list of soil properties or a vector containing the AWC for the whole soil depth with one vector element per input list element
