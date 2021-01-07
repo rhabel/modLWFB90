@@ -147,12 +147,14 @@ fnc_get_soil <- function(df.ids,
       stop("not all ID_custom of df.ids and df.soils are equal")
     } else {
       ls.soils <- df.soils %>%
-        dplyr::left_join(df.ids[c("ID_custom", "ID")], by = "ID_custom") %>%
+        dplyr::left_join(df.ids, by = "ID_custom") %>%
         dplyr::arrange(ID, mat, -upper) %>%
         dplyr::select(ID, ID_custom, everything()) %>%
         dplyr::group_split(ID)
       ls.soils <- lapply(ls.soils, FUN = fnc_depth_disc)
-      ls.soils <- lapply(ls.soils, FUN = dplyr::left_join, y = df.dgm, by = "ID")
+      if(!all(c("slope", "aspect") %in% colnames(df.ids))){
+        ls.soils <- lapply(ls.soils, FUN = dplyr::left_join, y = df.dgm, by = "ID")
+      }
       ls.soils <- lapply(ls.soils, FUN = dplyr::mutate, upper = upper/-100)
       ls.soils <- lapply(ls.soils, FUN = dplyr::mutate, lower = lower/-100)
       ls.soils <- lapply(ls.soils, function(x){cbind(x[,1:3], "nl" = 1:nrow(x), x[4:ncol(x)])})
