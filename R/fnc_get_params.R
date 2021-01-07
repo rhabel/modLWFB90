@@ -32,20 +32,27 @@ fnc_get_params <- function(df.ids,
 
 
   # SLOPE & ASPECT ------ ####
-  xy_gk <- fnc_transf_crs(df = df.ids)
+  if(!all(c("slope", "aspect") %in% colnames(df.ids))){
+    xy_gk <- fnc_transf_crs(df = df.ids)
 
-  dgm.stack <- raster::stack(list.files(input_paul, pattern = "aspect.sdat|slope.sdat", full.names=T))
-  df.dgm <- cbind("ID" = df.ids$ID,
-                  as.data.frame(fnc_extract_points_dgm(lay = dgm.stack, xy = xy_gk)))
+    dgm.stack <- raster::stack(list.files(input_paul, pattern = "aspect.sdat|slope.sdat", full.names=T))
+    df.dgm <- cbind("ID" = df.ids$ID,
+                    as.data.frame(fnc_extract_points_dgm(lay = dgm.stack, xy = xy_gk)))
+    df.ids <- dplyr::left_join(df.ids, df.dgm, by = "ID")
+  }
 
   # LAT & LON ------------ ####
-  sf.ids <- st_as_sf(df.ids, coords = c("easting", "northing"), crs = 32632)
-  df.latlon <- cbind("ID" = df.ids$ID,
-                     setNames(as.data.frame(sf::st_coordinates(sf::st_transform(sf.ids, crs = 4326))),
-                              c("coords_x", "coords_y")))
+  if(!all(c("coords_x", "coords_y") %in% colnames(df.ids))){
+    sf.ids <- st_as_sf(df.ids, coords = c("easting", "northing"), crs = 32632)
+    df.latlon <- cbind("ID" = df.ids$ID,
+                       setNames(as.data.frame(sf::st_coordinates(sf::st_transform(sf.ids, crs = 4326))),
+                                c("coords_x", "coords_y")))
+    df.ids <- dplyr::left_join(df.ids, df.latlon, by = "ID")
+
+  }
 
   # join ---------------- ####
-  df.site.infos <- dplyr::left_join(df.ids, df.dgm, by = "ID") %>%
+  df.site.infos <- df.ids %>%
     dplyr::rename(eslope = slope) %>%
     dplyr::mutate(dslope = eslope,
                   budburst.species = case_when(tree_species == "beech" ~ "Fagus sylvatica",
@@ -55,8 +62,7 @@ fnc_get_params <- function(df.ids,
                                                tree_species == "larch" ~ "Larix decidua",
                                                tree_species == "douglasfir" ~ "Picea abies (spaet)",
                                                T ~ NA_character_),
-                  tree_species = tree_species) %>%
-    dplyr::left_join(df.latlon, by = "ID")
+                  tree_species = tree_species)
 
   # if additional data present
   if(!is.null(df.ind.info)){
