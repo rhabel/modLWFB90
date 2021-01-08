@@ -28,7 +28,7 @@ fnc_roots <- function(df,
                                         oc.pct *1.72 >= 2 & oc.pct *1.72 < 5 ~ 4,
                                         oc.pct *1.72 >= 5 & oc.pct *1.72 < 10 ~ 5,
                                         oc.pct *1.72 >= 10 & oc.pct *1.72 < 15 ~ 6,
-                                        oc.pct *1.72 >= 30 ~ 7),
+                                        oc.pct *1.72 >= 15 ~ 7),
                     i.upper = upper *-100,
                     i.lower = lower *-100)
 
@@ -39,7 +39,8 @@ fnc_roots <- function(df,
                                         i.upper < 0 & humus_roots == F ~ 0,
                                         T ~ fwd_brt)) %>%
       dplyr::select(-nfk, -hum.ka5, -i.upper, -i.lower) %>%
-      dplyr::rename(rootden = fwd_brt)
+      dplyr::rename(rootden = fwd_brt) %>%
+      dplyr::mutate(rootden = ifelse(rootden < 0, 0, rootden))
     return(df)
   }else{
     rootden <- LWFBrook90R::MakeRelRootDens(soilnodes = df$lower, method = rootsmethod, ...)
