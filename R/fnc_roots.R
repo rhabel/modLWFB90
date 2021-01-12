@@ -40,7 +40,7 @@ fnc_roots <- function(df,
                                         T ~ fwd_brt)) %>%
       dplyr::select(-nfk, -hum.ka5, -i.upper, -i.lower) %>%
       dplyr::rename(rootden = fwd_brt) %>%
-      dplyr::mutate(rootden = ifelse(rootden < 0, 0, rootden))
+      dplyr::mutate(rootden = ifelse(rootden < 2, 0, rootden))
     return(df)
   }else{
     rootden <- LWFBrook90R::MakeRelRootDens(soilnodes = df$lower, method = rootsmethod, ...)
