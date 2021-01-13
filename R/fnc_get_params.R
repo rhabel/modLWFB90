@@ -54,7 +54,7 @@ fnc_get_params <- function(df.ids,
   df.site.infos <- df.ids %>%
     dplyr::rename(eslope = slope) %>%
     dplyr::mutate(dslope = eslope,
-                  budburst.species = case_when(tree_species == "beech" ~ "Fagus sylvatica",
+                  budburst_species = case_when(tree_species == "beech" ~ "Fagus sylvatica",
                                                tree_species == "spruce" ~ "Picea abies (spaet)",
                                                tree_species == "oak" ~ "Quercus robur",
                                                tree_species == "pine" ~ "Pinus sylvestris",
