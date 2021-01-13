@@ -7,7 +7,7 @@ params_beech <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                              dpsimax = 0.01,
                                              winlaifrac = 0,
 
-                                             budburst.species = "Fagus sylvatica",
+                                             budburst_species = "Fagus sylvatica",
 
                                              alb = 0.21,
                                              albsn = 0.47,
@@ -40,7 +40,7 @@ params_oak <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                            dpsimax = 0.01,
                                            winlaifrac = 0,
 
-                                           budburst.species = "Quercus robur",
+                                           budburst_species = "Quercus robur",
 
                                            alb = 0.21,
                                            albsn = 0.47,
@@ -72,7 +72,7 @@ params_spruce <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                               dswmax = 0.5,
                                               dpsimax = 0.01,
 
-                                              budburst.species = "Picea abies (spaet)",
+                                              budburst_species = "Picea abies (spaet)",
 
                                               alb = 0.13,
                                               albsn = 0.34,
@@ -105,7 +105,7 @@ params_pine <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                             dswmax = 0.5,
                                             dpsimax = 0.01,
 
-                                            budburst.species = "Pinus sylvestris",
+                                            budburst_species = "Pinus sylvestris",
 
                                             alb = 0.13,
                                             albsn = 0.34,
@@ -138,7 +138,7 @@ params_douglasfir <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                                   dswmax = 0.5,
                                                   dpsimax = 0.01,
 
-                                                  budburst.species = "Picea abies (spaet)",
+                                                  budburst_species = "Picea abies (spaet)",
 
                                                   alb = 0.13,
                                                   albsn = 0.34,
