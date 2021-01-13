@@ -1,7 +1,7 @@
 ### Tree species' parametrisation as agreed upon in WHH-KW
 
 # beech -------- ####
-params_beech <- LWFBrook90R::setparam_LWFB90(zw = 10,
+params_beech <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                              obsheight = 0.02,
                                              dswmax = 0.5,
                                              dpsimax = 0.01,
@@ -34,7 +34,7 @@ params_beech <- LWFBrook90R::setparam_LWFB90(zw = 10,
                                              sai = 1)
 
 # oak ---------- ####
-params_oak <- LWFBrook90R::setparam_LWFB90(zw = 10,
+params_oak <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                            obsheight = 0.02,
                                            dswmax = 0.5,
                                            dpsimax = 0.01,
@@ -67,7 +67,7 @@ params_oak <- LWFBrook90R::setparam_LWFB90(zw = 10,
                                            sai = 0.9)
 
 # spruce ------- ####
-params_spruce <- LWFBrook90R::setparam_LWFB90(zw = 10,
+params_spruce <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                               obsheight = 0.02,
                                               dswmax = 0.5,
                                               dpsimax = 0.01,
@@ -100,7 +100,7 @@ params_spruce <- LWFBrook90R::setparam_LWFB90(zw = 10,
                                               winlaifrac = 0.8)
 
 # pine --------- ####
-params_pine <- LWFBrook90R::setparam_LWFB90(zw = 10,
+params_pine <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                             obsheight = 0.02,
                                             dswmax = 0.5,
                                             dpsimax = 0.01,
@@ -133,7 +133,7 @@ params_pine <- LWFBrook90R::setparam_LWFB90(zw = 10,
                                             winlaifrac = 0.8)
 
 # douglasfir --- ####
-params_douglasfir <- LWFBrook90R::setparam_LWFB90(zw = 10,
+params_douglasfir <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                                   obsheight = 0.02,
                                                   dswmax = 0.5,
                                                   dpsimax = 0.01,
