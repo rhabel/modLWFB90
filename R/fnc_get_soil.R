@@ -171,8 +171,10 @@ fnc_get_soil <- function(df.ids,
 
     # check if all necessary columns are there:
     missingcol <- c("ths", "thr", "alpha", "npar", "mpar", "ksat", "tort")[!c("ths", "thr", "alpha", "npar", "mpar", "ksat", "tort") %in% names(df.soils)]
-    cat(missingcol, "is missing in df.soils for PTF-application of ", PTF_to_use, "\n")
-    stop("missing columns")
+    if (length(missingcol) > 0){
+      cat(missingcol, "is missing in df.soils for PTF-application of ", PTF_to_use, "\n")
+      stop("missing columns")
+    }
 
   } else {
     ls.soils[as.numeric(which(!unlist(lapply(ls.soils, is.null))==T))] <- lapply(ls.soils[as.numeric(which(!unlist(lapply(ls.soils, is.null))==T))],
