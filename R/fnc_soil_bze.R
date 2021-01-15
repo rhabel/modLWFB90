@@ -18,7 +18,7 @@ fnc_soil_bze <- function(df.utm,
                          meta.out,
                          ...){
 
-  load("./data/paths.rda")
+  input_bze <- input_bze
 
   # einlesen aller BZEraster:
   a <- c("bodtief",
@@ -87,18 +87,38 @@ fnc_soil_bze <- function(df.utm,
                   profile_top = profile_top/100,
                   gba = gba / 100) %>%
     dplyr::group_by(ID) %>%
-    dplyr::mutate(i.lower = case_when((i.lower == min(i.lower)) & (i.lower != max(lower)*-0.01) ~ max(lower)*-0.01, T~i.lower   )) %>%
-    dplyr::filter(i.lower >= roots_bottom_rnd*-0.01) %>%
+    dplyr::mutate(i.lower = case_when((i.lower == min(i.lower)) & (i.lower != max(lower)*-0.01) ~ max(lower)*-0.01, T~i.lower   ),
+                  nl = 1:n()) %>%
+    #dplyr::filter(i.lower >= roots_bottom_rnd*-0.01) %>%
     dplyr::ungroup() %>%
     dplyr::left_join(df.assign[c("ID", "ID_custom")], by = "ID") %>%
     dplyr::mutate(ID_custom = as.character(ID_custom)) %>%
-    dplyr::select(ID, ID_custom, depth, i.upper, i.lower, sand, schluff, ton, gba, trd, corg, aspect, slope, profile_top ) %>%
-    setNames(c("ID", "ID_custom", "mat", "upper", "lower", "sand", "silt", "clay", "gravel", "bd", "oc.pct", "aspect" ,"slope" ,"humus")) %>%
+    dplyr::select(ID, ID_custom, depth, nl, i.upper, i.lower, sand, schluff, ton, gba, trd, corg, aspect, slope, profile_top ) %>%
+    setNames(c("ID", "ID_custom", "mat", "nl","upper", "lower", "sand", "silt", "clay", "gravel", "bd", "oc.pct", "aspect" ,"slope" ,"humus")) %>%
     dplyr::group_split(ID)
 
-  # names correct...
+
+  # add 1m - horizon if necessary...
   ls.soils.tmp <- lapply(ls.soils.tmp, as.data.frame, stringsAsFactors = F)
-  ls.soils.tmp <- lapply(ls.soils.tmp, function(x){cbind(x[,1:3], "nl" = 1:nrow(x), x[4:ncol(x)])})
+  ls.soils.tmp <- lapply(ls.soils.tmp, function(df){
+    if ((max(df$lower) < -1.0)  & (!(-1.0 %in% df$lower)) & (!(-1.0 %in% df$upper))){
+      cross_1m <- which(df$lower < -1.0 & df$upper > -1.0)
+      if(cross_1m == nrow(df)){
+        df <- rbind(df, df[cross_1m,])
+        df[cross_1m, "lower"] <- -1.0
+        df[(cross_1m+1), "upper"] <- -1.0
+      }else{
+        df <- rbind(df[1:cross_1m,],
+                    df[cross_1m,],
+                    df[(cross_1m+1):nrow(df), ])
+        df[cross_1m, "lower"] <- -1.0
+        df[(cross_1m+1), "upper"] <- -1.0
+      }
+    }
+    return(df)
+    })
+
+  # remove NA-dfs
   which.na <- which(unlist(lapply(ls.soils.tmp, function(x) any(is.na(x)))==T))
   names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
   ls.soils.tmp[which.na] <- list(NULL)
