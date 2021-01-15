@@ -1,6 +1,6 @@
 #' Creation of Climate Data
 #'
-#' This function creates Climate Data in the format required by \code{\link[LWFBrook90R]{runLWFB90}} and \code{\link[LWFBrook90R]{msiterunLWFB90}}.
+#' This function creates Climate Data in the format required by \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}}.
 #'
 #' @param df.ids a data frame containing the following columns:
 #' \itemize{

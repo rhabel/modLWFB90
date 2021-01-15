@@ -10,7 +10,7 @@
 #' @param tree_species name of the tree species to be modelled with. Either a single species name that is then used for all points in \code{df.ids}, or a vector of the same length as \code{df.ids$ID} if the main tree species of each point is known and differs. Must be one of \code{beech}, \code{oak}, \code{spruce}, \code{pine}, \code{larch}, \code{douglasfir}. \cr It is  recommended (findings of project WHH-KW) to use the settings of spruce for fir and the settings of pine for larch. If certain tree specific parameters should be changed permanently, the corresponding object \code{params_...} should be overwritten manually before running the function.
 #' @param df.ind.info a data frame containing individual site information for each ID or if parameters are presumed to be different than the default settings of \code{\link[LWFBrook90R]{set_paramLWFB90}}. They need to be given here in the form of a data frame containing the column \code{ID}, which should be identical to the \code{ID}-column of\code{df.ids}, and additional columns that are named exactly like the parameters in \code{\link[LWFBrook90R]{set_paramLWFB90}}.
 #'
-#' @return Returns a list of parameter settings that can be read and further processed by \code{\link[LWFBrook90R]{msiterunLWFB90}} or \code{\link[LWFBrook90R]{runLWFB90}}
+#' @return Returns a list of parameter settings that can be read and further processed by \code{\link[LWFBrook90R]{run_multisite_LWFB90}} or \code{\link[LWFBrook90R]{run_LWFB90}}
 #' @example inst/examples/fnc_get_params_ex.R
 #' @export
 

@@ -8,8 +8,8 @@
 #' @param start_date start date as \code{Date}-object
 #' @param end_date end date as \code{Date}-object
 #' @param treespecies name of the tree species to be modelled with. Either a single species name that is then used for all points in \code{df.ids}, or a vector of the same length as \code{df.ids$ID} if the main tree species of each point is known and differs. Must be one of \code{beech}, \code{oak}, \code{spruce}, \code{pine}, \code{larch}, \code{douglasfir}.
-#' @param layercols a sting containing the desired output products. Full list of possible output columns can be find on the help page of \code{\link[LWFBrook90R]{runLWFB90}} under \code{Layer outputs}
-#' @param dailycols same as layercols but for daily output. For possible options see \code{\link[LWFBrook90R]{runLWFB90}}
+#' @param layercols a sting containing the desired output products. Full list of possible output columns can be find on the help page of \code{\link[LWFBrook90R]{run_LWFB90}} under \code{Layer outputs}
+#' @param dailycols same as layercols but for daily output. For possible options see \code{\link[LWFBrook90R]{run_LWFB90}}
 #' @param db_name name and file path of the SQL-database
 #' @param meta \code{NA} by default, a location where meta-information can be written. Will then be written into the database
 #' @param ... all additional information that can be set in \code{\link{fnc_get_soil}}. See help page for all options that can be selected
@@ -66,8 +66,8 @@ fnc_app <- function(df.ids,
     ls.soil <- ls.soil[which(!unlist(lapply(ls.soil, is.null))==T)]
 
 
-    LWFBrook90R::msiterunLWFB90(options.b90 = options.b90,
-                                param.b90 = ls.parms,
+    LWFBrook90R::run_multisite_LWFB90(options_b90 = options.b90,
+                                param_b90 = ls.parms,
                                 climate = ls.clim,
                                 soil = ls.soil,
 

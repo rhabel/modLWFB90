@@ -5,7 +5,7 @@
 #' @param df a data frame containing soil properties including MvG-alpha (column \code{alpha}), MvG-npar (column \code{npar}), theta_s (column \code{ths}), theta_r (column \code{thr}), and organic carbon in pct (column \code{oc.pct}.
 #' @param rootsmethod name of the method for fine roots. Possible options are \code{hartmann},\code{betamodel}, \code{table}, \code{constant}, and \code{linear}. Default is \code{betamodel}.
 #' @param humus_roots decides whether humus layers get roots too. Default is \code{TRUE}. If \code{TRUE}, humus layer gets the same amount of roots as highest soil layer, else \code{0}.
-#' @param ... additional input arguments that are passed on to \code{make_rootden}, see \code{\link[LWFBrook90R]{make_roots}}.
+#' @param ... additional input arguments that are passed on to \code{make_rootden}, see \code{\link[LWFBrook90R]{make_rootden}}.
 #'
 #' @return Returns the same data frame, but adds a rootden-column that is recognised by LWFBrook90R.
 #' @references
