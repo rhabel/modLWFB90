@@ -29,16 +29,25 @@ fnc_PTF <- function(df, PTF_used){
       # which are from topsoil... (>25 cm depth)
       which.topsoil <- which(df$lower >= -0.25)
 
-      df <- cbind(df, rbind(LWFBrook90R::hydpar_hypres(clay = transftt$CLAY[which.topsoil],
-                                                       silt = transftt$SILT[which.topsoil],
-                                                       bd = df$bd[which.topsoil],
-                                                       oc.pct = df$oc.pct[which.topsoil],
-                                                       topsoil = T),
-                            LWFBrook90R::hydpar_hypres(clay = transftt$CLAY[-which.topsoil],
-                                                       silt = transftt$SILT[-which.topsoil],
-                                                       bd = df$bd[-which.topsoil],
-                                                       oc.pct = df$oc.pct[-which.topsoil],
-                                                       topsoil = F)))
+      if(max(which.topsoil) < nrow(df)){
+        df <- cbind(df, rbind(LWFBrook90R::hydpar_hypres(clay = transftt$CLAY[which.topsoil],
+                                                         silt = transftt$SILT[which.topsoil],
+                                                         bd = df$bd[which.topsoil],
+                                                         oc.pct = df$oc.pct[which.topsoil],
+                                                         topsoil = T),
+                              LWFBrook90R::hydpar_hypres(clay = transftt$CLAY[-which.topsoil],
+                                                         silt = transftt$SILT[-which.topsoil],
+                                                         bd = df$bd[-which.topsoil],
+                                                         oc.pct = df$oc.pct[-which.topsoil],
+                                                         topsoil = F)))
+      }else{
+        df <- cbind(df, LWFBrook90R::hydpar_hypres(clay = transftt$CLAY,
+                                                   silt = transftt$SILT,
+                                                   bd = df$bd,
+                                                   oc.pct = df$oc.pct,
+                                                   topsoil = T))
+      }
+
 
 
 
