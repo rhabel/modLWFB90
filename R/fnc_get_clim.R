@@ -59,7 +59,7 @@ fnc_get_clim <- function(df.ids,
     ls.clim.tmp <- data.table::as.data.table(clim.tmp)
     ls.clim.tmp <- data.table::setorder(ls.clim.tmp, id, year, month, day)
     ls.clim.tmp[ , (needed_cols) := lapply(.SD, "*", 0.01), .SDcols = needed_cols]
-    data.table::setnames(ls.clim.tmp, c("id_standard", "year", "month", "day", "globrad", "grids", "prec", "sddm","tmean", "tmin", "tmax", "wind" )) # constr_corg umbenennen
+    data.table::setnames(ls.clim.tmp, c("id_standard", "year", "month", "day", "globrad", "grids", "prec", "sddm","tmean", "tmin", "tmax", "windspeed" )) # constr_corg umbenennen
     ls.clim.tmp[, dates := as.Date(paste0(year, "-", month, "-", day), format = "%Y-%m-%d")]
     ls.clim.tmp[, ewasser := 6.11*10^(7.5*tmean/(273.5+tmean))]
     ls.clim.tmp[, eeis := 6.11*10^(9.5*tmean/(265.5+tmean))]
@@ -78,7 +78,7 @@ fnc_get_clim <- function(df.ids,
     #
     ls.clim.tmp[, ID_custom := factor(ID_custom, levels = unique(ID_custom))]
 
-    ls.clim.tmp <- ls.clim.tmp[,.(ID, ID_custom, id_standard, dates, year, month, day, globrad, prec, tmean, tmin, tmax, wind, vappres)]
+    ls.clim.tmp <- ls.clim.tmp[,.(ID, ID_custom, id_standard, dates, year, month, day, globrad, prec, tmean, tmin, tmax, windspeed, vappres)]
     ls.clim.tmp <- ls.clim.tmp[dates>= mindate & dates <= maxdate]
 
     ls.clim.tmp <- split(ls.clim.tmp, ls.clim.tmp$ID_custom)
