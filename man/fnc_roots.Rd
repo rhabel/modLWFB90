@@ -13,7 +13,7 @@ fnc_roots(df, rootsmethod = "hartmann", humus_roots = T, ...)
 
 \item{humus_roots}{decides whether humus layers get roots too. Default is \code{TRUE}. If \code{TRUE}, humus layer gets the same amount of roots as highest soil layer, else \code{0}.}
 
-\item{...}{additional input arguments that are passed on to \code{make_rootden}, see \code{\link[LWFBrook90R]{make_roots}}.}
+\item{...}{additional input arguments that are passed on to \code{make_rootden}, see \code{\link[LWFBrook90R]{make_rootden}}.}
 }
 \value{
 Returns the same data frame, but adds a rootden-column that is recognised by LWFBrook90R.

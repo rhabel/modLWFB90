@@ -31,7 +31,7 @@ fnc_get_clim(
 Returns a named list (names from \code{df.ids$ID_custom}) of climate data
 }
 \description{
-This function creates Climate Data in the format required by \code{\link[LWFBrook90R]{runLWFB90}} and \code{\link[LWFBrook90R]{msiterunLWFB90}}.
+This function creates Climate Data in the format required by \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}}.
 }
 \examples{
 fnc_get_clim(df.ids = test.ids.bds, mindate = as.Date("2010-01-01"), maxdate = as.Date("2011-12-31"))

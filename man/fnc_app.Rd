@@ -34,9 +34,9 @@ fnc_app(
 
 \item{...}{all additional information that can be set in \code{\link{fnc_get_soil}}. See help page for all options that can be selected}
 
-\item{layercols}{a sting containing the desired output products. Full list of possible output columns can be find on the help page of \code{\link[LWFBrook90R]{runLWFB90}} under \code{Layer outputs}}
+\item{layercols}{a sting containing the desired output products. Full list of possible output columns can be find on the help page of \code{\link[LWFBrook90R]{run_LWFB90}} under \code{Layer outputs}}
 
-\item{dailycols}{same as layercols but for daily output. For possible options see \code{\link[LWFBrook90R]{runLWFB90}}}
+\item{dailycols}{same as layercols but for daily output. For possible options see \code{\link[LWFBrook90R]{run_LWFB90}}}
 }
 \value{
 An SQLite Database with the tables soil, and daily and/or layer outputs.

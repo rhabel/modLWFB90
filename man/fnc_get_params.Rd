@@ -18,7 +18,7 @@ fnc_get_params(df.ids, tree_species, df.ind.info = NULL)
 \item{df.ind.info}{a data frame containing individual site information for each ID or if parameters are presumed to be different than the default settings of \code{\link[LWFBrook90R]{set_paramLWFB90}}. They need to be given here in the form of a data frame containing the column \code{ID}, which should be identical to the \code{ID}-column of\code{df.ids}, and additional columns that are named exactly like the parameters in \code{\link[LWFBrook90R]{set_paramLWFB90}}.}
 }
 \value{
-Returns a list of parameter settings that can be read and further processed by \code{\link[LWFBrook90R]{msiterunLWFB90}} or \code{\link[LWFBrook90R]{runLWFB90}}
+Returns a list of parameter settings that can be read and further processed by \code{\link[LWFBrook90R]{run_multisite_LWFB90}} or \code{\link[LWFBrook90R]{run_LWFB90}}
 }
 \description{
 This function creates a list of parameter settings. Vegetation settings, by default, represent the findings of the WHH-KW project.

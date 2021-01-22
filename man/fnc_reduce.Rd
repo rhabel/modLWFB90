@@ -7,11 +7,11 @@
 fnc_reduce(x, dailycols, layercols, db_name)
 }
 \arguments{
-\item{x}{one of the intermediate producs of \code{\link[LWFBrook90R]{runLWFB90}} or  \code{\link[LWFBrook90R]{msiterunLWFB90}}, which is further processed internally. Can't be adjusted.}
+\item{x}{one of the intermediate producs of \code{\link[LWFBrook90R]{run_LWFB90}} or  \code{\link[LWFBrook90R]{run_multisite_LWFB90}}, which is further processed internally. Can't be adjusted.}
 
-\item{dailycols}{same as layercols but for daily output. For possible options see \code{\link[LWFBrook90R]{runLWFB90}}}
+\item{dailycols}{same as layercols but for daily output. For possible options see \code{\link[LWFBrook90R]{run_LWFB90}}}
 
-\item{layercols}{a sting containing the desired output products. Full list of possible output columns can be find on the help page of \code{\link[LWFBrook90R]{runLWFB90}} under \code{Layer outputs}}
+\item{layercols}{a sting containing the desired output products. Full list of possible output columns can be find on the help page of \code{\link[LWFBrook90R]{run_LWFB90}} under \code{Layer outputs}}
 
 \item{db_name}{name and file path of the SQL-database}
 }
@@ -19,5 +19,5 @@ fnc_reduce(x, dailycols, layercols, db_name)
 Returns the desired output to the database directly.
 }
 \description{
-LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{runLWFB90}} and \code{\link[LWFBrook90R]{msiterunLWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it to a database. This is what this function is made for.
+LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it to a database. This is what this function is made for.
 }
