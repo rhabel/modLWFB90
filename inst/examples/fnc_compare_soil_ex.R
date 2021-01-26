@@ -1,8 +1,8 @@
 # create folder for testfiles
-dir.create("H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/testfiles/SOIL/", recursive = T)
-dir.create("H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/testfiles/PTF/", recursive = T)
-output1 <- "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/testfiles/SOIL/"
-output2 <- "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/testfiles/PTF/"
+dir.create("./testfiles/SOIL/", recursive = T)
+dir.create("./testfiles/PTF/", recursive = T)
+output1 <- paste0(getwd(), "/testfiles/SOIL/")
+output2 <- paste0(getwd(), "/testfiles/PTF/")
 
 # comparing the different soil data provided by STOK, BZE and OWN with HYPRES as PTF
 fnc_compare_soil(df.ids = test.ids.bds,
