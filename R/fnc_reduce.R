@@ -10,7 +10,7 @@
 #' @return Returns the desired output to the database directly.
 #'
 #' @import data.table dplyr RSQLite
-
+#' @export
 
 fnc_write <- function(x, dailycols, layercols, db_name){
   # soil
@@ -71,5 +71,5 @@ fnc_write <- function(x, dailycols, layercols, db_name){
     })
     if(!is(rv, "try-error")) break
   }
-  # rv
+  rv
 }
