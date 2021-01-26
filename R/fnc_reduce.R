@@ -12,7 +12,7 @@
 #' @import data.table dplyr RSQLite
 
 
-fnc_reduce <- function(x, dailycols, layercols, db_name){
+fnc_write <- function(x, dailycols, layercols, db_name){
   # soil
   soil.df <- get("soil", envir = parent.frame(3))
   id_run <- get("soil", envir = parent.frame(3))$id_custom[1]
@@ -61,7 +61,7 @@ fnc_reduce <- function(x, dailycols, layercols, db_name){
                               append=T, overwrite = F, row.names=F)
       }
 
-      if(!any(is.na(dailycols))){
+      if(!any(is.na(layercols))){
         RSQLite::dbWriteTable(con,
                               "layer",
                               layer,
@@ -71,5 +71,5 @@ fnc_reduce <- function(x, dailycols, layercols, db_name){
     })
     if(!is(rv, "try-error")) break
   }
-  rv
+  # rv
 }
