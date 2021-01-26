@@ -17,7 +17,8 @@ fnc_compare_soil(
   limit_MvG = F,
   df.soils = NULL,
   output_path,
-  bze_buffer = NA
+  bze_buffer = NA,
+  meta.out = NA
 )
 }
 \arguments{
@@ -68,10 +69,10 @@ The two main options are comparing the soil data itself, and comparing what the 
 }
 \examples{
 # create folder for testfiles
-dir.create("./testfiles/SOIL/", recursive = T)
-dir.create("./testfiles/PTF/", recursive = T)
-output1 <- paste0(getwd(), "/testfiles/SOIL/")
-output2 <- paste0(getwd(), "/testfiles/PTF/")
+dir.create("H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/testfiles/SOIL/", recursive = T)
+dir.create("H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/testfiles/PTF/", recursive = T)
+output1 <- "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/testfiles/SOIL/"
+output2 <- "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/testfiles/PTF/"
 
 # comparing the different soil data provided by STOK, BZE and OWN with HYPRES as PTF
 fnc_compare_soil(df.ids = test.ids.bds,
@@ -91,10 +92,10 @@ fnc_compare_soil(df.ids = test.ids.bds,
 fnc_compare_soil(df.ids = test.ids.bds,
                  testgebiet = "BDS",
                  what_to_test = "PTFs",
-                 depths_to_test = c(-0.15, -0.30, -0.60),
+                 depths_to_test = c(-0.15, -0.30, -0.60, -0.9),
 
                  PTF_to_test = c("HYPRES", "PTFPUH2", "WESSOLEK"),
-                 soiloption_to_use = "STOK",
+                 soiloption_to_use = "BZE",
 
                  limit_MvG = F,
                  df.soils = NULL,
