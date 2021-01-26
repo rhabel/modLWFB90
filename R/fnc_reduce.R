@@ -61,7 +61,7 @@ fnc_reduce <- function(x, dailycols, layercols, db_name){
                               append=T, overwrite = F, row.names=F)
       }
 
-      if(!any(is.na(dailycols))){
+      if(!any(is.na(layercols))){
         RSQLite::dbWriteTable(con,
                               "layer",
                               layer,
@@ -71,5 +71,5 @@ fnc_reduce <- function(x, dailycols, layercols, db_name){
     })
     if(!is(rv, "try-error")) break
   }
-  rv
+  # rv
 }

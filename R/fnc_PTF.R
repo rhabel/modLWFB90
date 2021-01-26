@@ -27,7 +27,7 @@ fnc_PTF <- function(df, PTF_used){
                                               text.tol = 1)
 
       # which are from topsoil... (>25 cm depth)
-      which.topsoil <- which(df$lower >= -0.5)
+      which.topsoil <- which(df$lower >= -0.25)
 
       if(max(which.topsoil) < nrow(df)){
         df <- cbind(df, rbind(LWFBrook90R::hydpar_hypres(clay = transftt$CLAY[which.topsoil],
