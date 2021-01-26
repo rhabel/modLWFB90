@@ -50,7 +50,8 @@ fnc_compare_soil <- function(df.ids,
                             limit_MvG = F,
                             df.soils = NULL,
                             output_path,
-                            bze_buffer = NA){
+                            bze_buffer = NA,
+                            meta.out = NA){
 
   # add / to path if not given with a / at the end
   if(stringr::str_sub(output_path,-1) != "/"){
@@ -78,11 +79,11 @@ fnc_compare_soil <- function(df.ids,
       # sort dfs according to IDs
       df.ids$ID <- 1:nrow(df.ids)
       # transformation of ids to GK3 for slope & aspect
-      xy_gk <- fnc_transf_to_gk(df = df.ids)
+      xy_gk <- fnc_transf_crs(df = df.ids)
 
       dgm.stack <- raster::stack(list.files(input_paul, pattern = "aspect.sdat|slope.sdat", full.names=T))
       df.dgm <- cbind("ID" = df.ids$ID,
-                      as.data.frame(fnc_extract_points(lay = dgm.stack, xy = xy_gk, buffering = T)))
+                      as.data.frame(fnc_extract_points_dgm(lay = dgm.stack, xy = xy_gk, buffering = T)))
 
       # create data:  ------------------------------------------ ####
 
@@ -92,12 +93,22 @@ fnc_compare_soil <- function(df.ids,
         sf.testgeb <- get(paste0("sf.STOK.", testgebiet))
         df.LEIT <- get(paste0("df.LEIT.", testgebiet))
 
+
         sf.ids <- sf::st_as_sf(df.ids, coords = c("easting", "northing"), crs = 32632) %>%
           sf::st_join(sf.testgeb) %>%
-          sf::st_drop_geometry()
+          sf::st_drop_geometry() %>%
+          dplyr::select(ID, ID_custom, RST_F)
 
-        IDs_miss <- sf.ids$ID[is.na(sf.ids$RST_F)]
-        IDs_complete <- which(!is.na(sf.ids$RST_F)) # IDs good
+        # no forest
+        RST_noforest <- c(39272, 39273, 0, 39343, 42046)
+        # swamp
+        test <- df.LEIT %>% filter(humusform == "Moor")
+        RST_moor <- unique(test$RST_F)
+        RST_miss <- c(RST_moor, RST_noforest)
+        rm(list = c("RST_noforest", "RST_moor", "test"))
+
+        IDs_miss <- sf.ids$ID[(is.na(sf.ids$RST_F) | sf.ids$RST_F %in% RST_miss)] # remove non-forest-rst_fs
+        IDs_complete <- which(!(is.na(sf.ids$RST_F)| sf.ids$RST_F %in% RST_miss)) # IDs good
 
         # all IDs mapped by STOKA
         if(length(IDs_miss) == 0){
@@ -105,7 +116,7 @@ fnc_compare_soil <- function(df.ids,
                                    df.LEIT = get(paste0("df.LEIT.", testgebiet)),
                                    PTF_to_use = PTF_to_use,
                                    dgm = df.dgm)
-          names(ls.STOK) <- df.ids$ID
+          names(ls.soils) <- df.ids$ID_custom
 
         } else {
           cat("IDs ", IDs_miss, " are not mapped by STOKA. Those can't be compared using STOK")
@@ -117,17 +128,24 @@ fnc_compare_soil <- function(df.ids,
                                                  dgm = df.dgm)
           ls.STOK[IDs_miss] <- sapply(IDs_miss, function(x) NULL)
 
-          names(ls.STOK) <- df.ids$ID
+          names(ls.STOK) <- df.ids$ID_custom
 
         }
 
       }
 
       if (any(stringr::str_detect(soiloptions_to_test, "BZE"))) {
-        ls.BZE <- fnc_soil_bze(df.gk = xy_gk,
+        df.ids <- df.ids %>%
+          dplyr::left_join(df.dgm, by = "ID")
+        xy_proj <- fnc_transf_crs(df = df.ids,
+                                  to_crs = "UTM_25832")
+
+        ls.BZE <- fnc_soil_bze(df.utm = xy_proj,
                                df.assign = df.ids,
                                buffering = (!is.na(bze_buffer)),
-                               buff_width = bze_buffer)
+                               buff_width = bze_buffer,
+
+                               meta.out = meta.out)
 
       }
 
@@ -135,22 +153,24 @@ fnc_compare_soil <- function(df.ids,
 
         if(!all(df.ids$ID_custom == unique(df.soils$ID_custom))){
           stop("not all ID_custom of df.ids and df.soils are equal")
-        } else {
-          ls.OWN <- df.soils %>%
-            dplyr::left_join(df.ids[c("ID_custom", "ID")], by = "ID_custom") %>%
+        }else {
+          ls.soils <- df.soils %>%
+            dplyr::left_join(df.ids, by = "ID_custom") %>%
             dplyr::arrange(ID, mat, -upper) %>%
+            dplyr::select(ID, ID_custom, everything()) %>%
             dplyr::group_split(ID)
-          ls.OWN <- lapply(ls.OWN, FUN = fnc_depth_disc)
-          ls.OWN <- lapply(ls.OWN, FUN = dplyr::left_join, y = df.dgm, by = "ID")
-          ls.OWN <- lapply(ls.OWN, FUN = dplyr::mutate, upper = upper/-100)
-          ls.OWN <- lapply(ls.OWN, FUN = dplyr::mutate, lower = lower/-100)
+          ls.soils <- lapply(ls.soils, FUN = fnc_depth_disc)
+          if(!all(c("slope", "aspect") %in% colnames(df.ids))){
+            ls.soils <- lapply(ls.soils, FUN = dplyr::left_join, y = df.dgm, by = "ID")
+          }
+          ls.soils <- lapply(ls.soils, FUN = dplyr::mutate, upper = upper/-100)
+          ls.soils <- lapply(ls.soils, FUN = dplyr::mutate, lower = lower/-100)
+          ls.OWN <- lapply(ls.soils, function(x){cbind(x[,1:3], "nl" = 1:nrow(x), x[4:ncol(x)])})
 
-          names(ls.OWN) <- df.ids$ID
+          names(ls.OWN) <- df.ids$ID_custom
         }
 
       }
-
-
 
       # PTF-application:  -------------------------------------- ####
       if(MvG_own_vals == T){
@@ -163,7 +183,8 @@ fnc_compare_soil <- function(df.ids,
         }
 
         if(any(stringr::str_detect(soiloptions_to_test, "BZE"))){
-          ls.BZE <- lapply(ls.BZE, FUN = fnc_PTF, PTF_used = PTF_to_use)
+          ls.BZE[as.numeric(which(!unlist(lapply(ls.BZE, is.null))==T))] <- lapply(ls.BZE[as.numeric(which(!unlist(lapply(ls.BZE, is.null))==T))],
+                                                                                     FUN = fnc_PTF, PTF_used = PTF_to_use)
         }
         if(any(stringr::str_detect(soiloptions_to_test, "STOK"))){
           ls.STOK[IDs_complete] <- lapply(ls.STOK[IDs_complete], FUN = fnc_PTF, PTF_used = PTF_to_use)
@@ -175,7 +196,8 @@ fnc_compare_soil <- function(df.ids,
         }
 
         if(any(stringr::str_detect(soiloptions_to_test, "BZE"))){
-          ls.BZE <- lapply(ls.BZE, FUN = fnc_PTF, PTF_used = PTF_to_use)
+          ls.BZE[as.numeric(which(!unlist(lapply(ls.BZE, is.null))==T))]  <- lapply(ls.BZE[as.numeric(which(!unlist(lapply(ls.BZE, is.null))==T))] ,
+                                                                                    FUN = fnc_PTF, PTF_used = PTF_to_use)
         }
         if(any(stringr::str_detect(soiloptions_to_test, "STOK"))){
           ls.STOK[IDs_complete] <- lapply(ls.STOK[IDs_complete], FUN = fnc_PTF, PTF_used = PTF_to_use)
@@ -188,12 +210,13 @@ fnc_compare_soil <- function(df.ids,
           ls.OWN <- lapply(ls.OWN, FUN = fnc_limit)
         }
         if(any(stringr::str_detect(soiloptions_to_test, "BZE"))){
-          ls.BZE <- lapply(ls.BZE, FUN = fnc_limit)
+          ls.BZE[as.numeric(which(!unlist(lapply(ls.BZE, is.null))==T))]  <- lapply(ls.BZE[as.numeric(which(!unlist(lapply(ls.BZE, is.null))==T))] ,
+                                                                                    FUN = fnc_limit)
         }
         if(any(stringr::str_detect(soiloptions_to_test, "STOK"))){
           ls.STOK[IDs_complete] <- lapply(ls.STOK[IDs_complete], FUN = fnc_limit)
         }
-        ls.soils <- lapply(ls.soils, FUN = fnc_limit)
+        # ls.soils <- lapply(ls.soils, FUN = fnc_limit)
       }
 
       # plotframe creation ------------------------------------- ####
@@ -261,7 +284,7 @@ fnc_compare_soil <- function(df.ids,
       psi_vals <- 10^(seq(log10(1), log10(100000), length.out = 500))
 
       for(id in 1:nrow(df.ids)){
-        png(filename = paste0(output_path, df.ids$ID[id], ".png"),
+        png(filename = paste0(output_path, df.ids$ID_custom[id], ".png"),
             width = 16, height = 9, units = "in", res = 300)
 
         par(mfrow = c(length(depths_to_test), 4),
@@ -274,6 +297,7 @@ fnc_compare_soil <- function(df.ids,
           soiltexture::TT.plot(class.sys = "DE.BK94.TT",
                                tri.data = df.test,
                                main = "Soil Texture",
+                               tri.sum.tst = F,
                                col = as.character(df.match[match(df.test$OPTION, df.match$OPTION), "color"]),
                                cex = 2,
                                pch = 19,
@@ -380,12 +404,16 @@ fnc_compare_soil <- function(df.ids,
       df.ids$ID <- 1:nrow(df.ids)
 
       # transformation of ids to GK3 for slope & aspect
-      xy_gk <- fnc_transf_to_gk(df = df.ids)
+      xy_gk <- fnc_transf_crs(df = df.ids)
 
       dgm.stack <- raster::stack(list.files(input_paul, pattern = "aspect.sdat|slope.sdat", full.names=T))
       df.dgm <- cbind("ID" = df.ids$ID,
-                      as.data.frame(fnc_extract_points(lay = dgm.stack, xy = xy_gk, buffering = T)))
+                      as.data.frame(fnc_extract_points_dgm(lay = dgm.stack, xy = xy_gk, buffering = T)))
 
+
+      # initialise list
+      ls.soils <- vector("list", length = nrow(df.ids))
+      names(ls.soils) <- df.ids$ID_custom
       # choice of data origin:  -------------------------------- ####
 
       if(soiloption_to_use == "STOK"){
@@ -396,10 +424,19 @@ fnc_compare_soil <- function(df.ids,
 
         sf.ids <- sf::st_as_sf(df.ids, coords = c("easting", "northing"), crs = 32632) %>%
           sf::st_join(sf.testgeb) %>%
-          sf::st_drop_geometry()
+          sf::st_drop_geometry() %>%
+          dplyr::select(ID, ID_custom, RST_F)
 
-        IDs_miss <- sf.ids$ID[is.na(sf.ids$RST_F)]
-        IDs_complete <- which(!is.na(sf.ids$RST_F)) # IDs good
+        # no forest
+        RST_noforest <- c(39272, 39273, 0, 39343, 42046)
+        # swamp
+        test <- df.LEIT %>% filter(humusform == "Moor")
+        RST_moor <- unique(test$RST_F)
+        RST_miss <- c(RST_moor, RST_noforest)
+        rm(list = c("RST_noforest", "RST_moor", "test"))
+
+        IDs_miss <- sf.ids$ID[(is.na(sf.ids$RST_F) | sf.ids$RST_F %in% RST_miss)] # remove non-forest-rst_fs
+        IDs_complete <- which(!(is.na(sf.ids$RST_F)| sf.ids$RST_F %in% RST_miss)) # IDs good
 
 
         # all IDs mapped by STOKA
@@ -408,7 +445,7 @@ fnc_compare_soil <- function(df.ids,
                                     df.LEIT = get(paste0("df.LEIT.", testgebiet)),
                                     PTF_to_use = PTF_to_use,
                                     dgm = df.dgm)
-          names(ls.soils) <- df.ids$ID
+          names(ls.soils) <- df.ids$ID_custom
 
         } else {
           cat("IDs ", as.character(df.ids[IDs_miss, "ID_custom"]), " are not mapped by STOKA. How do you wish to proceed? \nPress \"1\" for not modelling missing IDs.\nPress \"2\" for using regionalised BZE-Data for missing IDs.")
@@ -420,25 +457,30 @@ fnc_compare_soil <- function(df.ids,
                                       df.LEIT = get(paste0("df.LEIT.", testgebiet)),
                                       PTF_to_use = PTF_to_use,
                                       dgm = df.dgm)
-            names(ls.soils) <- df.ids$ID[IDs_complete]
+            names(ls.soils) <- df.ids$ID_custom[IDs_complete]
 
             val_IDs <- df.ids$ID_custom[IDs_complete]
           }
 
           if(how_to_proceed == "2"){
-            ls.soils <- list()
-            ls.soils[IDs_complete] <- fnc_soil_stok(df = sf.ids[!is.na(sf.ids$RST_F),],
+            #ls.soils <- list()
+            ls.soils[IDs_complete] <- fnc_soil_stok(df = sf.ids[IDs_complete,],
                                                     df.LEIT = get(paste0("df.LEIT.", testgebiet)),
                                                     PTF_to_use = PTF_to_use,
                                                     dgm = df.dgm)
-            xy_gk_miss <- fnc_transf_to_gk(df = df.ids[is.na(sf.ids$RST_F),])
-            ls.soils[IDs_miss] <- fnc_soil_bze(df.gk = xy_gk_miss,
-                                               df.assign = df.ids,
+            df.ids <- df.ids %>%
+              dplyr::left_join(df.dgm, by = "ID")
+            xy_gk_miss <- fnc_transf_crs(df = df.ids[IDs_miss,],
+                                         to_crs = "UTM_25832")
+            ls.soils[IDs_miss] <- fnc_soil_bze(df.utm = xy_gk_miss,
+                                               df.assign = df.ids[IDs_miss,],
                                                buffering = (!is.na(bze_buffer)),
                                                buff_width = bze_buffer)
 
-            names(ls.soils) <- df.ids$ID
-            val_IDs <- df.ids$ID_custom
+            ls.soils <- ls.soils[as.numeric(which(!unlist(lapply(ls.soils, is.null))==T))]
+
+            names(ls.soils) <- unlist(lapply(ls.soils, function(x) unique(x$ID_custom)))
+            val_IDs <- names(ls.soils)
 
 
           }
@@ -446,11 +488,21 @@ fnc_compare_soil <- function(df.ids,
         }
 
       } else if (soiloption_to_use == "BZE") {
-        ls.soils <- fnc_soil_bze(df.gk = xy_gk,
+        df.ids <- df.ids %>%
+          dplyr::left_join(df.dgm, by = "ID")
+        xy_proj <- fnc_transf_crs(df = df.ids,
+                                  to_crs = "UTM_25832")
+        ls.soils <- fnc_soil_bze(df.utm = xy_proj,
                                  df.assign = df.ids,
                                  buffering = (!is.na(bze_buffer)),
-                                 buff_width = bze_buffer)
-        val_IDs <- df.ids$ID_custom
+                                 buff_width = bze_buffer,
+
+                                 meta.out = meta.out)
+
+        ls.soils <- ls.soils[as.numeric(which(!unlist(lapply(ls.soils, is.null))==T))]
+
+        names(ls.soils) <- unlist(lapply(ls.soils, function(x) unique(x$ID_custom)))
+        val_IDs <- names(ls.soils)
 
       } else if (soiloption_to_use == "OWN") {
 
@@ -458,15 +510,19 @@ fnc_compare_soil <- function(df.ids,
           stop("not all ID_custom of df.ids and df.soils are equal")
         } else {
           ls.soils <- df.soils %>%
-            dplyr::left_join(df.ids[c("ID_custom", "ID")], by = "ID_custom") %>%
+            dplyr::left_join(df.ids, by = "ID_custom") %>%
             dplyr::arrange(ID, mat, -upper) %>%
+            dplyr::select(ID, ID_custom, everything()) %>%
             dplyr::group_split(ID)
-          ls.soils <- lapply(df.soils, FUN = fnc_depth_disc)
-          ls.soils <- lapply(ls.soils, FUN = dplyr::left_join, y = df.dgm, by = "ID")
+          ls.soils <- lapply(ls.soils, FUN = fnc_depth_disc)
+          if(!all(c("slope", "aspect") %in% colnames(df.ids))){
+            ls.soils <- lapply(ls.soils, FUN = dplyr::left_join, y = df.dgm, by = "ID")
+          }
           ls.soils <- lapply(ls.soils, FUN = dplyr::mutate, upper = upper/-100)
           ls.soils <- lapply(ls.soils, FUN = dplyr::mutate, lower = lower/-100)
+          ls.soils <- lapply(ls.soils, function(x){cbind(x[,1:3], "nl" = 1:nrow(x), x[4:ncol(x)])})
 
-          names(ls.soils) <- df.ids$ID
+          names(ls.soils) <- df.ids$ID_custom
 
           val_IDs <- df.ids$ID_custom
         }

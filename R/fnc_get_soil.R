@@ -116,8 +116,11 @@ fnc_get_soil <- function(df.ids,
                                                 df.LEIT = get(paste0("df.LEIT.", testgebiet)),
                                                 PTF_to_use = PTF_to_use,
                                                 dgm = df.dgm)
-        xy_gk_miss <- fnc_transf_to_gk(df = df.ids[IDs_miss,])
-        ls.soils[IDs_miss] <- fnc_soil_bze(df.gk = xy_gk_miss,
+        df.ids <- df.ids %>%
+          dplyr::left_join(df.dgm, by = "ID")
+        xy_gk_miss <- fnc_transf_crs(df = df.ids[IDs_miss,],
+                                     to_crs = "UTM_25832")
+        ls.soils[IDs_miss] <- fnc_soil_bze(df.utm = xy_gk_miss,
                                            df.assign = df.ids[IDs_miss,],
                                            buffering = (!is.na(bze_buffer)),
                                            buff_width = bze_buffer)
