@@ -20,19 +20,33 @@
 #'
 #'
 fnc_limit <- function(df){
-  df <- df %>%
-    mutate(alpha = case_when(alpha < 0.1 ~ 0.1,
-                             alpha > 500 ~ 500,
-                             T ~ alpha),
-           gravel = case_when(gravel > 0.95 ~ 0.95,
-                              T ~ gravel),
-           npar = case_when(npar > 2 ~ 2,
-                            npar < 1.055 ~ 1.055,
-                            T ~ npar),
-           ksat = case_when(ksat < 2 ~ 2,
-                            T ~ ksat),
-           tort = case_when(tort < -3 ~ -3,
-                            tort > 6 ~ 6,
-                            T ~ tort))
+  if(alpha %in% colnames(df)){
+    df <- df %>%
+      mutate(alpha = case_when(alpha < 0.1 ~ 0.1,
+                               alpha > 500 ~ 500,
+                               T ~ alpha))
+  }
+  if(gravel %in% colnames(df)){
+    df <- df %>%
+      mutate(gravel = case_when(gravel > 0.95 ~ 0.95,
+                                T ~ gravel))
+  }
+  if(npar %in% colnames(df)){
+    df <- df %>%
+      mutate(npar = case_when(npar > 2 ~ 2,
+                              npar < 1.055 ~ 1.055,
+                              T ~ npar))
+  }
+  if(ksat %in% colnames(df)){
+    df <- df %>%
+      mutate(ksat = case_when(ksat < 2 ~ 2,
+                              T ~ ksat))
+  }
+  if(tort %in% colnames(df)){
+    df <- df %>%
+      mutate( tort = case_when(tort < -3 ~ -3,
+                               tort > 6 ~ 6,
+                               T ~ tort))
+  }
   return(df)
 }
