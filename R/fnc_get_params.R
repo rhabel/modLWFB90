@@ -15,7 +15,7 @@
 #' @export
 
 fnc_get_params <- function(df.ids,
-                          tree_species,
+                          tree_species = "default",
                           df.ind.info = NULL){
 
   # IDs okay? ---------- ####
@@ -79,6 +79,7 @@ fnc_get_params <- function(df.ids,
       df.site.infos[df.site.infos$ID == x, which(names(df.site.infos) %in% names(parms))]
     return(parms)
   }, df.site.infos = df.site.infos)
+
   names(ls.param) <- df.ids$ID_custom
 
   return(ls.param)

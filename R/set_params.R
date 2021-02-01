@@ -164,9 +164,9 @@ params_douglasfir <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                                   maxlai = 6,
                                                   sai = 0.8,
                                                   winlaifrac = 0.8)
-
+params_default <- LWFBrook90R::set_paramLWFB90()
 
 #
-# save(params_beech, params_oak, params_pine, params_spruce, params_douglasfir,
+# save(params_beech, params_oak, params_pine, params_spruce, params_douglasfir, params_default,
 #      file = "./data/params_species.rda")
 
