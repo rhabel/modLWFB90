@@ -4,7 +4,7 @@
 \alias{fnc_get_params}
 \title{Parameter-list creation}
 \usage{
-fnc_get_params(df.ids, tree_species, df.ind.info = NULL)
+fnc_get_params(df.ids, tree_species = "default", df.ind.info = NULL)
 }
 \arguments{
 \item{df.ids}{a data frame containing the following columns:
