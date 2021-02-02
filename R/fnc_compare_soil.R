@@ -155,7 +155,7 @@ fnc_compare_soil <- function(df.ids,
           stop("not all ID_custom of df.ids and df.soils are equal")
         }else {
           ls.soils <- df.soils %>%
-            dplyr::left_join(df.ids, by = "ID_custom") %>%
+            dplyr::left_join(df.ids, by = c("ID", "ID_custom")) %>%
             dplyr::arrange(ID, mat, -upper) %>%
             dplyr::select(ID, ID_custom, everything()) %>%
             dplyr::group_split(ID)
