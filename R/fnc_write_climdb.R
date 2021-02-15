@@ -1,6 +1,6 @@
 #' Creation of Climate Database
 #'
-#' This function creates a Project Climate Database in the format required by \code{\link[LWFBrook90R]{run_LWFB90}}. \code{\link[LWFBrook90R]{run_multisite_LWFB90}} can read climate data from the newly created database providing the advantage of lesser RAM consumption.
+#' This function creates a Project Climate Database in the format required by \code{\link[LWFBrook90R]{run_LWFB90}}. \code{\link[LWFBrook90R]{run_multisite_LWFB90}} can read climate data from this newly created database providing the advantage of lesser RAM consumption.
 #'
 #' @param df.ids a data frame containing the following columns:
 #' \itemize{
@@ -11,13 +11,12 @@
 #' @param maxdate last day of modelling time period as \code{Date}- object
 #' @param path_std path to standard locations directory
 #' @param path_climdb path to climate-db directory
-#' @param path_dbout path to output-climate-db directory
+#' @param path_dbout path to output-climate-db directory, i.e. project directory
 #'
 #' @import data.table
 #'
-#' @return Returns a named list (names from \code{df.ids$ID_custom}) of climate data
-#' @examples
-#' fnc_get_clim(df.ids = test.ids.bds, mindate = as.Date("2010-01-01"), maxdate = as.Date("2011-12-31"))
+#' @return creates as SQLite-Database with one climate-df for each ID ind \code{df.ids$ID_custom})
+#' @examples inst/examples/fnc_get_soil_ex.R
 #'
 #' @export
 
@@ -27,6 +26,12 @@ fnc_write_climdb <- function(df.ids,
                          path_std = "R:/klima/whh/brook90_input/locations",
                          path_climdb = "R:/klima/whh/brook90_input/db/",
                          path_bdout) {
+
+  # check if file exists, delete if T:
+  if(file.exists(paste(path_bdout, "clim_data.SQLite", sep = ""))){
+    unlink(paste(path_bdout, "clim_data.SQLite", sep = ""))
+  }
+
 
   # IDs okay? ---------- ####
   # sort dfs according to IDs
@@ -79,6 +84,7 @@ fnc_write_climdb <- function(df.ids,
 
     dt.clim.tmp <- dt.clim.tmp[,.(ID, ID_custom, id_standard, dates, year, month, day, globrad, prec, tmean, tmin, tmax, windspeed, vappres)]
     dt.clim.tmp <- dt.clim.tmp[dates>= mindate & dates <= maxdate]
+    dt.clim.tmp[, dates:= NULL]
 
 
     # write to db
