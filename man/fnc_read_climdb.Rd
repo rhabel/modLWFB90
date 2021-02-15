@@ -18,6 +18,6 @@ returns climate data in correct format
 This function reads in the Project Climate Database written by \code{\link[LWFBrook90R]{fnc_write_climdb}} and processes the data correctly, so that it can be used via the function parameters \code{climate} and \code{climate_args} in \code{\link[LWFBrook90R]{run_multisite_LWFB90}}. Function arguments must be passed to \code{\link[LWFBrook90R]{run_multisite_LWFB90}} as list of lists. Upper level containing the ID_custom names of the points to be modelled, the lower level containing the respective ID_custom name as well as the path to the project climate data base
 }
 \examples{
-inst/examples/fnc_get_soil_ex.R
+inst/examples/fnc_climdb_ex.R
 
 }

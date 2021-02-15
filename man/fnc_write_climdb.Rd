@@ -37,6 +37,6 @@ creates as SQLite-Database with one climate-df for each ID ind \code{df.ids$ID_c
 This function creates a Project Climate Database in the format required by \code{\link[LWFBrook90R]{run_LWFB90}}. \code{\link[LWFBrook90R]{run_multisite_LWFB90}} can read climate data from this newly created database providing the advantage of lesser RAM consumption.
 }
 \examples{
-inst/examples/fnc_get_soil_ex.R
+inst/examples/fnc_climdb_ex.R
 
 }

@@ -16,7 +16,7 @@
 #' @import data.table
 #'
 #' @return creates as SQLite-Database with one climate-df for each ID ind \code{df.ids$ID_custom})
-#' @examples inst/examples/fnc_get_soil_ex.R
+#' @examples inst/examples/fnc_climdb_ex.R
 #'
 #' @export
 
