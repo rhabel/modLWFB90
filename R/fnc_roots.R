@@ -47,7 +47,7 @@ fnc_roots <- function(df,
 
     return(df)
   }else{
-    rootden <- LWFBrook90R::make_rootden(soilnodes = df$lower, method = rootsmethod, ...)
+    rootden <- make_rootden_adj(soilnodes = df$lower, method = rootsmethod, ...)
     df$rootden <- c(ifelse(humus_roots == T, max(rootden), 0),
                     rootden)
     return(df)
@@ -55,4 +55,92 @@ fnc_roots <- function(df,
 
 }
 
+make_rootden_adj <- function(soilnodes,
+                         maxrootdepth = min(soilnodes),
+                         method = "betamodel",
+                         beta = 0.97,
+                         rootdat = NULL
+) {
+
+
+  method <- match.arg(method, choices = c("betamodel", "table", "constant", "linear"))
+
+  if (method == "betamodel") {
+
+    # only positive d-values allowed in beta-model:
+    maxrootdepth <- maxrootdepth * (-100)
+    soilnodes <- soilnodes * (-100)
+
+    # replace first element greater maxrootdepth with maxrootdepth
+    soilnodes_maxrtdep <- soilnodes
+
+    if(max(soilnodes) > maxrootdepth){
+      soilnodes_maxrtdep[which.max(soilnodes >= maxrootdepth)] <- maxrootdepth
+    }
+
+    # shift downwards to account for negative values in soilnodes (humus topsoil layers)
+    if (min(soilnodes_maxrtdep) < 0) {
+      maxrootdepth <- maxrootdepth - min(soilnodes_maxrtdep)
+      soilnodes_maxrtdep <- soilnodes_maxrtdep - min(soilnodes_maxrtdep)
+    }
+
+    # cumulative density
+    RLenDcum <- 1 - (beta ^ soilnodes_maxrtdep)
+
+    # density
+    rootden <- diff(RLenDcum)/diff(soilnodes) # important to use soilnodes here, so rootden is reduced if the lowest layer is only partially within maxrootdpeth
+    rootden[which(soilnodes_maxrtdep > maxrootdepth) - 1] <- 0
+
+  }
+
+  if (method == "constant") {
+    rootden <- rep(1,length(soilnodes)-1)
+    rootden[which(soilnodes[1:length(soilnodes)-1] <= maxrootdepth)] <- 0
+  }
+
+  if (method == "linear") {
+    RelDenFun <- stats::approxfun(x = c(max(soilnodes),maxrootdepth), y = c(1,0), method = "linear",rule = 1:2, yleft = 0)
+    soilnodes[which.max(soilnodes <= maxrootdepth)] <- maxrootdepth
+    midpoints <- soilnodes[1:length(soilnodes)-1] + diff(soilnodes)/2
+    rootden <- RelDenFun(midpoints)
+  }
+
+  if (method == "table") {
+
+    # to pass CRAN check notes
+    upper <- NULL; lower <- NULL; i.upper <- NULL; i.lower <- NULL;
+    rootmass <- NULL; rthick <- NULL; thick_ol <- NULL;
+
+    # distributes 'measured' relative root densities to the soil layers, preserving total root mass
+
+    stopifnot(all(c("upper", "lower", "rootden") %in% tolower(names(rootdat))))
+    names(rootdat) <- tolower(names(rootdat))
+
+    # create data.tables for overlap join
+    rootdat <- data.table::data.table(rootdat, key = c("lower", "upper"))
+    rootdat[, rthick := (upper - lower)]
+    rootdat[, rootmass := (rootden*rthick)]
+
+    slayers <- data.table::data.table(upper = soilnodes[1:length(soilnodes)-1],
+                                      lower = soilnodes[2:length(soilnodes)])
+
+    # overlap-join
+    rootdat <- data.table::foverlaps(slayers,rootdat, type = "any")
+
+    # derive overlap-thickness for soil layers
+    rootdat[, thick_ol := (ifelse(i.upper < upper,i.upper,upper) -
+                             ifelse(i.lower < lower & i.upper > lower,lower,
+                                    ifelse(i.upper < lower,0,i.lower)) ) * (i.upper > lower & i.lower < upper)]
+
+    # sum up rootmass proportional to overlapping thickness
+    out <- rootdat[, list(i.rootmass = sum(rootmass*thick_ol/rthick)), by = list(i.upper ,i.lower)]
+
+    # convert rootmass back to root density
+    out$i.rden <- with(out, ifelse(!is.na(i.rootmass),i.rootmass / (i.upper - i.lower), 0) )
+
+    rootden <- out$i.rden
+
+  }
+  return(rootden)
+}
 
