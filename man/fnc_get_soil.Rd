@@ -73,8 +73,8 @@ df.LEIT.NPS <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_Stok
   dplyr::left_join(df.LEIT.hum, by = "RST_F")
 
 # load STOKA - shapefiles
-sf.STOK.BDS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/BDS/BDS_STOKA_Clip_UTM.shp"))
-sf.STOK.NPS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NP_STOKA_Clip_UTM.shp"))
+sf.STOK.BDS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/BDS/BDS_STOKA_Clip_UTM_25832.shp"))
+sf.STOK.NPS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NPS_STOKA_Clip_UTM.shp"))
 
 fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
