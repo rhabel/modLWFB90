@@ -60,12 +60,16 @@ fnc_get_soil <- function(df.ids,
 
   if(str_detect(soil_option, "STOK")){
 
+  sf.wugeb <- sf::st_read("H:/BU/Gis/Themen/Vektor/Wugeb_Dissolve.shp")%>% sf::st_transform(crs= 32632)
+
+
     # subset currently still active for faster processing - to be expanded to BW in the future
     #sf.testgeb <- get(paste0("sf.STOK.", testgebiet))
     #df.LEIT <- get(paste0("df.LEIT.", testgebiet))
 
     sf.ids <- sf::st_as_sf(df.ids, coords = c("easting", "northing"), crs = 32632)
 
+<<<<<<< HEAD
     #Due to RAM issues the STOKA-shapefile was divided into 7 parts, each of them comprising a Wuchsbezirk
     #read shapefile with an overview over Wuchsbezirke in BW and test which STOKA-files are required
     sf.wugeb <- sf::st_read("H:/BU/Gis/Themen/Vektor/Wugeb_Dissolve.shp")%>% sf::st_transform(crs= 32632)
@@ -83,6 +87,27 @@ fnc_get_soil <- function(df.ids,
                             sf::st_read(i)})%>%
                             do.call(rbind, .) %>%
                             st_transform(crs = st_crs(sf.ids))
+=======
+    wugeb <- unique(unlist(sf::st_intersects(sf.ids, sf.wugeb), recursive = T))
+
+
+    for(i in wugeb){
+
+      sf.gebiet_teil <- sf::st_read(paste0("H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Wuchsgebiete/", i, ".shp")) %>% st_transform(sf.gebiet_teil, crs = st_crs(sf.ids))
+
+        if(i == wugeb[1]){
+          sf.gebiet <- sf.gebiet_teil
+        }
+        else{
+          sf.gebiet <- rbind(sf.gebiet, sf.gebiet_teil)
+        }
+    }
+
+    sf.ids <-  sf.ids%>%
+                  sf::st_join(sf.gebiet)%>%
+                  sf::st_drop_geometry()%>%
+                  dplyr::select(ID, ID_custom, RST_F)
+>>>>>>> 11336cf4eca003ebe983ddecc5614cc6dfe97c35
 
 
     #Join sf.ids with sf.gebiet
