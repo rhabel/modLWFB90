@@ -9,7 +9,7 @@
 #' \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
 #' }
 #' @param soil_option whether BZE or STOK data should be used for modelling. While option \code{BZE} with a buffer of 50 shouldn't create NAs, option \code{STOK} builds on the data of the Standortskartierung Baden-Wuerttemberg that is not available everywhere (i.e. in private forests). Option \code{STOK_BZE} will complete the missing STOK-points with BZE-data. The final option is \code{OWN}, in which case users can enter their own soil data (i.e. from lab or field experiements). If the option \code{OWN} is selected, the dataframes must be passed at \code{df.soils}.
-#' @param df.LEIT soil information from Modul1-DB. Should be the extended verion containing a column for humus
+#' @param df.LEIT soil information from Modul1-DB. Should be the extended version containing a column for humus
 #' @param PTF_to_use the PTF to be used in the modeling process. Options are \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}. Alternatively, if MvG parameters have been retrieved elsewhere (i.e. by lab analyses), \code{OWN_PARMS} can be selected to skip this.
 #' @param limit_MvG should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit}}. Default is \code{FALSE}.
 #' @param ... further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}.
@@ -71,7 +71,7 @@ fnc_get_soil <- function(df.ids,
     #read shapefile with an overview over Wuchsbezirke in BW and test which STOKA-files are required
     sf.wugeb <- sf::st_read("H:/BU/Gis/Themen/Vektor/Wugeb_Dissolve.shp")%>% sf::st_transform(crs= 32632)
     wugeb <- sort(paste0(unique(unlist(sf::st_intersects(sf.ids, sf.wugeb), recursive = F)), ".shp"), decreasing = F)
-
+    rm(sf.wugeb)
     #Read required STOKA shapefiles and transform CRS according to sf.ids
 
       files <- list.files("H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Wuchsgebiete/")
