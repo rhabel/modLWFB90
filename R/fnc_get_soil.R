@@ -9,7 +9,7 @@
 #' \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
 #' }
 #' @param soil_option whether BZE or STOK data should be used for modelling. While option \code{BZE} with a buffer of 50 shouldn't create NAs, option \code{STOK} builds on the data of the Standortskartierung Baden-Wuerttemberg that is not available everywhere (i.e. in private forests). Option \code{STOK_BZE} will complete the missing STOK-points with BZE-data. The final option is \code{OWN}, in which case users can enter their own soil data (i.e. from lab or field experiements). If the option \code{OWN} is selected, the dataframes must be passed at \code{df.soils}.
-#' @param testgebiet at the current stage of development, we're working with test areas that have to be named here as \code{BDS} for Bodensee/07b, or \code{NPS} for National Park Schwarzwald. Eventually, this should be replaced by a BW-wide option. This parameter might be useful if a spatial pre-selection should be included for performance optimization...
+#' @param df.LEIT soil information from Modul1-DB. Should be the extended verion containing a column for humus
 #' @param PTF_to_use the PTF to be used in the modeling process. Options are \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}. Alternatively, if MvG parameters have been retrieved elsewhere (i.e. by lab analyses), \code{OWN_PARMS} can be selected to skip this.
 #' @param limit_MvG should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit}}. Default is \code{FALSE}.
 #' @param ... further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}.
@@ -34,6 +34,7 @@
 
 fnc_get_soil <- function(df.ids,
                          soil_option,
+                         df.LEIT,
                          PTF_to_use,
                          bze_buffer = NA,
                          limit_MvG = T,
@@ -60,16 +61,12 @@ fnc_get_soil <- function(df.ids,
 
   if(str_detect(soil_option, "STOK")){
 
-  sf.wugeb <- sf::st_read("H:/BU/Gis/Themen/Vektor/Wugeb_Dissolve.shp")%>% sf::st_transform(crs= 32632)
-
-
     # subset currently still active for faster processing - to be expanded to BW in the future
     #sf.testgeb <- get(paste0("sf.STOK.", testgebiet))
     #df.LEIT <- get(paste0("df.LEIT.", testgebiet))
 
     sf.ids <- sf::st_as_sf(df.ids, coords = c("easting", "northing"), crs = 32632)
 
-<<<<<<< HEAD
     #Due to RAM issues the STOKA-shapefile was divided into 7 parts, each of them comprising a Wuchsbezirk
     #read shapefile with an overview over Wuchsbezirke in BW and test which STOKA-files are required
     sf.wugeb <- sf::st_read("H:/BU/Gis/Themen/Vektor/Wugeb_Dissolve.shp")%>% sf::st_transform(crs= 32632)
@@ -87,27 +84,6 @@ fnc_get_soil <- function(df.ids,
                             sf::st_read(i)})%>%
                             do.call(rbind, .) %>%
                             st_transform(crs = st_crs(sf.ids))
-=======
-    wugeb <- unique(unlist(sf::st_intersects(sf.ids, sf.wugeb), recursive = T))
-
-
-    for(i in wugeb){
-
-      sf.gebiet_teil <- sf::st_read(paste0("H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Wuchsgebiete/", i, ".shp")) %>% st_transform(sf.gebiet_teil, crs = st_crs(sf.ids))
-
-        if(i == wugeb[1]){
-          sf.gebiet <- sf.gebiet_teil
-        }
-        else{
-          sf.gebiet <- rbind(sf.gebiet, sf.gebiet_teil)
-        }
-    }
-
-    sf.ids <-  sf.ids%>%
-                  sf::st_join(sf.gebiet)%>%
-                  sf::st_drop_geometry()%>%
-                  dplyr::select(ID, ID_custom, RST_F)
->>>>>>> 11336cf4eca003ebe983ddecc5614cc6dfe97c35
 
 
     #Join sf.ids with sf.gebiet
@@ -128,7 +104,7 @@ fnc_get_soil <- function(df.ids,
     #All missing RST_F
     RST_miss <- c(RST_moor, RST_noforest, RST_LEIT)
 
-    #rm(list = c("RST_noforest", "RST_moor", "RST_LEIT"))
+    rm(list = c("RST_noforest", "RST_moor", "RST_LEIT"))
 
     IDs_miss <- sf.ids$ID[(is.na(sf.ids$RST_F) | sf.ids$RST_F %in% RST_miss)] # remove non-forest-rst_fs
     IDs_complete <- which(!(is.na(sf.ids$RST_F)| sf.ids$RST_F %in% RST_miss)) # IDs good
