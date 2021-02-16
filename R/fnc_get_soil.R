@@ -63,14 +63,34 @@ fnc_get_soil <- function(df.ids,
 
   if(str_detect(soil_option, "STOK")){
 
-    # subset currently still active for faster processing - to be expanded to BW in the future
-    sf.testgeb <- get(paste0("sf.STOK.", testgebiet))
-    df.LEIT <- get(paste0("df.LEIT.", testgebiet))
+  sf.wugeb <- sf::st_read("H:/BU/Gis/Themen/Vektor/Wugeb_Dissolve.shp")%>% sf::st_transform(crs= 32632)
 
-    sf.ids <- sf::st_as_sf(df.ids, coords = c("easting", "northing"), crs = 32632) %>%
-      sf::st_join(sf.testgeb) %>%
-      sf::st_drop_geometry() %>%
-      dplyr::select(ID, ID_custom, RST_F)
+
+    # subset currently still active for faster processing - to be expanded to BW in the future
+    #sf.testgeb <- get(paste0("sf.STOK.", testgebiet))
+    #df.LEIT <- get(paste0("df.LEIT.", testgebiet))
+
+    sf.ids <- sf::st_as_sf(df.ids, coords = c("easting", "northing"), crs = 32632)
+
+    wugeb <- unique(unlist(sf::st_intersects(sf.ids, sf.wugeb), recursive = T))
+
+
+    for(i in wugeb){
+
+      sf.gebiet_teil <- sf::st_read(paste0("H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Wuchsgebiete/", i, ".shp")) %>% st_transform(sf.gebiet_teil, crs = st_crs(sf.ids))
+
+        if(i == wugeb[1]){
+          sf.gebiet <- sf.gebiet_teil
+        }
+        else{
+          sf.gebiet <- rbind(sf.gebiet, sf.gebiet_teil)
+        }
+    }
+
+    sf.ids <-  sf.ids%>%
+                  sf::st_join(sf.gebiet)%>%
+                  sf::st_drop_geometry()%>%
+                  dplyr::select(ID, ID_custom, RST_F)
 
     # no forest
     RST_noforest <- c(39272, 39273, 0, 39343, 42046)
