@@ -34,13 +34,10 @@
 
 fnc_get_soil <- function(df.ids,
                          soil_option,
-                         testgebiet,
                          PTF_to_use,
-
                          bze_buffer = NA,
                          limit_MvG = T,
                          df.soils = NULL,
-
                          meta.out = NA,
                          ...){
 
@@ -64,30 +61,61 @@ fnc_get_soil <- function(df.ids,
   if(str_detect(soil_option, "STOK")){
 
     # subset currently still active for faster processing - to be expanded to BW in the future
-    sf.testgeb <- get(paste0("sf.STOK.", testgebiet))
-    df.LEIT <- get(paste0("df.LEIT.", testgebiet))
+    #sf.testgeb <- get(paste0("sf.STOK.", testgebiet))
+    #df.LEIT <- get(paste0("df.LEIT.", testgebiet))
 
-    sf.ids <- sf::st_as_sf(df.ids, coords = c("easting", "northing"), crs = 32632) %>%
-      sf::st_join(sf.testgeb) %>%
-      sf::st_drop_geometry() %>%
-      dplyr::select(ID, ID_custom, RST_F)
+    sf.ids <- sf::st_as_sf(df.ids, coords = c("easting", "northing"), crs = 32632)
 
+    #Due to RAM issues the STOKA-shapefile was divided into 7 parts, each of them comprising a Wuchsbezirk
+    #read shapefile with an overview over Wuchsbezirke in BW and test which STOKA-files are required
+    sf.wugeb <- sf::st_read("H:/BU/Gis/Themen/Vektor/Wugeb_Dissolve.shp")%>% sf::st_transform(crs= 32632)
+    wugeb <- sort(paste0(unique(unlist(sf::st_intersects(sf.ids, sf.wugeb), recursive = F)), ".shp"), decreasing = F)
+
+    #Read required STOKA shapefiles and transform CRS according to sf.ids
+
+      files <- list.files("H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Wuchsgebiete/")
+      files <- files[!nchar(files) > 5]
+      files <- sort(files[substr(files, 3, 5) == "shp"], decreasing = F)
+      files <- files[files[] == wugeb[]]
+
+      sf.gebiet <- lapply(paste0("H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Wuchsgebiete/", files),
+                          function(i){
+                            sf::st_read(i)})%>%
+                            do.call(rbind, .) %>%
+                            st_transform(crs = st_crs(sf.ids))
+
+
+    #Join sf.ids with sf.gebiet
+    sf.ids <-  sf.ids%>%
+                  sf::st_join(sf.gebiet)%>%
+                  sf::st_drop_geometry()%>%
+                  dplyr::select(ID, ID_custom, RST_F)
+
+    # Identify missing and non-forest RST_F
     # no forest
     RST_noforest <- c(39272, 39273, 0, 39343, 42046)
-    # swamp
-    test <- df.LEIT %>% filter(humusform == "Moor")
-    RST_moor <- unique(test$RST_F)
-    RST_miss <- c(RST_moor, RST_noforest)
-    rm(list = c("RST_noforest", "RST_moor", "test"))
+    # Dieser Teil funktioniert derzeit in der neuen Version für ganz BW nicht, weil in der Datenbank Humusformen fehlen
+    #swamp
+    RST_moor <- df.LEIT %>% filter(humusform == "Moor")
+    RST_moor <- RST_moor$RST_F
+    #missing RST_F in df.LEIT
+    RST_LEIT <- unique(sf.ids$RST_F[!sf.ids$RST_F %in% df.LEIT$RST_F])
+    #All missing RST_F
+    RST_miss <- c(RST_moor, RST_noforest, RST_LEIT)
+
+    #rm(list = c("RST_noforest", "RST_moor", "RST_LEIT"))
 
     IDs_miss <- sf.ids$ID[(is.na(sf.ids$RST_F) | sf.ids$RST_F %in% RST_miss)] # remove non-forest-rst_fs
     IDs_complete <- which(!(is.na(sf.ids$RST_F)| sf.ids$RST_F %in% RST_miss)) # IDs good
+
+
+
 
     # all IDs mapped by STOKA
     if(length(IDs_miss) == 0){
 
       ls.soils <- fnc_soil_stok(df = sf.ids,
-                                df.LEIT = get(paste0("df.LEIT.", testgebiet)),
+                                df.LEIT = get("df.LEIT"),
                                 PTF_to_use = PTF_to_use,
                                 dgm = df.dgm)
 
@@ -97,11 +125,11 @@ fnc_get_soil <- function(df.ids,
 
       if(soil_option == "STOK"){
 
-        cat("IDs \n", as.character(as.data.frame(df.ids)[IDs_miss, "ID_custom"]), " \nare not mapped by STOKA. They will no be modelled.")
+        cat("IDs \n", as.character(as.data.frame(df.ids)[IDs_miss, "ID_custom"]), " \nare not mapped by STOKA. They will not be modelled.")
 
         sf.ids <- sf.ids[-IDs_miss,] # remove missing IDs
         ls.soils.tmp <- fnc_soil_stok(df = sf.ids,
-                                      df.LEIT = get(paste0("df.LEIT.", testgebiet)),
+                                      df.LEIT = get("df.LEIT"),
                                       PTF_to_use = PTF_to_use,
                                       dgm = df.dgm)
         names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
@@ -113,7 +141,7 @@ fnc_get_soil <- function(df.ids,
         cat("IDs \n", as.character(as.data.frame(df.ids)[IDs_miss, "ID_custom"]), " \nare not mapped by STOKA. They will be modelled using regionlized BZE data.")
 
         ls.soils[IDs_complete] <- fnc_soil_stok(df = sf.ids[IDs_complete,],
-                                                df.LEIT = get(paste0("df.LEIT.", testgebiet)),
+                                                df.LEIT = get("df.LEIT"),
                                                 PTF_to_use = PTF_to_use,
                                                 dgm = df.dgm)
         df.ids <- df.ids %>%
