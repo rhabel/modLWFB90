@@ -74,12 +74,12 @@ fnc_get_soil <- function(df.ids,
     rm(sf.wugeb)
     #Read required STOKA shapefiles and transform CRS according to sf.ids
 
-      files <- list.files("H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Wuchsgebiete/")
+      files <- list.files("H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Wuchsgebiete/Wuchsgebiete_red/")
       files <- files[!nchar(files) > 5]
       files <- sort(files[substr(files, 3, 5) == "shp"], decreasing = F)
       files <- files[files[] == wugeb[]]
 
-      sf.gebiet <- lapply(paste0("H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Wuchsgebiete/", files),
+      sf.gebiet <- lapply(paste0("H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Wuchsgebiete/Wuchsgebiete_red/", files),
                           function(i){
                             sf::st_read(i)})%>%
                             do.call(rbind, .) %>%
