@@ -6,7 +6,7 @@
 #' @param path_climdb path to project climate data base
 #'
 #' @return returns climate data in correct format
-#' @examples inst/examples/fnc_climdb_ex.R
+#' @example inst/examples/fnc_climdb_ex.R
 #'
 #' @export
 

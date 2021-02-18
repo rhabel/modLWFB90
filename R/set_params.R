@@ -13,9 +13,9 @@ params_beech <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                              albsn = 0.47,
                                              lwidth = 0.04,
                                              rhotp = 2,
-                                             glmax = 0.0068,
+                                             glmax = 0.006,
                                              radex = 0.59,
-                                             glmin = 0.000238,
+                                             glmin = 0.0002,
                                              mxkpl = 8,
                                              maxrlen = 3200,
                                              psicr = -2,
@@ -30,8 +30,12 @@ params_beech <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                              fsintlai = 0.08,
                                              fsintsai = 0.4,
 
-                                             maxlai = 7,
-                                             sai = 1)
+                                             maxlai = 6,
+                                             sai = 1,
+                                             height = 34,
+                                             age_ini = 100,
+                                             maxrootdepth = -1.6,
+                                             betaroot = 0.966)
 
 # oak ---------- ####
 params_oak <- LWFBrook90R::set_paramLWFB90(zw = 10,
@@ -46,9 +50,9 @@ params_oak <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                            albsn = 0.47,
                                            lwidth = 0.05,
                                            rhotp = 2,
-                                           glmax = 0.0091,
+                                           glmax = 0.007,
                                            radex = 0.59,
-                                           glmin = 0.0003185,
+                                           glmin = 0.0003,
                                            mxkpl = 8,
                                            maxrlen = 3200,
                                            psicr = -2.5,
@@ -63,8 +67,13 @@ params_oak <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                            fsintlai = 0.1,
                                            fsintsai = 0.5,
 
-                                           maxlai = 5,
-                                           sai = 0.9)
+                                           maxlai = 4.5,
+                                           sai = 0.9,
+                                           height = 26,
+                                           age_ini = 100,
+                                           maxrootdepth = -2,
+                                           betaroot = 0.966)
+
 
 # spruce ------- ####
 params_spruce <- LWFBrook90R::set_paramLWFB90(zw = 10,
@@ -80,7 +89,7 @@ params_spruce <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                               rhotp = 2.6,
                                               glmax = 0.0035,
                                               radex = 0.45,
-                                              glmin = 0.000099,
+                                              glmin = 0.0001,
                                               mxkpl = 8,
                                               maxrlen = 3000,
                                               psicr = -2,
@@ -97,7 +106,12 @@ params_spruce <- LWFBrook90R::set_paramLWFB90(zw = 10,
 
                                               maxlai = 7,
                                               sai = 2,
-                                              winlaifrac = 0.8)
+                                              winlaifrac = 0.8,
+                                              height = 36,
+                                              age_ini = 100,
+                                              maxrootdepth = -1.2,
+                                              betaroot = 0.976)
+
 
 # pine --------- ####
 params_pine <- LWFBrook90R::set_paramLWFB90(zw = 10,
@@ -113,7 +127,7 @@ params_pine <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                             rhotp = 2.6,
                                             glmax = 0.005,
                                             radex = 0.45,
-                                            glmin = 0.000225,
+                                            glmin = 0.0002,
                                             mxkpl = 8,
                                             maxrlen = 3000,
                                             psicr = -2.5,
@@ -128,9 +142,14 @@ params_pine <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                             fsintlai = 0.13,
                                             fsintsai = 0.3,
 
-                                            maxlai = 4,
+                                            maxlai = 3.5,
                                             sai = 0.8,
-                                            winlaifrac = 0.8)
+                                            winlaifrac = 0.5,
+                                              height = 30,
+                                            age_ini = 100,
+                                            maxrootdepth = -2,
+                                            betaroot = 0.976)
+
 
 # douglasfir --- ####
 params_douglasfir <- LWFBrook90R::set_paramLWFB90(zw = 10,
@@ -146,7 +165,7 @@ params_douglasfir <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                                   rhotp = 2.6,
                                                   glmax = 0.0035,
                                                   radex = 0.45,
-                                                  glmin = 0.000099,
+                                                  glmin = 0.0001,
                                                   mxkpl = 8,
                                                   maxrlen = 3000,
                                                   psicr = -2.5,
@@ -156,17 +175,23 @@ params_douglasfir <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                                   cintrs = 0.2,
                                                   cintsl = 1.6,
                                                   cintss = 0.8,
-                                                  frintlai = 0.08,
-                                                  frintsai = 0.08,
+                                                  frintlai = 0.12,
+                                                  frintsai = 0.2,
                                                   fsintlai = 0.08,
                                                   fsintsai = 0.1,
 
                                                   maxlai = 6,
                                                   sai = 0.8,
-                                                  winlaifrac = 0.8)
+                                                  winlaifrac = 0.8,
+                                                  height = 40,
+                                                  age_ini = 100,
+                                                  maxrootdepth = -1.6,
+                                                  betaroot = 0.976)
+
+
 params_default <- LWFBrook90R::set_paramLWFB90()
 
-#
+
 # save(params_beech, params_oak, params_pine, params_spruce, params_douglasfir, params_default,
 #      file = "./data/params_species.rda")
 
