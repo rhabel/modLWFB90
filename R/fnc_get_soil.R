@@ -90,20 +90,27 @@ fnc_get_soil <- function(df.ids,
     sf.ids <-  sf.ids%>%
                   sf::st_join(sf.gebiet)%>%
                   sf::st_drop_geometry()%>%
-                  dplyr::select(ID, ID_custom, RST_F)
+                  dplyr::select(ID, ID_custom, RST_F, OA_ID)
+
 
     # Identify missing and non-forest RST_F
-    # no forest
-    RST_noforest <- c(39272, 39273, 0, 39343, 42046)
-    # Dieser Teil funktioniert derzeit in der neuen Version für ganz BW nicht, weil in der Datenbank Humusformen fehlen
-    #swamp
-    RST_moor <- df.LEIT %>% filter(humusform == "Moor")
-    RST_moor <- RST_moor$RST_F
+    #no forest
+    RST_noforest <- sf.ids %>%
+                        dplyr::filter(OA_ID != 6)  %>%
+                        dplyr::pull(RST_F) %>%
+                        unique(.)
+
     #missing RST_F in df.LEIT
     RST_LEIT <- unique(sf.ids$RST_F[!sf.ids$RST_F %in% df.LEIT$RST_F])
-    #All missing RST_F
-    RST_miss <- c(RST_moor, RST_noforest, RST_LEIT)
 
+    #Swamps
+    RST_moor <- df.LEIT %>%
+                    dplyr::filter(humusform == "Moor") %>%
+                    dplyr::pull(RST_F)%>%
+                    as.numeric(.) %>%
+                    unique(.)
+
+    RST_miss <- c(RST_noforest, RST_LEIT, RST_moor)
     rm(list = c("RST_noforest", "RST_moor", "RST_LEIT"))
 
     IDs_miss <- sf.ids$ID[(is.na(sf.ids$RST_F) | sf.ids$RST_F %in% RST_miss)] # remove non-forest-rst_fs
