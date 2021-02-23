@@ -10,7 +10,8 @@ fnc_write_climdb(
   maxdate = as.Date("2011-12-31"),
   path_std = "R:/klima/whh/brook90_input/locations",
   path_climdb = "R:/klima/whh/brook90_input/db/",
-  path_bdout
+  dbout_name,
+  append_to_db = F
 )
 }
 \arguments{
@@ -28,7 +29,7 @@ fnc_write_climdb(
 
 \item{path_climdb}{path to climate-db directory}
 
-\item{path_dbout}{path to output-climate-db directory, i.e. project directory}
+\item{dbout_name}{full path and file name for output-climate-db directory}
 }
 \value{
 creates as SQLite-Database with one climate-df for each ID ind \code{df.ids$ID_custom})
@@ -37,6 +38,30 @@ creates as SQLite-Database with one climate-df for each ID ind \code{df.ids$ID_c
 This function creates a Project Climate Database in the format required by \code{\link[LWFBrook90R]{run_LWFB90}}. \code{\link[LWFBrook90R]{run_multisite_LWFB90}} can read climate data from this newly created database providing the advantage of lesser RAM consumption.
 }
 \examples{
-inst/examples/fnc_climdb_ex.R
+# write project climate database from "2010-01-01" to "2011-12-31"
+fnc_write_climdb(df.ids = test.ids.bds,
+                 path_bdout = "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/")
 
+# set clim_args
+clim_args <-
+  lapply(test.ids.bds$ID_custom,
+         function(x) list(IDs = as.character(x),
+                          path_climdb = "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/clim_data.sqlite"))
+names(clim_args) <- as.character(test.ids.bds$ID_custom)
+
+soil.test <- fnc_get_soil(df.ids = test.ids.bds,
+                          soil_option = "BZE",
+                          testgebiet = "BDS",
+                          PTF_to_use = "HYPRES",
+                          rootsmethod = "hartmann",
+                          humus_roots = F)
+
+res <- run_multisite_LWFB90(options_b90 = set_optionsLWFB90(startdate = as.Date("2010-01-01"),
+                                                            enddate = as.Date("2011-12-31"),
+                                                            root_method = "soilvar"),
+                            param_b90 = fnc_get_params(tree_species = "spruce",
+                                                       df.ids = test.ids.bds),
+                            soil = soil.test,
+                            climate = fnc_read_climdb,
+                            climate_args = clim_args)
 }

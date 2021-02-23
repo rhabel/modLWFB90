@@ -11,7 +11,7 @@
 #' @param maxdate last day of modelling time period as \code{Date}- object
 #' @param path_std path to standard locations directory
 #' @param path_climdb path to climate-db directory
-#' @param path_dbout path to output-climate-db directory, i.e. project directory
+#' @param dbout_name full path and file name for output-climate-db directory
 #'
 #' @import data.table
 #'
@@ -25,11 +25,13 @@ fnc_write_climdb <- function(df.ids,
                          maxdate = as.Date("2011-12-31"),
                          path_std = "R:/klima/whh/brook90_input/locations",
                          path_climdb = "R:/klima/whh/brook90_input/db/",
-                         path_bdout) {
+                         dbout_name,
+                         append_to_db = F) {
 
   # check if file exists, delete if T:
-  if(file.exists(paste(path_bdout, "clim_data.SQLite", sep = ""))){
-    unlink(paste(path_bdout, "clim_data.SQLite", sep = ""))
+
+  if(append_to_db == F & file.exists(dbout_name)){
+    unlink(dbout_name)
   }
 
 
@@ -88,7 +90,7 @@ fnc_write_climdb <- function(df.ids,
 
 
     # write to db
-    con <- RSQLite::dbConnect(RSQLite::SQLite(), dbname = paste(path_bdout, "clim_data.SQLite", sep = ""))
+    con <- RSQLite::dbConnect(RSQLite::SQLite(), dbname = dbout_name)
 
     RSQLite::dbWriteTable(con,
                           "clim",
