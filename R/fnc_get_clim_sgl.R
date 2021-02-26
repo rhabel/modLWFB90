@@ -18,12 +18,13 @@
 #' @export
 
 fnc_get_clim_sgl <- function(id,
-                           easting,
-                           northing,
-                           mindate = as.Date("2010-01-01"),
-                           maxdate = as.Date("2011-10-31"),
-                           path_std = "R:/klima/whh/brook90_input/locations",
-                           path_climdb = "R:/klima/whh/brook90_input/db/") {
+                             easting,
+                             northing,
+                             mindate = as.Date("2010-01-01"),
+                             maxdate = as.Date("2011-10-31"),
+                             path_std = "R:/klima/whh/brook90_input/locations",
+                             path_climdb = "R:/klima/whh/brook90_input/db/") {
+
 
 
   # IDs okay? ---------- ####
