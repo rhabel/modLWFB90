@@ -10,17 +10,8 @@
 #'
 #' @return Returns the desired output to the database directly.
 #'
-#' @section Vegperiod outputs:
-#' \tabular{llcl}{
-#' \strong{Name} \tab \strong{Description} \tab \strong{Unit} \cr
-#' tran \tab transpiration \tab mm \cr
-#' irvp \tab evaporation of intercepted rain \tab mm \cr
-#' isvp \tab evaporation of intercepted snow \tab mm \cr
-#' slvp \tab year \tab - \cr
-#' ptran \tab potential transpiration \tab mm \cr
-#' pslvp \tab potential soil evaporation \tab mm \cr
-#' ...
-#' }
+#' @section Vegperiod and monthly outputs:
+#' For a complete list of possible output types plus description, see \code{"U:/db_brook90_output/whh_db_documentation"}
 #'
 #'
 #' @import data.table RSQLite
@@ -239,7 +230,7 @@ Evap.DailyToVegper <- function(dat, vp.year, vp.start, vp.end) {
     TRAN = sum(TRAN),
     IRVP = sum(IRVP),
     ISVP = sum(ISVP),
-    SLVP=sum(SLVP),
+    SLVP = sum(SLVP),
     SNVP = sum(SNVP),
     PTRAN = sum(PTRAN),
     PSLVP = sum(PSLVP),
