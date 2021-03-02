@@ -26,14 +26,6 @@ A data frame containing:
 \itemize{
 \item membership of location in tranche.
 }
-
-\itemize{
-\item distance of custom location to the nearest standard location.
-}
-
-\itemize{
-\item raster representation in relation of locations.
-}
 }
 \description{
 Relate custom locations of interest to standard locations present in a climatic database by nearest neighbour operation.

@@ -4,14 +4,16 @@
 \alias{fnc_read_climdb}
 \title{Reading from Climate Database}
 \usage{
-fnc_read_climdb(IDs, path_climdb, mindate = NA, maxdate = NA)
+fnc_read_climdb(IDs, clim_dir, id_standard, mindate = NA, maxdate = NA)
 }
 \arguments{
-\item{path_climdb}{path to project climate data base}
+\item{clim_dir}{path to project climate data file directory}
+
+\item{id_standard}{climate-cell where point is located, use \code{\link{fnc_relateCoords}} to create this information, see example}
 
 \item{mindate}{R-date-object, optional, if only a selection of the data in the climate-database shall be retrieved, can be used to improve computing time}
 
-\item{maxdate}{R-date-object, same as mindate. Must be provided with mindate if sub-selection on date is desired.}
+\item{maxdate}{R-date-object, optional, same as mindate. Must be provided with mindate if sub-selection on date is desired.}
 
 \item{ID_custom}{ID-name of point in project climate data base}
 }
@@ -19,18 +21,22 @@ fnc_read_climdb(IDs, path_climdb, mindate = NA, maxdate = NA)
 returns climate data in correct format
 }
 \description{
-This function reads in the Project Climate Database written by \code{\link[LWFBrook90R]{fnc_write_climdb}} and processes the data correctly, so that it can be used via the function parameters \code{climate} and \code{climate_args} in \code{\link[LWFBrook90R]{run_multisite_LWFB90}}. Function arguments must be passed to \code{\link[LWFBrook90R]{run_multisite_LWFB90}} as list of lists. Upper level containing the ID_custom names of the points to be modelled, the lower level containing the respective ID_custom name as well as the path to the project climate data base
+This function reads in the Project Climate Data files written by \code{\link[LWFBrook90R]{fnc_write_climdb}} and processes the data correctly, so that it can be used via the function parameters \code{climate} and \code{climate_args} in \code{\link[LWFBrook90R]{run_multisite_LWFB90}}. Function arguments must be passed to \code{\link[LWFBrook90R]{run_multisite_LWFB90}} as list of lists. Upper level containing the ID_custom names of the points to be modelled, the lower level containing the respective ID_custom name as well as the path to the project climate data base
 }
 \examples{
-# write project climate database from "2010-01-01" to "2011-12-31"
+
 fnc_write_climdb(df.ids = test.ids.bds,
-                 path_bdout = "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/")
+                 clim_dir = "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/clim_files/",
+                 mindate = as.Date("2000-01-01"),
+                 maxdate = as.Date("2010-12-31"))
 
 # set clim_args
+test.ids.bds <- left_join(test.ids.bds, fnc_relateCoords(test.ids.bds)[c("ID_custom", "id_standard")])
 clim_args <-
-  lapply(test.ids.bds$ID_custom,
-         function(x) list(IDs = as.character(x),
-                          path_climdb = "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/clim_data.sqlite"))
+  lapply(split(test.ids.bds, seq(nrow(test.ids.bds))),
+         function(x) list(IDs = as.character(x$ID_custom),
+                          id_standard = x$id_standard,
+                          clim_dir = "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/clim_files/"))
 names(clim_args) <- as.character(test.ids.bds$ID_custom)
 
 soil.test <- fnc_get_soil(df.ids = test.ids.bds,
@@ -39,13 +45,24 @@ soil.test <- fnc_get_soil(df.ids = test.ids.bds,
                           PTF_to_use = "HYPRES",
                           rootsmethod = "hartmann",
                           humus_roots = F)
+parms.test <- fnc_get_params(df.ids = test.ids.bds,
+                             tree_species = "spruce")
 
-res <- run_multisite_LWFB90(options_b90 = set_optionsLWFB90(startdate = as.Date("2010-01-01"),
-                                                            enddate = as.Date("2011-12-31"),
+res <- run_multisite_LWFB90(options_b90 = set_optionsLWFB90(startdate = as.Date("2009-01-01"),
+                                                            enddate = as.Date("2010-12-31"),
                                                             root_method = "soilvar"),
                             param_b90 = fnc_get_params(tree_species = "spruce",
                                                        df.ids = test.ids.bds),
                             soil = soil.test,
+
                             climate = fnc_read_climdb,
-                            climate_args = clim_args)
+                            climate_args = clim_args,
+
+                            cores = 5)
+
+# single df
+fnc_read_climdb(IDs = test.ids.bds[1, "ID_custom"],
+                id_standard = test.ids.bds[1, "id_standard"],
+                clim_dir = "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/clim_files/")
+
 }
