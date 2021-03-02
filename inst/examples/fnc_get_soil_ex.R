@@ -1,40 +1,20 @@
-# load Leitprofil-db:
-df.LEIT.hum <- readxl::read_excel(paste0(input_stok, "testregionen/20200129_StokDB_Leitprofile_705.xlsx"),
-                                  sheet = "STANDORTSEINHEITEN") %>%
-  dplyr::select(RST_F, RST_DritteZeileHumus) %>%
-  setNames(c("RST_F", "humusform"))
-df.LEIT.BDS <- readxl::read_excel(paste0(input_stok, "testregionen/20200129_StokDB_Leitprofile_705.xlsx"),
-                                  sheet = "LEITPROFIL") %>%
-  dplyr::left_join(df.LEIT.hum, by = "RST_F")
-
-
-df.LEIT.hum <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_StokDB_Leitprofile_NLP.xlsx"),
-                                  sheet = "STANDORTSEINHEITEN") %>%
-  dplyr::select(RST_F, RST_DritteZeileHumus) %>%
-  setNames(c("RST_F", "humusform"))
-df.LEIT.NPS <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_StokDB_Leitprofile_NLP.xlsx"),
-                                  sheet = "LEITPROFIL")%>%
-  dplyr::left_join(df.LEIT.hum, by = "RST_F")
-
-# load STOKA - shapefiles
-sf.STOK.BDS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/BDS/BDS_STOKA_Clip_UTM_25832.shp"))
-sf.STOK.NPS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NPS_STOKA_Clip_UTM.shp"))
-
 fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
-                testgebiet = "BDS",
                 PTF_to_use = "HYPRES",
                 rootsmethod = "hartmann",
                 humus_roots = F)
 fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
-                testgebiet = "BDS",
                 PTF_to_use = "HYPRES",
                 rootsmethod = "betamodel",
                 beta = 0.95) # specification from LWFBrook90::MakeRelRootDens
 fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "BZE",
-                testgebiet = "BDS",
+                PTF_to_use = "HYPRES",
+                rootsmethod = "betamodel",
+                beta = 0.95)
+fnc_get_soil(df.ids = test.ids.bds,
+                soil_option = "STOK_BZE",
                 PTF_to_use = "HYPRES",
                 rootsmethod = "betamodel",
                 beta = 0.95)

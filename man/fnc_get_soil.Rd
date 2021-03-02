@@ -7,7 +7,11 @@
 fnc_get_soil(
   df.ids,
   soil_option,
-  testgebiet,
+ 
+    pth_df.LEIT = "H:/FVA-Projekte/P01540_WHHKW/Daten/Ergebnisse/Modellierung_Testregionen/Leitprofile/Modul1DB.Rdata",
+  pth_WGB_diss_shp = "H:/BU/Gis/Themen/Vektor/Wugeb_Dissolve.shp",
+ 
+    pth_STOK_pieces = "H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Wuchsgebiete/Wuchsgebiete_red/",
   PTF_to_use,
   bze_buffer = NA,
   limit_MvG = T,
@@ -23,9 +27,13 @@ fnc_get_soil(
 \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
 }}
 
-\item{soil_option}{whether BZE or STOK data should be used for modelling. While option \code{BZE} with a buffer of 50 shouldn't create NAs, option \code{STOK} builds on the data of the Standortskartierung Baden-Wuerttemberg that is not available everywhere (i.e. in private forests). Option \code{STOK_BZE} will complete the missing STOK-points with BZE-data. The final option is \code{OWN}, in which case users can enter their own soil data (i.e. from lab or field experiements). If the option \code{OWN} is selected, the dataframes must be passed at \code{df.soils}.}
+\item{soil_option}{whether BZE or STOK data should be used for modelling. While option \code{BZE} with a buffer of 50 shouldn't create many NAs, option \code{STOK} builds on the data of the Standortskartierung Baden-Wuerttemberg that is not available everywhere (i.e. in private forests). \cr Option \code{STOK_BZE} will complete the missing STOK-points with BZE-data. \cr The final option is \code{OWN}, in which case users can enter their own soil data (i.e. from lab or field experiements). If the option \code{OWN} is selected, the dataframes must be passed at \code{df.soils}.}
 
-\item{testgebiet}{at the current stage of development, we're working with test areas that have to be named here as \code{BDS} for Bodensee/07b, or \code{NPS} for National Park Schwarzwald. Eventually, this should be replaced by a BW-wide option. This parameter might be useful if a spatial pre-selection should be included for performance optimization...}
+\item{pth_df.LEIT}{path to .RData file with soil information from Modul1-DB. Should be the extended version containing a column for humus, currently set to latest location.}
+
+\item{pth_WGB_diss_shp}{path to dissolved WUCHSGEBIET-shapefile, currently set to latest location.}
+
+\item{pth_STOK_pieces}{path to Wuchsgeb-STOKA.shapefiles, currently set to latest location.}
 
 \item{PTF_to_use}{the PTF to be used in the modeling process. Options are \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}. Alternatively, if MvG parameters have been retrieved elsewhere (i.e. by lab analyses), \code{OWN_PARMS} can be selected to skip this.}
 
@@ -54,43 +62,23 @@ Returns a list of soil data frames completely processed to be further used by \c
 This function is a wrapper of several functions and chunks of code and the main point of access for the final user. It takes a dataframe of coordinates of the points to be modeled and returns a list of soil data frames as required by \code{LWFBrook90R}. Adjustment options exist for the origin of soil data, the PTF to be used, whether MvG-parameters should be limited to a certain range, as well as all options for roots included in \code{\link[LWFBrook90R]{make_rootden}} and \link{fnc_roots} that can be passed down from here.
 }
 \examples{
-# load Leitprofil-db:
-df.LEIT.hum <- readxl::read_excel(paste0(input_stok, "testregionen/20200129_StokDB_Leitprofile_705.xlsx"),
-                                  sheet = "STANDORTSEINHEITEN") \%>\%
-  dplyr::select(RST_F, RST_DritteZeileHumus) \%>\%
-  setNames(c("RST_F", "humusform"))
-df.LEIT.BDS <- readxl::read_excel(paste0(input_stok, "testregionen/20200129_StokDB_Leitprofile_705.xlsx"),
-                                  sheet = "LEITPROFIL") \%>\%
-  dplyr::left_join(df.LEIT.hum, by = "RST_F")
-
-
-df.LEIT.hum <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_StokDB_Leitprofile_NLP.xlsx"),
-                                  sheet = "STANDORTSEINHEITEN") \%>\%
-  dplyr::select(RST_F, RST_DritteZeileHumus) \%>\%
-  setNames(c("RST_F", "humusform"))
-df.LEIT.NPS <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_StokDB_Leitprofile_NLP.xlsx"),
-                                  sheet = "LEITPROFIL")\%>\%
-  dplyr::left_join(df.LEIT.hum, by = "RST_F")
-
-# load STOKA - shapefiles
-sf.STOK.BDS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/BDS/BDS_STOKA_Clip_UTM_25832.shp"))
-sf.STOK.NPS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NPS_STOKA_Clip_UTM.shp"))
-
 fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
-                testgebiet = "BDS",
                 PTF_to_use = "HYPRES",
                 rootsmethod = "hartmann",
                 humus_roots = F)
 fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
-                testgebiet = "BDS",
                 PTF_to_use = "HYPRES",
                 rootsmethod = "betamodel",
                 beta = 0.95) # specification from LWFBrook90::MakeRelRootDens
 fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "BZE",
-                testgebiet = "BDS",
+                PTF_to_use = "HYPRES",
+                rootsmethod = "betamodel",
+                beta = 0.95)
+fnc_get_soil(df.ids = test.ids.bds,
+                soil_option = "STOK_BZE",
                 PTF_to_use = "HYPRES",
                 rootsmethod = "betamodel",
                 beta = 0.95)
