@@ -65,7 +65,7 @@ fnc_get_soil <- function(df.ids,
 
     # subset currently still active for faster processing - to be expanded to BW in the future
     sf.testgeb <- get(paste0("sf.STOK.", testgebiet))
-    df.LEIT <- get(paste0("df.LEIT.", testgebiet))
+    df.LEIT <- get("df.LEIT.BW")
 
     sf.ids <- sf::st_as_sf(df.ids, coords = c("easting", "northing"), crs = 32632) %>%
       sf::st_join(sf.testgeb) %>%
@@ -73,7 +73,7 @@ fnc_get_soil <- function(df.ids,
       dplyr::select(ID, ID_custom, RST_F)
 
     # no forest
-    RST_noforest <- c(39272, 39273, 0, 39343, 42046)
+    RST_noforest <- c( 0,22714, 22719, 22723, 29742, 39272, 39273,39343, 42046)
     # swamp
     test <- df.LEIT %>% filter(humusform == "Moor")
     RST_moor <- unique(test$RST_F)
@@ -87,7 +87,7 @@ fnc_get_soil <- function(df.ids,
     if(length(IDs_miss) == 0){
 
       ls.soils <- fnc_soil_stok(df = sf.ids,
-                                df.LEIT = get(paste0("df.LEIT.", testgebiet)),
+                                df.LEIT = get("df.LEIT.BW"),
                                 PTF_to_use = PTF_to_use,
                                 dgm = df.dgm)
 
@@ -101,7 +101,7 @@ fnc_get_soil <- function(df.ids,
 
         sf.ids <- sf.ids[-IDs_miss,] # remove missing IDs
         ls.soils.tmp <- fnc_soil_stok(df = sf.ids,
-                                      df.LEIT = get(paste0("df.LEIT.", testgebiet)),
+                                      df.LEIT = get("df.LEIT.BW"),
                                       PTF_to_use = PTF_to_use,
                                       dgm = df.dgm)
         names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
@@ -113,7 +113,7 @@ fnc_get_soil <- function(df.ids,
         cat("IDs \n", as.character(as.data.frame(df.ids)[IDs_miss, "ID_custom"]), " \nare not mapped by STOKA. They will be modelled using regionlized BZE data.")
 
         ls.soils[IDs_complete] <- fnc_soil_stok(df = sf.ids[IDs_complete,],
-                                                df.LEIT = get(paste0("df.LEIT.", testgebiet)),
+                                                df.LEIT = get("df.LEIT.BW"),
                                                 PTF_to_use = PTF_to_use,
                                                 dgm = df.dgm)
         df.ids <- df.ids %>%
