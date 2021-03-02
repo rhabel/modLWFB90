@@ -60,9 +60,6 @@ fnc_write_climdb <- function(df.ids,
   foreach::foreach(i = sort(unique(df.clim.ids$tranche)),
                    .packages = c("RSQLite", "data.table")) %dopar% {
 
-
-  #for(tranche in sort(unique(df.clim.ids$tranche))){
-
     # preselection of ids
     ids_in_tranche <- as.character(df.clim.ids[which(df.clim.ids$tranche == i), "id_standard"])
 
@@ -101,40 +98,12 @@ fnc_write_climdb <- function(df.ids,
     #### if we get complaints that our files get too large
     # dt.clim.tmp[ , (final_cols) := lapply(.SD, "/", 0.01), .SDcols = final_cols]
 
-    # parallel::parLapply(cl, 1:length(dt.clim.tmp),
-    #                     function(dt.clim.tmp) save(dt.clim.tmp,
-    #                                                file = paste0(clim_dir,
-    #                                                              unique(dt.clim.tmp$id_standard),
-    #                                                              ".RData")))
-    # parallel::stopCluster(cl)
-    # myfun <- function(dtclim){
-    #   foreach::foreach(i = seq_along(dtclim)) %dopar% {
-    #
-    #   }
-    # }
-
-
 
     lapply(dt.clim.tmp,
            function(dt.clim.tmp) save(dt.clim.tmp,
                                   file = paste0(clim_dir,
                                                 unique(dt.clim.tmp$id_standard),
                                                 ".RData")))
-
-
-    # load(file = paste0(clim_dir, "5152505289250.RData"))
-    # # join
-    # df.clim.ids.j <- data.table::as.data.table(df.clim.ids[c("ID", "ID_custom", "id_standard")])
-    # data.table::setkey(df.clim.ids.j, id_standard)
-    # data.table::setkey(dt.clim.tmp, id_standard)
-    #
-    # dt.clim.tmp <- merge(x = dt.clim.tmp, y = df.clim.ids.j, by = "id_standard", all.x = TRUE, allow.cartesian = T)
-    #
-    # dt.clim.tmp[, ID_custom := factor(ID_custom, levels = unique(ID_custom))]
-    #
-    # data.table::setorder(dt.clim.tmp, ID_custom, year, month, day)
-    # dt.clim.tmp <- dt.clim.tmp[,.(ID, ID_custom, year, month, day, globrad, prec, tmean, tmin, tmax, windspeed, vappres)]
-
 
 
 #     # write to db

@@ -116,5 +116,3 @@ fnc_write_agg <- function(x,
   }
   rv
 }
-
-
