@@ -17,10 +17,7 @@
 #' @return A data frame containing:
 #' @return - id and coordinates of custom location and nearest standard location in CRS=EPSG:32632.
 #' @return - membership of location in tranche.
-#' @return - distance of custom location to the nearest standard location.
-#' @return - raster representation in relation of locations.
-#' @import sf
-#' @import tidyverse
+#' @import sf tidyverse
 #' @examples
 #'
 #' fnc_relateCoords(df.ids = test.ids.bds)
@@ -31,108 +28,82 @@
 fnc_relateCoords <- function(df.ids,
                              path_std = "R:/klima/whh/brook90_input/locations") {
 
-    # create df to store standard locations ----
-    standard_locations <- data.frame(id_standard = character(),
-                                     tranche = numeric(),
-                                     x_standard = numeric(),
-                                     y_standard = numeric(),
-                                     stringsAsFactors = FALSE)
+  # create df to store standard locations ----
+  standard_locations <- data.frame(id_standard = character(),
+                                   tranche = numeric(),
+                                   x_standard = numeric(),
+                                   y_standard = numeric(),
+                                   stringsAsFactors = FALSE)
 
-    # loop tranches ----
-    for (tranche in 1:9) {
+  # loop tranches ----
+  for (tranche in 1:9) {
 
-        # testing
-        # tranche <- 1
+    # testing
+    # tranche <- 1
 
-        # read coordinates of standard locations ----
-        xy_standard <- read.csv(file = paste0(path_std,
-                                              "/x_y_tr",
-                                              tranche,
-                                              ".txt"),
-                                header = FALSE,
-                                sep = "\t",
-                                col.names = c("x_standard",
-                                              "y_standard"))
+    # read coordinates of standard locations ----
+    xy_standard <- read.csv(file = paste0(path_std,
+                                          "/x_y_tr",
+                                          tranche,
+                                          ".txt"),
+                            header = FALSE,
+                            sep = "\t",
+                            col.names = c("x_standard",
+                                          "y_standard"))
 
-        # create coordinates based id ----
-        id_standard <- paste0(xy_standard$x_standard,
-                              xy_standard$y_standard)
+    # create coordinates based id ----
+    id_standard <- paste0(xy_standard$x_standard,
+                          xy_standard$y_standard)
 
-        # concatenate id, tranche, coordinates ----
-        standard_locations_loop <- cbind(id_standard,
-                                         xy_standard,
-                                         tranche)
+    # concatenate id, tranche, coordinates ----
+    standard_locations_loop <- cbind(id_standard,
+                                     xy_standard,
+                                     tranche)
 
-        # append current df (current tr) to final df (all tr) ----
-        standard_locations <- rbind.data.frame(standard_locations,
-                                               standard_locations_loop)
-    }
+    # append current df (current tr) to final df (all tr) ----
+    standard_locations <- rbind.data.frame(standard_locations,
+                                           standard_locations_loop)
+  }
 
-    # standard locations to sf-object ----
-    standard_locations_sf <- sf::st_as_sf(standard_locations,
-                                          crs = 32632,
-                                          coords = c("x_standard",
-                                                     "y_standard"))
+  # standard locations to sf-object ----
+  standard_locations_sf <- sf::st_as_sf(standard_locations,
+                                        crs = 32632,
+                                        coords = c("x_standard",
+                                                   "y_standard"))
 
-    # custom locations to sf-object ----
-    custom_locations_sf <- sf::st_as_sf(df.ids,
-                                        coords = c("easting", "northing"),
-                                        crs = 32632)
-
-
-    # get index of std-locations nearest to cst-locations ----
-    standard_locations_ix <- sf::st_nearest_feature(x = custom_locations_sf,
-                                                    y = standard_locations_sf)
-
-    # get sample of std-locations nearest to cst-locations ----
-    standard_locations_sf_sample <- standard_locations_sf[standard_locations_ix,]
-    standard_locations_sample <- standard_locations[standard_locations_ix,]
-
-    # get distance from cst- to std-locations ----
-    distance <- sf::st_distance(custom_locations_sf,
-                                standard_locations_sf_sample,
-                                by_element = TRUE)
-
-    # set distance threshold for raster representation ----
-    distance_threshold <- sqrt((250/2)^2*2)
-
-    # concatenate relations ----
-    location_relations <- cbind(standard_locations_sample,
-                                df.ids$ID,
-                                df.ids$ID_custom,
-                                sf::st_coordinates(custom_locations_sf),
-                                distance,
-                                distance_threshold)
-
-    # distance threshold as units-object ----
-    location_relations$distance_threshold <- units::as_units(
-        location_relations$distance_threshold,
-        "m")
-
-    # set raster representation ----
-    location_relations$raster_representation <- ifelse(location_relations$distance <= location_relations$distance_threshold, 1, 0)
-
-    # rename columns ----
-    colnames(location_relations) <- c("id_standard",
-                                      "x_standard",
-                                      "y_standard",
-                                      "tranche",
-                                      "ID",
-                                      "ID_custom",
-                                      "x_custom",
-                                      "y_custom",
-                                      "distance",
-                                      "distance_threshold",
-                                      "raster_representation"
-                                      )
-
-    location_relations <- location_relations %>%
-      dplyr::select(ID, ID_custom, x_custom, y_custom, tranche, id_standard, x_standard, y_standard, distance, distance_threshold, raster_representation) %>%
-      dplyr::mutate(id_standard = as.character(id_standard))
+  # custom locations to sf-object ----
+  custom_locations_sf <- sf::st_as_sf(df.ids,
+                                      coords = c("easting", "northing"),
+                                      crs = 32632)
 
 
-    # return resulting df ----
-    return(location_relations)
+  # get index of std-locations nearest to cst-locations ----
+  standard_locations_ix <- sf::st_nearest_feature(x = custom_locations_sf,
+                                                  y = standard_locations_sf)
+
+  # get sample of std-locations nearest to cst-locations ----
+  standard_locations_sf_sample <- standard_locations_sf[standard_locations_ix,]
+  standard_locations_sample <- standard_locations[standard_locations_ix,]
+
+
+  # concatenate relations ----
+  location_relations <- cbind(standard_locations_sample,
+                              df.ids$ID,
+                              df.ids$ID_custom,
+                              sf::st_coordinates(custom_locations_sf))
+
+  # rename columns ----
+  colnames(location_relations) <- c("id_standard",
+                                    "x_standard",
+                                    "y_standard",
+                                    "tranche",
+                                    "ID",
+                                    "ID_custom",
+                                    "x_custom",
+                                    "y_custom")
+
+  # return resulting df ----
+  return(location_relations)
 }
 
 

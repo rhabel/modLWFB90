@@ -74,6 +74,7 @@ fnc_get_soil <- function(df.ids,
     load(file = pth_df.LEIT)
 
     # subset currently still active for faster processing - to be expanded to BW in the future
+
     #sf.testgeb <- get(paste0("sf.STOK.", testgebiet))
     #df.LEIT <- get(paste0("df.LEIT.", testgebiet))
 
@@ -138,6 +139,7 @@ fnc_get_soil <- function(df.ids,
     RST_miss <- c(RST_noforest, RST_LEIT, RST_moor)
     rm(list = c("RST_noforest", "RST_moor", "RST_LEIT"));
 
+
     IDs_miss <- sf.ids$ID[(is.na(sf.ids$RST_F) | sf.ids$RST_F %in% RST_miss)] # remove non-forest-rst_fs
     IDs_good <- sf.ids$ID[!sf.ids$ID %in% IDs_miss] # IDs good
 
@@ -176,6 +178,7 @@ fnc_get_soil <- function(df.ids,
 
         ls.soils[IDs_good] <- fnc_soil_stok(df = sf.ids[IDs_good,],
                                                 df.LEIT = df.LEIT.BW,
+
                                                 PTF_to_use = PTF_to_use,
                                                 dgm = df.dgm)
         df.ids <- df.ids %>%

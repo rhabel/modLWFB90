@@ -1,6 +1,3 @@
-# load Leitprofil-db:
-#load(file = "H:/FVA-Projekte/P01540_WHHKW/Daten/Ergebnisse/Modellierung_Testregionen/Leitprofile/Modul1DB.Rdata")
-
 fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
                 PTF_to_use = "HYPRES",
