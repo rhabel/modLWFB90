@@ -35,8 +35,6 @@ fnc_read_climdb <- function(IDs,
     dt.clim.tmp <- dt.clim.tmp[dates>= mindate & dates <= maxdate]
   }
 
-  out <- dt.clim.tmp
-
-  return(out)
+  return(dt.clim.tmp)
 }
 

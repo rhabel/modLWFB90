@@ -146,7 +146,7 @@ fnc_get_soil <- function(df.ids,
     # all IDs mapped by STOKA
     if(length(IDs_miss) == 0){
 
-      ls.soils <- fnc_soil_stok(df = sf.ids.test,
+      ls.soils <- fnc_soil_stok(df = sf.ids,
                                 df.LEIT = df.LEIT.BW,
                                 PTF_to_use = PTF_to_use,
                                 dgm = df.dgm)
