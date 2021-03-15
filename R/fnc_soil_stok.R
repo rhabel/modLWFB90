@@ -13,50 +13,64 @@ fnc_soil_stok <- function(df,
                           df.LEIT,
                           PTF_to_use,
                           dgm){
-  ls.soils.tmp <- list()
-  for (i in 1:nrow(df)){
-    df.soil <- tryCatch({
-      df.tmp <- df.LEIT %>%
-        filter(RST_F == df$RST_F[i]) %>%
-        dplyr::mutate("ID" = df$ID[i],
-                      "ID_custom" = as.character(df$ID_custom[i])) %>%
-        dplyr::mutate(TRD = round(as.numeric(TRD), 3)) %>%
 
-        dplyr::select(ID, ID_custom, LAGENUM, TIEFE_OG, TIEFE_UG, SAND, SCHLUFF, TON, SKELETT, TRD, SOC, humusform) %>%
-        setNames(c("ID", "ID_custom", "mat", "upper", "lower", "sand", "silt", "clay", "gravel", "bd", "oc.pct", "humusform")) %>%
+  # get Leitprofile info through parallel processing
+  cl <- parallel::makeCluster(parallel::detectCores())
+  doParallel::registerDoParallel(cl)
 
-        dplyr::mutate_at(vars(-all_of(c("ID_custom", "humusform"))), as.numeric)
+  ls.soil.par <- foreach::foreach(i = 1:nrow(df),
+                   .packages = c("dplyr", "modLWFB90")) %dopar% {
+                     tryCatch({
+                       df.tmp <- df.LEIT %>%
+                         dplyr::filter(RST_F == df$RST_F[i]) %>%
+                         dplyr::mutate("ID" = df$ID[i],
+                                       "ID_custom" = as.character(df$ID_custom[i])) %>%
+                         dplyr::mutate(TRD = round(as.numeric(TRD), 3)) %>%
 
-      # Tiefendiskretisierung, Slope & Aspect
-      df.tmp <- fnc_depth_disc(df.tmp) %>%
-        dplyr::mutate(oc.pct = case_when((is.na(oc.pct)|(oc.pct < 0)) & PTF_to_use == "PTFPUH2" ~ 0.5,
-                                         (is.na(oc.pct)|(oc.pct < 0)) & PTF_to_use %in% c("HYPRES", "WESSOLEK") ~ 0.1,
-                                         T ~ oc.pct),
-                      humus = case_when(humusform == "Mull" ~ 0.03,
-                                        humusform == "Mullmoder" ~ 0.067,
-                                        humusform == "Moder" ~ 0.045,
-                                        humusform == "Rohhumusartiger Moder" ~ 0.06,
-                                        humusform == "Rohhumus" ~ 0.07,
-                                        T ~ 0),
-                      upper = upper/-100,
-                      lower = lower/-100,
-                      gravel = gravel / 100)
-      df.tmp <- df.tmp %>%
-        dplyr::mutate(nl = 1:nrow(df.tmp)) %>%
-        dplyr::left_join(dgm, by = "ID") %>%
-        dplyr::select(ID, ID_custom, mat, nl, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus) %>%
-        dplyr::mutate(ID_custom = as.character(ID_custom)) %>%
-        as_tibble()
+                         dplyr::select(ID, ID_custom, LAGENUM, TIEFE_OG, TIEFE_UG, SAND, SCHLUFF, TON, SKELETT, TRD, SOC, humusform) %>%
+                         setNames(c("ID", "ID_custom", "mat", "upper", "lower", "sand", "silt", "clay", "gravel", "bd", "oc.pct", "humusform")) %>%
 
-    },
-    error = function(cond){
-      message(cat("\n RST_F ", df$RST_F[i], " seems to cause issues. row ", i))
-      message(cond)
-      return(NULL)
-    })
+                         dplyr::mutate_at(vars(-all_of(c("ID_custom", "humusform"))), as.numeric)
 
-    ls.soils.tmp[[i]] <- df.soil
+                       # Tiefendiskretisierung, Slope & Aspect
+                       df.tmp <- fnc_depth_disc(df.tmp) %>%
+                         dplyr::mutate(oc.pct = case_when((is.na(oc.pct)|(oc.pct < 0)) & PTF_to_use == "PTFPUH2" ~ 0.5,
+                                                          (is.na(oc.pct)|(oc.pct < 0)) & PTF_to_use %in% c("HYPRES", "WESSOLEK") ~ 0.1,
+                                                          T ~ oc.pct),
+                                       humus = case_when(humusform == "Mull" ~ 0.03,
+                                                         humusform == "Mullmoder" ~ 0.067,
+                                                         humusform == "Moder" ~ 0.045,
+                                                         humusform == "Rohhumusartiger Moder" ~ 0.06,
+                                                         humusform == "Rohhumus" ~ 0.07,
+                                                         T ~ 0),
+                                       upper = upper/-100,
+                                       lower = lower/-100,
+                                       gravel = gravel / 100)
+                       df.tmp <- df.tmp %>%
+                         dplyr::mutate(nl = 1:nrow(df.tmp)) %>%
+                         dplyr::left_join(dgm, by = "ID") %>%
+                         dplyr::select(ID, ID_custom, mat, nl, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus) %>%
+                         dplyr::mutate(ID_custom = as.character(ID_custom))
 
-  }
-  return(ls.soils.tmp)
+                     },
+                     error = function(cond){
+                       out <- data.frame("ID" = df$ID[i],
+                                         "ID_custom" = as.character(df$ID_custom[i]))
+                       return(out)
+                     })
+                   }
+
+  parallel::stopCluster(cl)
+
+  # name acc. to ordered IDs
+  names(ls.soil.par) <- unlist(lapply(ls.soil.par, function(x) unique(x$ID)))
+  # sort
+  ls.soil.par = ls.soil.par[stringr::str_sort(names(ls.soil.par), numeric = T)]
+  # rename acc. to ID_custom
+  names(ls.soil.par) <- unlist(lapply(ls.soil.par, function(x) unique(x$ID_custom)))
+  # set NULL to missing data
+  ls.soil.par[which(unlist(lapply(ls.soil.par, function(x) nrow(x))) == 1)] <- NULL
+
+
+  return(ls.soil.par)
 }
