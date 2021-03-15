@@ -43,13 +43,13 @@ fnc_roots <- function(df,
       dplyr::mutate(rootden = ifelse(rootden < 2, 0, rootden))
 
     range01 <- function(x){(x-min(x))/(max(x)-min(x))}
-    df$rootden <- range01(df$rootden)
+    df$rootden <- round(range01(df$rootden), 4)
 
     return(df)
   }else{
     rootden <- make_rootden_adj(soilnodes = df$lower, method = rootsmethod, ...)
-    df$rootden <- c(ifelse(humus_roots == T, max(rootden)/2, 0),
-                    rootden)
+    df$rootden <- c(ifelse(humus_roots == T, round(max(rootden)/2, 4), 0),
+                    round(rootden, 4))
     return(df)
   }
 
