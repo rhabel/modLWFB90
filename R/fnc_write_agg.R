@@ -1,14 +1,14 @@
 #' Function to aggregate and write data from automated LWFB90-Runs
 #'
-#' LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it to a database. This is what this function is made for. \cr In comparison to \code{\link{fnc_write}}, which only reduces the columns returned by \code{\link[LWFBrook90R]{run_LWFB90}} (see help page), this function enables aggregation over vegperiod and monthly, plus a more detailed selection of drought indices. See detail section.\cr\cr IMPORTANT: FOR RUNNING THIS AGGREGATE FUNCTION, \code{output} in \code{run_multiside_LWFB90} MUST BE SET TO A \code{df.output} AS SET BY THE CODE IN THE EXAMPLE SECTION
+#' LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it to a database. This is what this function is made for. \cr In comparison to \code{\link{fnc_write}}, which only reduces the columns returned by \code{\link[LWFBrook90R]{run_LWFB90}} (see help page), this function enables aggregation over vegperiod and monthly, plus a more detailed selection of drought indices. See detail section.\cr\cr IMPORTANT: FOR RUNNING THIS AGGREGATE FUNCTION, \code{output} in \code{run_multiside_LWFB90} MUST BE SET TO A \code{df.output} AS SET BY THE CODE IN THE EXAMPLE SECTION \cr The function writes .RData files with the desired output for each point. \code{\link{fnc_write_to_sql}} can be used to convert these files into a SQLite-DB. This "step-in-between" is necessary because SQLite does not support parallel writing.
 #'
 #' @param x one of the intermediate producs of \code{\link[LWFBrook90R]{run_LWFB90}} or  \code{\link[LWFBrook90R]{run_multisite_LWFB90}}, which is further processed internally. Can't be adjusted.
 #' @param aggr_tp a string containing the desired aggregation time period. Can be \code{monthly},  \code{vegper}, or  \code{monthly_vegper}. The latter does both.
 #' @param col_select_vp a string containing the desired columns from the vegperiod-aggregation (see details)
 #' @param col_select_mon a string containing the desired columns from the monthly-aggregation (see details)
-#' @param db_name name and file path of the SQL-database
+#' @param dir_name directory for tmp files
 #'
-#' @return Returns the desired output to the database directly.
+#' @return Returns the desired output to .Rdata files
 #'
 #' @section Vegperiod and monthly outputs:
 #' For a complete list of possible output types plus description, see \code{"U:/db_brook90_output/whh_db_documentation"}
@@ -19,14 +19,14 @@
 #' df.output[c("Evap", "Swat"), c("Day")] <- 1
 #' df.output[c("Flow"), c("Mon")] <- 1
 #'
-#' @import data.table RSQLite
+#' @import data.table
 #' @export
 
 fnc_write_agg <- function(x,
                           aggr_tp,
                           col_select_vp = NA,
                           col_select_mon = NA,
-                          db_name){
+                          dir_name){
 
 
   # soil.df <- ls.soil[[1]]
@@ -84,35 +84,25 @@ fnc_write_agg <- function(x,
     output_monthly <- output_monthly[, keep, with = FALSE]
   }
 
-  # write to db
-  con <- RSQLite::dbConnect(RSQLite::SQLite(), dbname = db_name)
-  rest <- RSQLite::dbSendQuery(con, "PRAGMA busy_timeout=5000;")
-  RSQLite::dbClearResult(rest)
+  # write to tmp
+  if(stringr::str_detect(aggr_tp, "monthly")){
 
-  on.exit(RSQLite::dbDisconnect(con))
+    if(!dir.exists(paste0(dir_name, "/monthly/"))){
+      dir.create(paste0(dir_name, "/monthly/"), recursive = T)}
 
-  repeat {
-    rv <- try({
-      RSQLite::dbWriteTable(con,
-                            "soils",
-                            soil.df[,-1],
-                            append=T, overwrite = F, row.names=F)
+    save(output_monthly,
+         file = paste0(dir_name, "/monthly/", id_run, ".RData"))
 
-      if(stringr::str_detect(aggr_tp, "monthly")){
-        RSQLite::dbWriteTable(con,
-                              "monthly",
-                              output_monthly,
-                              append=T, overwrite = F, row.names=F)
-      }
-
-      if(stringr::str_detect(aggr_tp, "vegper")){
-        RSQLite::dbWriteTable(con,
-                              "vegper",
-                              output_vp,
-                              append=T, overwrite = F, row.names=F)
-      }
-    })
-    if(!is(rv, "try-error")) break
   }
-  rv
+
+  if(stringr::str_detect(aggr_tp, "vegper")){
+
+    if(!dir.exists(paste0(dir_name, "/vegper/"))){
+      dir.create(paste0(dir_name, "/vegper/"), recursive = T)}
+
+    save(output_vp,
+         file = paste0(dir_name, "/vegper/", id_run, ".RData"))
+
+  }
+
 }

@@ -260,7 +260,8 @@ fnc_get_soil <- function(df.ids,
 
 
   # Roots:
-  ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)], FUN = fnc_roots, ...)
+  ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)],
+                                                                   FUN = fnc_roots, ...)
 
 
   return(ls.soils)

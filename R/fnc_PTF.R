@@ -119,16 +119,18 @@ fnc_PTF <- function(df, PTF_used){
                            "thr" = 0,
                            "alpha" = 98,
                            "npar" = 1.191,
-                           "mpar" = 0.1603694,
+                           "mpar" = 0.160,
                            "ksat" = 98000,
                            "tort" = 0.5),
                 df)
 
   }
 
+  cols <- c("aspect", "slope", "ths", "thr", "alpha", "npar", "mpar", "ksat", "tort")
   df <- df %>%
     dplyr::mutate(nl = 1:nrow(df)) %>%
-    dplyr::select(-humus)
+    dplyr::select(-humus) %>%
+    dplyr::mutate(across(cols, round, 3))
 
   return(df)
 }
