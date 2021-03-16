@@ -4,7 +4,7 @@
 \alias{fnc_write_agg}
 \title{Function to aggregate and write data from automated LWFB90-Runs}
 \usage{
-fnc_write_agg(x, aggr_tp, col_select_vp = NA, col_select_mon = NA, db_name)
+fnc_write_agg(x, aggr_tp, col_select_vp = NA, col_select_mon = NA, dir_name)
 }
 \arguments{
 \item{x}{one of the intermediate producs of \code{\link[LWFBrook90R]{run_LWFB90}} or  \code{\link[LWFBrook90R]{run_multisite_LWFB90}}, which is further processed internally. Can't be adjusted.}
@@ -15,13 +15,13 @@ fnc_write_agg(x, aggr_tp, col_select_vp = NA, col_select_mon = NA, db_name)
 
 \item{col_select_mon}{a string containing the desired columns from the monthly-aggregation (see details)}
 
-\item{db_name}{name and file path of the SQL-database}
+\item{dir_name}{directory for tmp files}
 }
 \value{
-Returns the desired output to the database directly.
+Returns the desired output to .Rdata files
 }
 \description{
-LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it to a database. This is what this function is made for. \cr In comparison to \code{\link{fnc_write}}, which only reduces the columns returned by \code{\link[LWFBrook90R]{run_LWFB90}} (see help page), this function enables aggregation over vegperiod and monthly, plus a more detailed selection of drought indices. See detail section.\cr\cr IMPORTANT: FOR RUNNING THIS AGGREGATE FUNCTION, \code{output} in \code{run_multiside_LWFB90} MUST BE SET TO A \code{df.output} AS SET BY THE CODE IN THE EXAMPLE SECTION
+LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it to a database. This is what this function is made for. \cr In comparison to \code{\link{fnc_write}}, which only reduces the columns returned by \code{\link[LWFBrook90R]{run_LWFB90}} (see help page), this function enables aggregation over vegperiod and monthly, plus a more detailed selection of drought indices. See detail section.\cr\cr IMPORTANT: FOR RUNNING THIS AGGREGATE FUNCTION, \code{output} in \code{run_multiside_LWFB90} MUST BE SET TO A \code{df.output} AS SET BY THE CODE IN THE EXAMPLE SECTION \cr The function writes .RData files with the desired output for each point. \code{\link{fnc_write_to_sql}} can be used to convert these files into a SQLite-DB. This "step-in-between" is necessary because SQLite does not support parallel writing.
 }
 \section{Vegperiod and monthly outputs}{
 

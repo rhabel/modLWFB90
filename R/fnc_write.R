@@ -1,18 +1,18 @@
 #' Function to reduce data output from automated LWFB90-Runs
 #'
-#' LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it to a database. This is what this function is made for.
+#' LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it. This is what this function is made for. It writes .RData files with the desired output for each point. \code{\link{fnc_write_to_sql}} can be used to convert these files into a SQLite-DB. \cr This "step-in-between" is necessary because SQLite does not support parallel writing.
 #'
 #' @param x one of the intermediate producs of \code{\link[LWFBrook90R]{run_LWFB90}} or  \code{\link[LWFBrook90R]{run_multisite_LWFB90}}, which is further processed internally. Can't be adjusted.
 #' @param layercols a sting containing the desired output products. Full list of possible output columns can be find on the help page of \code{\link[LWFBrook90R]{run_LWFB90}} under \code{Layer outputs}
 #' @param dailycols same as layercols but for daily output. For possible options see \code{\link[LWFBrook90R]{run_LWFB90}}
-#' @param db_name name and file path of the SQL-database
+#' @param dir_name directory for tmp files
 #'
-#' @return Returns the desired output to the database directly.
+#' @return writes output to
 #'
-#' @import data.table dplyr RSQLite
+#' @import data.table
 #' @export
 
-fnc_write <- function(x, dailycols, layercols, db_name){
+fnc_write <- function(x, dailycols, layercols, dir_name){
   # soil
   soil.df <- get("soil", envir = parent.frame(3))
   id_run <- get("soil", envir = parent.frame(3))$id_custom[1]
@@ -40,35 +40,25 @@ fnc_write <- function(x, dailycols, layercols, db_name){
     layer <- layer[, keep, with = FALSE]
   }
 
-  # write to db
-  con <- RSQLite::dbConnect(RSQLite::SQLite(), dbname = db_name)
-  rest <- RSQLite::dbSendQuery(con, "PRAGMA busy_timeout=5000;")
-  RSQLite::dbClearResult(rest)
+  # write to tmp
+  if(!any(is.na(dailycols))){
 
-  on.exit(RSQLite::dbDisconnect(con))
+    if(!dir.exists(paste0(dir_name, "/daily/"))){
+      dir.create(paste0(dir_name, "/daily/"), recursive = T)}
 
-  repeat {
-    rv <- try({
-      RSQLite::dbWriteTable(con,
-                            "soils",
-                            soil.df[,-1],
-                            append=T, overwrite = F, row.names=F)
-      if(!any(is.na(dailycols))){
-        RSQLite::dbWriteTable(con,
-                              "daily",
-                              daily,
-                              append=T, overwrite = F, row.names=F)
-      }
+    save(daily,
+         file = paste0(dir_name, "/daily/", id_run, ".RData"))
 
-      if(!any(is.na(layercols))){
-        RSQLite::dbWriteTable(con,
-                              "layer",
-                              layer,
-                              append=T, overwrite = F, row.names=F)
-      }
-
-    })
-    if(!is(rv, "try-error")) break
   }
-  rv
+
+  if(!any(is.na(layercols))){
+
+    if(!dir.exists(paste0(dir_name, "/layer/"))){
+      dir.create(paste0(dir_name, "/layer/"), recursive = T)}
+
+    save(layer,
+         file = paste0(dir_name, "/layer/", id_run, ".RData"))
+
+  }
+
 }

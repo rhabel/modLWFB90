@@ -4,9 +4,9 @@
 \alias{fnc_write}
 \title{Function to reduce data output from automated LWFB90-Runs}
 \usage{
-fnc_write(x, dailycols, layercols, db_name)
+fnc_write(x, dailycols, layercols, dir_name)
 
-fnc_write(x, dailycols, layercols, db_name)
+fnc_write(x, dailycols, layercols, dir_name)
 }
 \arguments{
 \item{x}{one of the intermediate producs of \code{\link[LWFBrook90R]{run_LWFB90}} or  \code{\link[LWFBrook90R]{run_multisite_LWFB90}}, which is further processed internally. Can't be adjusted.}
@@ -15,15 +15,17 @@ fnc_write(x, dailycols, layercols, db_name)
 
 \item{layercols}{a sting containing the desired output products. Full list of possible output columns can be find on the help page of \code{\link[LWFBrook90R]{run_LWFB90}} under \code{Layer outputs}}
 
+\item{dir_name}{directory for tmp files}
+
 \item{db_name}{name and file path of the SQL-database}
 }
 \value{
 Returns the desired output to the database directly.
 
-Returns the desired output to the database directly.
+writes output to
 }
 \description{
 LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it to a database. This is what this function is made for.
 
-LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it to a database. This is what this function is made for.
+LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it. This is what this function is made for. It writes .RData files with the desired output for each point. \code{\link{fnc_write_to_sql}} can be used to convert these files into a SQLite-DB. \cr This "step-in-between" is necessary because SQLite does not support parallel writing.
 }

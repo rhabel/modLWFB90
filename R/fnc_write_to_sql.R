@@ -1,0 +1,53 @@
+#' Function to write temporary Outputfiles to SQLite-DB
+#'
+#' Parallel writing is not supported for SQLite. To end with a SQLite-DB \code{\link{fnc_write}} and \code{\link{fnc_write_agg}} now create temporary .RData files that this function reads, writes to an SQLite-Database, and then deletes.
+#'
+#' @param dir_tmp path to temporary files
+#' @param db_name name and file path of the SQL-database
+#' @param del_tmp optional, shall tmp-files be deleted. Default is T
+#'
+#' @return writes the output to a database
+#'
+#'
+#' @import RSQLite
+#' @export
+
+fnc_write_to_sql <- function(dir_tmp,
+                             db_name,
+                             del_tmp = T){
+
+
+  # load and write function
+  load_and_write <- function(x){
+    filename <- load(x)
+    load(x)
+    RSQLite::dbWriteTable(con,
+                          i,
+                          get(filename),
+                          append=T, overwrite = F, row.names=F)
+  }
+
+  # which tables exist?
+  table.names <- dir(dir_tmp)
+
+  # take each one and write to db
+  con <- RSQLite::dbConnect(RSQLite::SQLite(), dbname = db_name)
+  # i <- table.names[3]
+  for (i in table.names){
+    files_to_write <- list.files(paste0(dir_tmp, "/", i),
+                                 full.names = T)
+
+    lapply(files_to_write,
+           FUN = load_and_write)
+  }
+
+  # dbListTables(con)
+  # dbListFields(con, "vegper")
+  # test <- dbGetQuery(con, "SELECT * FROM vegper ")
+
+  RSQLite::dbDisconnect(con)
+
+  if(del_tmp){
+    unlink(dir_tmp, recursive = T)
+  }
+}
