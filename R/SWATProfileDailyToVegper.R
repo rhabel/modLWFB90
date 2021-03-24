@@ -25,8 +25,8 @@ SWATProfile.DailyToVegper <- function(dat, vp.year, vp.start, vp.end) {
     SWAT_prf_min = round(min(SWAT_prf),1),
     SWAT_we_avg = round(mean(SWAT_we),1),
     SWAT_we_min = round(min(SWAT_we),1),
-    SWAT_090_avg = round(mean(SWAT_090),1),
-    SWAT_090_min = round(min(SWAT_090),1),
+    SWAT_0100_avg = round(mean(SWAT_0100),1),
+    SWAT_0100_min = round(min(SWAT_0100),1),
     SWAT_060_avg = round(mean(SWAT_060),1),
     SWAT_060_min = round(min(SWAT_060),1),
     #AWAT
@@ -51,8 +51,8 @@ SWATProfile.DailyToVegper <- function(dat, vp.year, vp.start, vp.end) {
     #PSI
     PSIlogmean_we_avg = round(mean(PSIlogmean_we),1),
     PSIlogmean_we_min = round(min(PSIlogmean_we),1),
-    PSIlogmean_090_avg = round(mean(PSIlogmean_090),1),
-    PSIlogmean_090_min = round(min(PSIlogmean_090),1),
+    PSIlogmean_0100_avg = round(mean(PSIlogmean_0100),1),
+    PSIlogmean_0100_min = round(min(PSIlogmean_0100),1),
     PSIlogmean_060_avg = round(mean(PSIlogmean_060),1),
     PSIlogmean_060_min = round(min(PSIlogmean_060),1),
     # #StagWat-Stress
@@ -64,9 +64,9 @@ SWATProfile.DailyToVegper <- function(dat, vp.year, vp.start, vp.end) {
     Durations_Psiwe_lower1200 = paste((rle(PSIlogmean_we < -1200)$lengths[rle(PSIlogmean_we < -1200)$values]), collapse = " "),
     Defsum_PsiWe_lower1200 = round(sum((PSIlogmean_we + 1200) * (PSIlogmean_we < -1200)),1),
 
-    Days_Psi090_lower1200 = sum(PSIlogmean_we < -1200),
-    Durations_Psi90_lower1200 = paste((rle(PSIlogmean_090 < -1200)$lengths[rle(PSIlogmean_090 < -1200)$values]), collapse = " "),
-    Defsum_Psi090_lower1200 = round(sum((PSIlogmean_090 + 1200) * (PSIlogmean_090 < -1200)),1),
+    Days_Psi0100_lower1200 = sum(PSIlogmean_we < -1200),
+    Durations_Psi0100_lower1200 = paste((rle(PSIlogmean_0100 < -1200)$lengths[rle(PSIlogmean_0100 < -1200)$values]), collapse = " "),
+    Defsum_Psi0100_lower1200 = round(sum((PSIlogmean_0100 + 1200) * (PSIlogmean_0100 < -1200)),1),
 
     Days_Psi060_lower1200 = sum(PSIlogmean_we < -1200),
     Durations_Psi60_lower1200 = paste((rle(PSIlogmean_060 < -1200)$lengths[rle(PSIlogmean_060 < -1200)$values]), collapse = " "),

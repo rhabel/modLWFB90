@@ -3,6 +3,7 @@
 export(Aggregate.SWAT.ASC)
 export(Evap.DailyToMonthly)
 export(Evap.DailyToVegper)
+export(Flow.DailyToVegper)
 export(MvG.swc)
 export(SWATProfile.DailyToMonthly)
 export(SWATProfile.DailyToVegper)

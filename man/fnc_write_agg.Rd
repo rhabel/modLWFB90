@@ -4,7 +4,13 @@
 \alias{fnc_write_agg}
 \title{Function to aggregate and write data from automated LWFB90-Runs}
 \usage{
-fnc_write_agg(x, aggr_tp, col_select_vp = NA, col_select_mon = NA, dir_name)
+fnc_write_agg(
+  x,
+  aggr_tp,
+  col_select_vp = NA,
+  col_select_mon = NA,
+  dir_name = NA
+)
 }
 \arguments{
 \item{x}{one of the intermediate producs of \code{\link[LWFBrook90R]{run_LWFB90}} or  \code{\link[LWFBrook90R]{run_multisite_LWFB90}}, which is further processed internally. Can't be adjusted.}
@@ -15,7 +21,7 @@ fnc_write_agg(x, aggr_tp, col_select_vp = NA, col_select_mon = NA, dir_name)
 
 \item{col_select_mon}{a string containing the desired columns from the monthly-aggregation (see details)}
 
-\item{dir_name}{directory for tmp files}
+\item{dir_name}{directory for tmp files, if \code{NA} as in default, results are returned to console}
 }
 \value{
 Returns the desired output to .Rdata files
