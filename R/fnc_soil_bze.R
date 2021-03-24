@@ -55,8 +55,8 @@ fnc_soil_bze <- function(df.utm,
   data.table::setnames(soil, paste0("trdfb",0:4), paste0("trd",0:4)) # constr_corg umbenennen
   data.table::setnames(soil, paste0("grobv",0:4), paste0("gba",0:4)) # constr_corg umbenennen
   data.table::setnames(soil, paste0("s",0:4), paste0("sand",0:4)) # constr_corg umbenennen
-  data.table::setnames(soil, paste0("t",0:4), paste0("schluff",0:4)) # constr_corg umbenennen
-  data.table::setnames(soil, paste0("u",0:4), paste0("ton",0:4)) # constr_corg umbenennen
+  data.table::setnames(soil, paste0("t",0:4), paste0("ton",0:4)) # constr_corg umbenennen
+  data.table::setnames(soil, paste0("u",0:4), paste0("schluff",0:4)) # constr_corg umbenennen
   soil[, c("corg0","corg1","corg2","corg3","corg4") := list(corg0/100,corg1/100,corg2/100,corg3/100,corg4/100)]
   soil[, c("trd0","trd1","trd2","trd3","trd4") := list(trd0/100,trd1/100,trd2/100,trd3/100,trd4/100)]
   soil[, c("gba0","gba1","gba2","gba3","gba4") := list(gba0/1000,gba1/1000,gba2/1000,gba3/1000,gba4/1000)]

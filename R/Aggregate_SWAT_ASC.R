@@ -53,7 +53,7 @@ Aggregate.SWAT.ASC <- function(SWATi, soil){
     da = DA[1],
     SWAT_prf = round(sum(SWATI),1),
     SWAT_we = round(sum(SWATI * (rootden > 0)),1),
-    SWAT_090 =  round(sum(SWATI * (upper <= 0 & lower >= -0.9)),1),
+    SWAT_0100 =  round(sum(SWATI * (upper <= 0 & lower >= -1.0)),1),
     SWAT_060 =  round(sum(SWATI * (upper <= 0 & lower >= -0.6)),1),
     AWAT_we =  round(sum(AWAT * (rootden > 0)),1),
     AWAT_0100 =  round(sum(AWAT * (upper <= 0 & lower >= -1.0)),1),
@@ -71,8 +71,8 @@ Aggregate.SWAT.ASC <- function(SWATi, soil){
     PSIlogmean_we = round(-1*10 ^ (weighted.mean(log10(PSIMI * -10),
                                                  (ths * (1 - gravel) * 100 * thick * 10) * (rootden > 0)))
                           ,1),
-    PSIlogmean_090 = round(-1 * 10 ^ (weighted.mean(log10(PSIMI * -10),
-                                                    (ths * (1 - gravel) * 100 * thick * 10)*(upper <= 0 & lower >= -0.9)))
+    PSIlogmean_0100 = round(-1 * 10 ^ (weighted.mean(log10(PSIMI * -10),
+                                                    (ths * (1 - gravel) * 100 * thick * 10)*(upper <= 0 & lower >= -1.0)))
                            ,1),
     PSIlogmean_060 = round(-1 * 10 ^ (weighted.mean(log10(PSIMI * -10),
                                                     (ths * (1 - gravel) * 100 * thick * 10)*(upper <= 0 & lower >= -0.6)))

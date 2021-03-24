@@ -13,12 +13,13 @@
 
 Evap.DailyToMonthly <- function(dat) {
   setDT(dat)
-  dat_month <- dat[,list(EVAP= sum(EVAP),
+  dat_month <- dat[,list(# EVAP= sum(EVAP),
                          TRAN = sum(TRAN),
-                         IRVP = sum(IRVP),
-                         ISVP = sum(ISVP),
-                         SLVP=sum(SLVP),
-                         SNVP = sum(SNVP),
+                         INTV = sum(IRVP + ISVP),
+                         EVAP = sum(SLVP + SNVP),
+                         # ISVP = sum(ISVP),
+                         # SLVP = sum(SLVP),
+                         # SNVP = sum(SNVP),
                          PTRAN = sum(PTRAN),
                          PSLVP = sum(PSLVP),
                          TDIFF = round(sum(PTRAN-TRAN),1),
