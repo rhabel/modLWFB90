@@ -17,6 +17,7 @@ fnc_get_soil(
   limit_MvG = T,
   df.soils = NULL,
   meta.out = NA,
+  add_nFK = T,
   ...
 )
 }
