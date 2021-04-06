@@ -86,8 +86,8 @@ fnc_write_climdb <- function(df.ids,
     dt.clim.tmp <- dt.clim.tmp[dates>= mindate & dates <= maxdate]
 
     # create vappres
-    dt.clim.tmp[, ewasser := 6.11*10^(7.5*tmean/(273.5+tmean))]
-    dt.clim.tmp[, eeis := 6.11*10^(9.5*tmean/(265.5+tmean))]
+    dt.clim.tmp[, ewasser := 6.112*exp(17.62*tmean/(243.12+tmean))]
+    dt.clim.tmp[, eeis := 6.112*exp(22.46*tmean/(272.62+tmean))]
     dt.clim.tmp[, vappres :=  round(ifelse(tmean > 0, (ewasser-sddm)*0.1, (eeis-sddm)*0.1), 2)]
 
     # clean up
