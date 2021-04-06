@@ -69,8 +69,8 @@ fnc_get_clim_sgl <- function(id,
   data.table::setorder(dt.clim.tmp, dates)
 
   # vappres calculation
-  dt.clim.tmp[, ewasser := 6.11*10^(7.5*tmean/(273.5+tmean))]
-  dt.clim.tmp[, eeis := 6.11*10^(9.5*tmean/(265.5+tmean))]
+  dt.clim.tmp[, ewasser := 6.112*exp(17.62*tmean/(243.12+tmean))]
+  dt.clim.tmp[, eeis := 6.112*exp(22.46*tmean/(272.62+tmean))]
   dt.clim.tmp[, vappres :=  ifelse(tmean > 0, (ewasser-sddm)*0.1, (eeis-sddm)*0.1)]
 
   # add IDs and select
