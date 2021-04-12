@@ -21,7 +21,7 @@ fnc_read_climdb(IDs, clim_dir, id_standard, mindate = NA, maxdate = NA)
 returns climate data in correct format
 }
 \description{
-This function reads in the Project Climate Data files written by \code{\link[LWFBrook90R]{fnc_write_climdb}} and processes the data correctly, so that it can be used via the function parameters \code{climate} and \code{climate_args} in \code{\link[LWFBrook90R]{run_multisite_LWFB90}}. Function arguments must be passed to \code{\link[LWFBrook90R]{run_multisite_LWFB90}} as list of lists. Upper level containing the ID_custom names of the points to be modelled, the lower level containing the respective ID_custom name as well as the path to the project climate data base
+This function reads in the Project Climate Data files written by \code{\link{fnc_write_climdb}} and processes the data correctly, so that it can be used via the function parameters \code{climate} and \code{climate_args} in \code{\link[LWFBrook90R]{run_multisite_LWFB90}}. Function arguments must be passed to \code{\link[LWFBrook90R]{run_multisite_LWFB90}} as list of lists. Upper level containing the ID_custom names of the points to be modelled, the lower level containing the respective ID_custom name as well as the path to the project climate data base
 }
 \examples{
 

@@ -12,7 +12,7 @@
 #'
 #' @import data.table
 #'
-#' @return creates climate data on-the-fly for \code{\link[LWFBrook90R]{run_multiside_LWFB90}} by returning a correct clim-df
+#' @return creates climate data on-the-fly for \code{\link[LWFBrook90R]{run_multisite_LWFB90}} by returning a correct clim-df
 #' @example inst/examples/fnc_get_clim_sgl_ex.R
 #'
 #' @export
