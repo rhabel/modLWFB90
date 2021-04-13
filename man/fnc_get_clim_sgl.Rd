@@ -30,7 +30,7 @@ fnc_get_clim_sgl(
 \item{path_climdb}{path to climate-db directory}
 }
 \value{
-creates climate data on-the-fly for \code{\link[LWFBrook90R]{run_multiside_LWFB90}} by returning a correct clim-df
+creates climate data on-the-fly for \code{\link[LWFBrook90R]{run_multisite_LWFB90}} by returning a correct clim-df
 }
 \description{
 This function returns climate data from the main FVA-Climate Databases in the format required by \code{\link[LWFBrook90R]{run_LWFB90}}. \code{\link[LWFBrook90R]{run_multisite_LWFB90}} can read climate data directly via \code{climate} and \code{climate_args} without loading data into the session's memory. \cr\cr See example for how to set \code{climate_args} correctly.

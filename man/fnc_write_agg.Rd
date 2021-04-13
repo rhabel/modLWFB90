@@ -9,6 +9,7 @@ fnc_write_agg(
   aggr_tp,
   col_select_vp = NA,
   col_select_mon = NA,
+  col_select_yr = NA,
   dir_name = NA
 )
 }
@@ -37,7 +38,7 @@ For a complete list of possible output types plus description, see \code{"U:/db_
 \examples{
 df.output <- set_outputLWFB90()
 df.output[,] <- 0L
-df.output[c("Evap", "Swat"), c("Day")] <- 1
+df.output[c("Evap", "Flow", "Swat"), c("Day")] <- 1
 df.output[c("Flow"), c("Mon")] <- 1
 
 }
