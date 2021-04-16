@@ -2,11 +2,18 @@
 #'
 #' @description This function creates a list of parameter settings. Vegetation settings, by default, represent the findings of the WHH-KW project.
 #'
-#' @param df.ids a data frame containing the following columns:
+#' @param df.ids a data frame that contains at least the following columns:
 #' \itemize{
 #' \item \code{ID_custom} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to.
 #' \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
+#' } \cr and may further contain the following meta information:
+#' \itemize{
+#' \item \code{slope} - slope at the modelling points in degree
+#' \item \code{aspect} - aspect of the modelling points in degree
+#' \item \code{coord_x} - longitude of points in degree, will be calculated automatically if missing
+#' \item \code{coord_y} - latitude of points in degree, will be calculated automatically if missing
 #' }
+#'
 #' @param tree_species name of the tree species to be modelled with. Either a single species name that is then used for all points in \code{df.ids}, or a vector of the same length as \code{df.ids$ID} if the main tree species of each point is known and differs. Must be one of \code{beech}, \code{oak}, \code{spruce}, \code{pine}, \code{larch}, \code{douglasfir}. \cr It is  recommended (findings of project WHH-KW) to use the settings of spruce for fir and the settings of pine for larch. If certain tree specific parameters should be changed permanently, the corresponding object \code{params_...} should be overwritten manually before running the function.
 #' @param df.ind.info a data frame containing individual site information for each ID or if parameters are presumed to be different than the default settings of \code{\link[LWFBrook90R]{set_paramLWFB90}}. They need to be given here in the form of a data frame containing the column \code{ID}, which should be identical to the \code{ID}-column of\code{df.ids}, and additional columns that are named exactly like the parameters in \code{\link[LWFBrook90R]{set_paramLWFB90}}.
 #'

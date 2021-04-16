@@ -12,7 +12,16 @@
 #' @import data.table
 #' @export
 
-fnc_write <- function(x, dailycols, layercols, dir_name){
+fnc_write <- function(x,
+                      dailycols = NA,
+                      layercols = NA,
+                      dir_name = NA){
+  #
+  # soil.df <- ls.soils[[1]]
+  # colnames(soil.df) <- tolower(colnames(soil.df))
+  # id_run <- ls.soils[[1]]$ID_custom[1]
+  # param_std <- param_b90
+
   # soil
   soil.df <- get("soil", envir = parent.frame(3))
   id_run <- get("soil", envir = parent.frame(3))$id_custom[1]
@@ -40,25 +49,41 @@ fnc_write <- function(x, dailycols, layercols, dir_name){
     layer <- layer[, keep, with = FALSE]
   }
 
-  # write to tmp
-  if(!any(is.na(dailycols))){
+  ls.out <- list()
+  if(is.na(dir_name)){
+    if(!any(is.na(layercols))){
+      ls.out <- append(ls.out, list(layer))
+      names(ls.out)[length(ls.out)] <- "layer"
+    }
+    if(!any(is.na(dailycols))){
+      ls.out <- append(ls.out, list(daily))
+      names(ls.out)[length(ls.out)] <- "daily"
+    }
 
-    if(!dir.exists(paste0(dir_name, "/daily/"))){
-      dir.create(paste0(dir_name, "/daily/"), recursive = T)}
+    return(ls.out)
+  }else{
+    # write to tmp
+    if(!any(is.na(dailycols))){
 
-    save(daily,
-         file = paste0(dir_name, "/daily/", id_run, ".RData"))
+      if(!dir.exists(paste0(dir_name, "/daily/"))){
+        dir.create(paste0(dir_name, "/daily/"), recursive = T)}
 
+      save(daily,
+           file = paste0(dir_name, "/daily/", id_run, ".RData"))
+
+    }
+
+    if(!any(is.na(layercols))){
+
+      if(!dir.exists(paste0(dir_name, "/layer/"))){
+        dir.create(paste0(dir_name, "/layer/"), recursive = T)}
+
+      save(layer,
+           file = paste0(dir_name, "/layer/", id_run, ".RData"))
+
+    }
   }
 
-  if(!any(is.na(layercols))){
 
-    if(!dir.exists(paste0(dir_name, "/layer/"))){
-      dir.create(paste0(dir_name, "/layer/"), recursive = T)}
-
-    save(layer,
-         file = paste0(dir_name, "/layer/", id_run, ".RData"))
-
-  }
 
 }

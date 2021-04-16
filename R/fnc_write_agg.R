@@ -14,6 +14,7 @@
 #' For a complete list of possible output types plus description, see \code{"U:/db_brook90_output/whh_db_documentation"}
 #'
 #' @examples
+#' # setting for df.output:
 #' df.output <- set_outputLWFB90()
 #' df.output[,] <- 0L
 #' df.output[c("Evap", "Flow", "Swat"), c("Day")] <- 1
@@ -51,10 +52,10 @@ fnc_write_agg <- function(x,
 
   if(stringr::str_detect(aggr_tp, "yearly")){
     output_yearly <- data.table(ID_custom = id_run,
-                            Flow.MonthlyToYearly(dat = x$FLOWMON.ASC,
+                                Flow.MonthlyToYearly(dat = x$FLOWMON.ASC,
                                                bypar = param_std$bypar),
-                            Evap.DailyToYearly(dat = x$EVAPDAY.ASC)[,-1, with=F],
-                            SWATProfile.DailyToYearly(dat = x$swat.profile)[,-1, with=F])
+                                Evap.DailyToYearly(dat = x$EVAPDAY.ASC)[,-1, with=F],
+                                SWATProfile.DailyToYearly(dat = x$swat.profile)[,-1, with=F])
     setnames(output_yearly, names(output_yearly), tolower(names(output_yearly)))
   }
 

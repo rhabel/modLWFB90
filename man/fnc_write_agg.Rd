@@ -36,6 +36,7 @@ For a complete list of possible output types plus description, see \code{"U:/db_
 }
 
 \examples{
+# setting for df.output:
 df.output <- set_outputLWFB90()
 df.output[,] <- 0L
 df.output[c("Evap", "Flow", "Swat"), c("Day")] <- 1
