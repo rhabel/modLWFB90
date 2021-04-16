@@ -4,9 +4,9 @@
 \alias{fnc_write}
 \title{Function to reduce data output from automated LWFB90-Runs}
 \usage{
-fnc_write(x, dailycols, layercols, dir_name)
+fnc_write(x, dailycols = NA, layercols = NA, dir_name = NA)
 
-fnc_write(x, dailycols, layercols, dir_name)
+fnc_write(x, dailycols = NA, layercols = NA, dir_name = NA)
 }
 \arguments{
 \item{x}{one of the intermediate producs of \code{\link[LWFBrook90R]{run_LWFB90}} or  \code{\link[LWFBrook90R]{run_multisite_LWFB90}}, which is further processed internally. Can't be adjusted.}

@@ -7,10 +7,16 @@
 fnc_get_params(df.ids, tree_species = "default", df.ind.info = NULL)
 }
 \arguments{
-\item{df.ids}{a data frame containing the following columns:
+\item{df.ids}{a data frame that contains at least the following columns:
 \itemize{
 \item \code{ID_custom} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to.
 \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
+} \cr and may further contain the following meta information:
+\itemize{
+\item \code{slope} - slope at the modelling points in degree
+\item \code{aspect} - aspect of the modelling points in degree
+\item \code{coord_x} - longitude of points in degree, will be calculated automatically if missing
+\item \code{coord_y} - latitude of points in degree, will be calculated automatically if missing
 }}
 
 \item{tree_species}{name of the tree species to be modelled with. Either a single species name that is then used for all points in \code{df.ids}, or a vector of the same length as \code{df.ids$ID} if the main tree species of each point is known and differs. Must be one of \code{beech}, \code{oak}, \code{spruce}, \code{pine}, \code{larch}, \code{douglasfir}. \cr It is  recommended (findings of project WHH-KW) to use the settings of spruce for fir and the settings of pine for larch. If certain tree specific parameters should be changed permanently, the corresponding object \code{params_...} should be overwritten manually before running the function.}
