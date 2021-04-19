@@ -10,7 +10,7 @@
 #' @return A spatialpointsdataframe with the projected points in the respective.  Data type changes because of further processing within fnc_soil_bze( ).
 #'
 #' @example inst/examples/fnc_transf_to_gk_ex.R
-#'
+#' @export
 fnc_transf_crs <- function(df,
                            to_crs = "GK3"){
 

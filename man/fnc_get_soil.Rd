@@ -18,6 +18,7 @@ fnc_get_soil(
   df.soils = NULL,
   meta.out = NA,
   add_nFK = T,
+  create_roots = T,
   ...
 )
 }

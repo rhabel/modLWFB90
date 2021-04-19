@@ -1,13 +1,13 @@
 #' Function to write temporary Outputfiles to SQLite-DB
 #'
-#' Parallel writing is not supported for SQLite. To end with a SQLite-DB \code{\link{fnc_write}} and \code{\link{fnc_write_agg}} now create temporary .RData files that this function reads, writes to an SQLite-Database, and then deletes.
+#' Parallel writing is not supported for SQLite. To end with a SQLite-DB \code{\link{fnc_write}} and \code{\link{fnc_write_agg}} now create temporary .RData files that this function reads, writes to an SQLite-Database, and then deletes. \cr For every folder in \code{dir_tmp}, one table will be added to the SQL-Database, with tables named after folder names in \code{dir_tmp}. This procedure has been selected due to the default settings of \code{\link{fnc_write_agg}} and \code{\link{fnc_write}}, which create one folder for each aggregation. For example, meta files and soil-dfs can be stored accordingly (see example).
 #'
 #' @param dir_tmp path to temporary files
 #' @param db_name name and file path of the SQL-database
 #' @param del_tmp optional, shall tmp-files be deleted. Default is T
 #'
 #' @return writes the output to a database
-#'
+#' @example inst/examples/fnc_write_to_sql_ex.R
 #'
 #' @import RSQLite
 #' @export
