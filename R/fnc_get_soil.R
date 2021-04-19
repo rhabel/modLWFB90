@@ -47,6 +47,7 @@ fnc_get_soil <- function(df.ids,
                          df.soils = NULL,
                          meta.out = NA,
                          add_nFK = T,
+                         create_roots = T,
                          ...){
 
   # sort dfs according to IDs
@@ -261,8 +262,10 @@ fnc_get_soil <- function(df.ids,
 
 
   # Roots:
-  ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)],
-                                                                   FUN = fnc_roots, ...)
+  if(create_roots){
+    ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)],
+                                                                     FUN = fnc_roots, ...)
+  }
 
   # nFK:
   if(add_nFK){
