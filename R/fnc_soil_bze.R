@@ -18,27 +18,38 @@ fnc_soil_bze <- function(df.utm,
                          meta.out,
                          ...){
 
-  input_bze <- input_bze
+  # input_bze <- input_bze
 
   # einlesen aller BZEraster:
-  a <- c("bodtief",
+  a <- c("lof_cm", "oh_cm")
+  b <- c("bodtief",
          "corg0", "corg1", "corg2", "corg3", "corg4",
-         "lof_cm", "oh_cm",
          "trdfb0", "trdfb1", "trdfb2", "trdfb3", "trdfb4",
          "grobv0", "grobv1", "grobv2", "grobv3", "grobv4",
          "s0", "s1", "s2", "s3", "s4",
          "t0", "t1", "t2", "t3", "t4",
          "u0", "u1", "u2", "u3", "u4")
 
+
   cl <- parallel::makeCluster(parallel::detectCores())  #Cluster mit verfügbarer Anzahl von Kernen starten
   doParallel::registerDoParallel(cl)
-  ls.text <- foreach::foreach(i = a, .combine = cbind, .packages = "raster") %dopar% {
+
+  ls.text.alt <- foreach::foreach(i = a, .combine = cbind, .packages = "raster") %dopar% {
     rs.files <- lapply(paste0(input_bze, i, "_strt/hdr.adf"), raster)
   }
+
+  ls.text.neu <- foreach::foreach(i = b, .combine = cbind, .packages = "raster") %dopar% {
+    rs.files <- lapply(paste0(input_bze, i, ".tif"), raster)
+  }
+
   parallel::stopCluster(cl)
 
+  # bind together
+  ls.text <- append(ls.text.alt, ls.text.neu)
+  rm(ls.text.alt, ls.text.neu)
+
   soilraster <- raster::stack(unlist(ls.text))
-  names(soilraster) <- a
+  names(soilraster) <- c(a, b)
 
   # stechen
   soil <- fnc_extract_points_bze(lay = soilraster,
