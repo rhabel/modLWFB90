@@ -65,21 +65,21 @@ fnc_write <- function(x,
     # write to tmp
     if(!any(is.na(dailycols))){
 
-      if(!dir.exists(paste0(dir_name, "/daily/"))){
-        dir.create(paste0(dir_name, "/daily/"), recursive = T)}
+      if(!dir.exists(paste0(dir_name, "daily/"))){
+        dir.create(paste0(dir_name, "daily/"), recursive = T)}
 
       save(daily,
-           file = paste0(dir_name, "/daily/", id_run, ".RData"))
+           file = paste0(dir_name, "daily/", id_run, ".RData"))
 
     }
 
     if(!any(is.na(layercols))){
 
-      if(!dir.exists(paste0(dir_name, "/layer/"))){
-        dir.create(paste0(dir_name, "/layer/"), recursive = T)}
+      if(!dir.exists(paste0(dir_name, "layer/"))){
+        dir.create(paste0(dir_name, "layer/"), recursive = T)}
 
       save(layer,
-           file = paste0(dir_name, "/layer/", id_run, ".RData"))
+           file = paste0(dir_name, "layer/", id_run, ".RData"))
 
     }
   }
