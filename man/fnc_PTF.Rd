@@ -12,7 +12,7 @@ fnc_PTF(df, PTF_used)
 \item sand, silt, clay - soil texture in mass \%
 \item bd - bulk density in g cm-1
 \item oc.pct - organic carbon in mass \%
-\item humus - thickness of the humus-layer (repeated \code{nrow} - times. a bit clumsy, but building on existing code it was the most convenient way)
+\item humus - thickness of the humus-layer (repeated \code{nrow} - times. a bit clumsy, but building on existing code it was the most convenient way) \cr LWFB90 has problems if the first row is too thin and creates surface flow if it becomes saturated, which can happen if the humus layer is too thin. So, if humus is <= 2cm, it will be removed, 3 cm will be turned into 4 cm. Anything above is fine.
 }}
 
 \item{PTF_used}{PTF-options from the \code{LWFBrook90R} - package. Choices are \code{"HYPRES"}, \code{"PTFPUH2"}, or \code{"WESSOLEK"}.}
