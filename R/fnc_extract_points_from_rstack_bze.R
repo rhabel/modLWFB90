@@ -86,7 +86,7 @@ fnc_extract_points_bze <- function(lay,
       }
 
 
-      val2[which_missing, ] <- val_miss[which(colnames(val_miss) == "bodtief"):which(colnames(val_miss) == "u4")]
+      val2[which_missing, ] <- val_miss[which(colnames(val_miss) == "lof_cm"):which(colnames(val_miss) == "u4")]
       val2 <- as.data.frame(cbind(xy@data[c("aspect", "slope")],
                                   val2))
 

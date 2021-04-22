@@ -18,7 +18,7 @@ fnc_soil_bze <- function(df.utm,
                          meta.out,
                          ...){
 
-  # input_bze <- input_bze
+  input_bze <- input_bze
 
   # einlesen aller BZEraster:
   a <- c("lof_cm", "oh_cm")
