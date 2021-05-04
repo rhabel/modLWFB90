@@ -56,7 +56,7 @@ If PTFs are to be applied, the columns required in \code{\link{fnc_PTF}} must be
 If roots are to be calculated, the columns required in \code{\link{fnc_roots}} must be provided. Otherwise they need to be stored in a column called \code{rootden}.\cr
 If the nFK shall be calculated at some point, this will be done for the first 1m depth, so in this case one of the layers should end at 100cm depth.}
 
-\item{limit_bodtief}{whether soil-df should be reduced to the depth provided by the BZE-layer "Bodentiefe" (if \code{soil_option = "BZE"}) or to the lowest layer of the "Leitprofil" (if \code{soil_option = "STOK"}).\cr Default is \code{FALSE}. If \code{FALSE}, the soil-df are created down to a depth of 2.50 m to give room for different \code{maxrootdepth} - settings in \link{\code{fnc_get_params}}. If \code{TRUE}, soil depth may be reduced significantly.}
+\item{limit_bodtief}{whether soil-df should be reduced to the depth provided by the BZE-layer "Bodentiefe" (if \code{soil_option = "BZE"}) or to the lowest layer of the "Leitprofil" (if \code{soil_option = "STOK"}).\cr Default is \code{FALSE}. If \code{FALSE}, the soil-df are created down to a depth of 2.50 m to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. If \code{TRUE}, soil depth may be reduced significantly.}
 
 \item{...}{further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}.}
 }
