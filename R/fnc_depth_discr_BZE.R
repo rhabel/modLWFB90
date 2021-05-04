@@ -27,7 +27,7 @@ fnc_MakeSoil_BZE <- function(soil, skltn){
   layers_wide[, lower := ifelse(depth == "0", 5,
                                 ifelse(depth =="1", 10,
                                        ifelse(depth =="2",30,
-                                              ifelse(depth =="3", 60,max(skltn$lower)))))]
+                                              ifelse(depth =="3", 60, max(skltn$lower)))))]
   #breite layers wieder mit den limits und infos verschneiden
   setkey(layers_wide, ID)
   limits[,profile_top := round((ifelse(is.na(lof_cm),0,lof_cm)+ifelse(is.na(oh_cm),0,oh_cm))*0.1)]
@@ -64,8 +64,12 @@ fnc_MakeSoil_BZE <- function(soil, skltn){
   # Interval merge: model-nodes x layers.
   # Achtung: wenn die Wurzeltiefe nicht mit einer schichtuntergrenze zusammenf?llt,
   # dann muss noch eine Schicht unten oder mittendrin angef?gt werden.
-  lay_long <- data.table::foverlaps(skltn, lay_lim, type = "within", nomatch=0L)
+  completelay_lim <- lay_lim[complete.cases(lay_lim)]
+  lay_long <- data.table::foverlaps(skltn, completelay_lim, type = "within", nomatch=0L)
 
+  lay_long <- rbind(lay_long, cbind(lay_lim[!complete.cases(lay_lim)],
+                                    "i.upper" = NA,
+                                    "i.lower" = NA))
   setkey(lay_long, ID, i.upper)
   #setkey(lay_long, id)
   return(lay_long)

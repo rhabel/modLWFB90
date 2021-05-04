@@ -67,6 +67,8 @@ Returns a list of soil data frames completely processed to be further used by \c
 This function is a wrapper of several functions and chunks of code and the main point of access for the final user. It takes a dataframe of coordinates of the points to be modeled and returns a list of soil data frames as required by \code{LWFBrook90R}. Adjustment options exist for the origin of soil data, the PTF to be used, whether MvG-parameters should be limited to a certain range, as well as all options for roots included in \code{\link[LWFBrook90R]{make_rootden}} and \link{fnc_roots} that can be passed down from here.
 }
 \examples{
+load("H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Kleinprivatwald/Tranche1/ids_tr1.Rdata")
+
 fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
                 PTF_to_use = "HYPRES",
@@ -77,9 +79,9 @@ fnc_get_soil(df.ids = test.ids.bds,
                 PTF_to_use = "HYPRES",
                 rootsmethod = "betamodel",
                 beta = 0.95) # specification from LWFBrook90::MakeRelRootDens
-fnc_get_soil(df.ids = test.ids.bds,
+testx <- fnc_get_soil(df.ids = df.ids,
                 soil_option = "BZE",
-                PTF_to_use = "HYPRES",
+                PTF_to_use = "WESSOLEK",
                 rootsmethod = "betamodel",
                 beta = 0.95)
 fnc_get_soil(df.ids = test.ids.bds,
