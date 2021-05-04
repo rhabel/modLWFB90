@@ -10,7 +10,7 @@
 
 fnc_MakeSoil_BZE <- function(soil, skltn){
 
-  limits <- soil[,list(ID,lof_cm, oh_cm, bodtief, slope, aspect)]
+  limits <- soil[,list(ID, lof_cm, oh_cm, bodtief, slope, aspect)]
   layers <- soil[,-which(names(soil) %in% c("lof_cm", "oh_cm", "bodtief", "slope", "aspect")), with=F]
 
   #Layers umformen nach lang
@@ -27,15 +27,16 @@ fnc_MakeSoil_BZE <- function(soil, skltn){
   layers_wide[, lower := ifelse(depth == "0", 5,
                                 ifelse(depth =="1", 10,
                                        ifelse(depth =="2",30,
-                                              ifelse(depth =="3", 60,90))))]
+                                              ifelse(depth =="3", 60,max(skltn$lower)))))]
   #breite layers wieder mit den limits und infos verschneiden
   setkey(layers_wide, ID)
   limits[,profile_top := round((ifelse(is.na(lof_cm),0,lof_cm)+ifelse(is.na(oh_cm),0,oh_cm))*0.1)]
-  limits[,roots_bottom := ifelse(is.na(bodtief),90,bodtief)*0.1]
+
+  limits[,roots_bottom := bodtief]
   limits[,roots_bottom_rnd := ifelse(roots_bottom<10, 10,5*ceiling(roots_bottom/5))] # auf 5 cm aufrunden, mindestens 10 cm
 
   #merge limits/info back in
-  lay_lim <- layers_wide[limits[,.(ID,profile_top,roots_bottom, roots_bottom_rnd, slope, aspect)]]
+  lay_lim <- layers_wide[limits[,.(ID, profile_top, roots_bottom, roots_bottom_rnd, slope, aspect)]]
   lay_lim[, upper := c(0,lower[1:4]), by= ID]
 
 
@@ -52,7 +53,7 @@ fnc_MakeSoil_BZE <- function(soil, skltn){
 
   #upper, lower layer bounds
 
-  lay_lim[,thick := layerthickness(upper, lower, 0, max(c(roots_bottom_rnd, 90))), by= ID]
+  lay_lim[,thick := layerthickness(upper, lower, 0, max(c(roots_bottom_rnd, max(skltn$lower)))), by= ID]
   lay_lim[,c("upper_new","lower_new") := list(c(0,cumsum(thick[1:length(thick)-1])),
                                               cumsum(thick)), by=ID]
   lay_lim[,c("thick", "upper", "lower") := NULL]
