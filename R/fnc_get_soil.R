@@ -153,7 +153,8 @@ fnc_get_soil <- function(df.ids,
       ls.soils <- fnc_soil_stok(df = sf.ids,
                                 df.LEIT = df.LEIT.BW,
                                 PTF_to_use = PTF_to_use,
-                                dgm = df.dgm)
+                                dgm = df.dgm,
+                                limit_bodtief = limit_bodtief)
 
       names(ls.soils) <- df.ids$ID_custom
 
@@ -161,7 +162,7 @@ fnc_get_soil <- function(df.ids,
 
       if(soil_option == "STOK"){
 
-        cat("IDs \n",
+        cat("\nIDs \n",
             as.character(as.data.frame(df.ids)[IDs_miss, "ID_custom"]),
             " \nare not mapped by STOKA. They will not be modelled.\n\n")
 
@@ -169,22 +170,24 @@ fnc_get_soil <- function(df.ids,
         ls.soils.tmp <- fnc_soil_stok(df = sf.ids,
                                       df.LEIT = df.LEIT.BW,
                                       PTF_to_use = PTF_to_use,
-                                      dgm = df.dgm)
+                                      dgm = df.dgm,
+                                      limit_bodtief = limit_bodtief)
         names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
 
         ls.soils[match(names(ls.soils.tmp), names(ls.soils))] <- ls.soils.tmp
 
       } else if (soil_option == "STOK_BZE"){
 
-        cat("IDs \n",
+        cat("\nIDs \n",
             as.character(as.data.frame(df.ids)[IDs_miss, "ID_custom"]),
             " \nare not mapped by STOKA. They will be modelled using regionlized BZE data.\n\n")
 
         ls.soils[IDs_good] <- fnc_soil_stok(df = sf.ids[IDs_good,],
-                                                df.LEIT = df.LEIT.BW,
+                                            df.LEIT = df.LEIT.BW,
 
-                                                PTF_to_use = PTF_to_use,
-                                                dgm = df.dgm)
+                                            PTF_to_use = PTF_to_use,
+                                            dgm = df.dgm,
+                                            limit_bodtief = limit_bodtief)
         df.ids <- df.ids %>%
           dplyr::left_join(df.dgm, by = "ID")
         xy_gk_miss <- fnc_transf_crs(df = df.ids[IDs_miss,],
@@ -192,7 +195,9 @@ fnc_get_soil <- function(df.ids,
         ls.soils[IDs_miss] <- fnc_soil_bze(df.utm = xy_gk_miss,
                                            df.assign = df.ids[IDs_miss,],
                                            buffering = (!is.na(bze_buffer)),
-                                           buff_width = bze_buffer)
+                                           buff_width = bze_buffer,
+
+                                           limit_bodtief = limit_bodtief)
 
         # names(ls.soils) <- df.ids$ID_custom
 
@@ -217,7 +222,7 @@ fnc_get_soil <- function(df.ids,
   } else if (soil_option == "OWN") {
 
     if(!all(df.ids$ID_custom == unique(df.soils$ID_custom))){
-      stop("not all ID_custom of df.ids and df.soils are equal")
+      stop("\n not all ID_custom of df.ids and df.soils are equal")
     } else {
       ls.soils <- df.soils %>%
         dplyr::left_join(df.ids, by = "ID_custom") %>%
@@ -236,7 +241,7 @@ fnc_get_soil <- function(df.ids,
     }
 
   } else {
-    stop("Please provide valid soil-option")
+    stop("\nPlease provide valid soil-option")
   }
 
   # PTF-application: ----------------------------------------- ####
@@ -247,7 +252,7 @@ fnc_get_soil <- function(df.ids,
                     "mpar", "ksat", "tort")[!c("ths", "thr", "alpha", "npar",
                                                "mpar", "ksat", "tort") %in% names(df.soils)]
     if (length(missingcol) > 0){
-      cat(missingcol, "is missing in df.soils for PTF-application of ", PTF_to_use, "\n")
+      cat("\n", missingcol, "is missing in df.soils for PTF-application of ", PTF_to_use, "\n")
       stop("missing columns")
     }
 

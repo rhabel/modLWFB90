@@ -70,6 +70,12 @@ This function is a wrapper of several functions and chunks of code and the main 
 load("H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Kleinprivatwald/Tranche1/ids_tr1.Rdata")
 
 fnc_get_soil(df.ids = test.ids.bds,
+             soil_option = "STOK_BZE",
+             PTF_to_use = "HYPRES",
+             rootsmethod = "hartmann",
+             humus_roots = F,
+             limit_bodtief = F)
+fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
                 PTF_to_use = "HYPRES",
                 rootsmethod = "hartmann",
@@ -77,9 +83,9 @@ fnc_get_soil(df.ids = test.ids.bds,
 fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
                 PTF_to_use = "HYPRES",
-                rootsmethod = "betamodel",
-                beta = 0.95) # specification from LWFBrook90::MakeRelRootDens
-testx <- fnc_get_soil(df.ids = df.ids,
+                rootsmethod = "betamodel",  # specification from LWFBrook90R::make_roots
+                beta = 0.95)                # specification from LWFBrook90R::make_roots
+testx <- fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "BZE",
                 PTF_to_use = "WESSOLEK",
                 rootsmethod = "betamodel",
@@ -89,7 +95,10 @@ fnc_get_soil(df.ids = test.ids.bds,
                 PTF_to_use = "HYPRES",
                 rootsmethod = "betamodel",
                 beta = 0.95)
-
+# LWFBrook90R::make_roots
+# pth_df.LEIT = "H:/FVA-Projekte/P01540_WHHKW/Daten/Ergebnisse/Modellierung_Testregionen/Leitprofile/Modul1DB.Rdata",
+# pth_WGB_diss_shp = "H:/BU/Gis/Themen/Vektor/Wugeb_Dissolve.shp",
+# pth_STOK_pieces = "H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Wuchsgebiete/Wuchsgebiete_red/",
 
 # sample data frame with "own" data
 df.own.test <- data.frame("ID_custom" = c(rep("E",4), rep("D",4), rep("C",4), rep("B",4), rep("A",4)),

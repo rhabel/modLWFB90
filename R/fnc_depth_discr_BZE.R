@@ -62,14 +62,18 @@ fnc_MakeSoil_BZE <- function(soil, skltn){
   setkey(lay_lim, upper, lower)
 
   # Interval merge: model-nodes x layers.
-  # Achtung: wenn die Wurzeltiefe nicht mit einer schichtuntergrenze zusammenf?llt,
-  # dann muss noch eine Schicht unten oder mittendrin angef?gt werden.
-  completelay_lim <- lay_lim[complete.cases(lay_lim)]
-  lay_long <- data.table::foverlaps(skltn, completelay_lim, type = "within", nomatch=0L)
 
-  lay_long <- rbind(lay_long, cbind(lay_lim[!complete.cases(lay_lim)],
-                                    "i.upper" = NA,
-                                    "i.lower" = NA))
+  if(any(!complete.cases(lay_lim))){
+    completelay_lim <- lay_lim[complete.cases(lay_lim)]
+    lay_long <- data.table::foverlaps(skltn, completelay_lim, type = "within", nomatch=0L)
+
+    lay_long <- rbind(lay_long, cbind(lay_lim[!complete.cases(lay_lim)],
+                                      "i.upper" = NA,
+                                      "i.lower" = NA))
+  }else{
+    lay_long <- data.table::foverlaps(skltn, lay_lim, type = "within", nomatch=0L)
+  }
+
   setkey(lay_long, ID, i.upper)
   #setkey(lay_long, id)
   return(lay_long)
