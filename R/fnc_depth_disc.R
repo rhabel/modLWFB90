@@ -7,6 +7,7 @@
 #' that do not add up to another layer are added to the layer above.
 #'
 #' @param df data frame containing mandatory depth information on horizon number (\code{mat}), \code{upper} and \code{lower} as columns. Information of soil physics are optional and will be kept and returned.
+#' @param limit_bodentief whether soil-df should be reduced to the depth provided by the "Leitprofil". Default is \code{FALSE}. If \code{FALSE}, the soil-df are created down to a depth of 2.50 m to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. If \code{TRUE}, soil depth may be reduced significantly.
 #' @param thick_1 first set distance between nodes the function will build down to \code{disk_gr1}
 #' @param thick_2 second set distance between nodes the function will build down to \code{disk_gr2}
 #' @param thick_3 third set distance between nodes the function will build below \code{disk_gr2}
@@ -18,8 +19,16 @@
 #' @example inst/examples/fnc_depth_disc_ex.R
 
 fnc_depth_disc <- function(df,
-                        thick_1 = 5, thick_2 = 10, thick_3 = 20,
-                        disk_gr1 = 50, disk_gr2 = 100){
+                           limit_bodentief = F,
+                           thick_1 = 5, thick_2 = 10, thick_3 = 20,
+                           disk_gr1 = 50, disk_gr2 = 100){
+
+
+  # limit to STOK-Profile max or 2.50m
+  if(!limit_bodentief){
+    df$lower[nrow(df)] <- 250
+  }
+
   upper <- df$upper
   lower <- df$lower
   mat <- df$mat
@@ -28,8 +37,11 @@ fnc_depth_disc <- function(df,
   thickness <- numeric(0)
   material <-  numeric(0)
 
-  for (i in 1:length(layers)){
+
+  for (i in 1:length(layers)){   # 3){#
+
     if(lower[i] <= disk_gr1){
+
       if(layers[i] >= thick_1){
         # falls potentiell mehr als eine Schicht...
         nlayer <- (layers[i] %/% thick_1)-1 # nlayer ohne finlayer
@@ -44,7 +56,8 @@ fnc_depth_disc <- function(df,
       }
 
 
-    } else if(lower[i] <=disk_gr2){
+    } else if(lower[i] <= disk_gr2){
+
       if(upper[i] >= disk_gr1){
         if(layers[i] >= thick_2){
           # falls potentiell mehr als eine Schicht...
@@ -92,7 +105,14 @@ fnc_depth_disc <- function(df,
         }
       }
     } else {
+
+      # statement schleife: lower[i] ist größer als 100 (BEI 250 IMMER)
+
       if(upper[i] >= disk_gr2){
+
+        # statement schleife: lower[i] ist größer als 100 (BEI 250 IMMER) UND
+        #                     upper[i] ist größer als 100, dann nur 20 er schritte
+
         if(layers[i] >= thick_3){
           # falls potentiell mehr als eine Schicht...
           nlayer <- (layers[i] %/% thick_3)-1 # nlayer ohne finlayer
@@ -187,6 +207,13 @@ fnc_depth_disc <- function(df,
     dplyr::mutate(lower = upper+thickness) %>%
     dplyr::select(-thickness)
 
+  # ab 200 cm eigentlich 50 er schritte, in aktueller einstellung höchstens eine Schicht,
+  # die man am einfachsten selbst eliminiert
+  if((!limit_bodentief) & (df.soil$upper[nrow(df.soil)-1] >= 200)){
+    df.soil$lower[nrow(df.soil)-1] <- 250
+    df.soil <- df.soil[-nrow(df.soil)]
+  }
+
   # add rows in 1m depth
   if ((max(df.soil$lower) > 100)  & (!(100 %in% df.soil$lower))){
     cross_1m <- which(df.soil$lower>100 & df.soil$upper<100)
@@ -202,6 +229,7 @@ fnc_depth_disc <- function(df,
       df.soil[(cross_1m+1), "upper"] <- 100
     }
   }
+  rownames(df.soil) <- 1:nrow(df.soil)
 
   return(df.soil)
 }

@@ -1,3 +1,11 @@
+load("H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Kleinprivatwald/Tranche1/ids_tr1.Rdata")
+
+fnc_get_soil(df.ids = test.ids.bds,
+             soil_option = "STOK_BZE",
+             PTF_to_use = "HYPRES",
+             rootsmethod = "hartmann",
+             humus_roots = F,
+             limit_bodtief = F)
 fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
                 PTF_to_use = "HYPRES",
@@ -6,11 +14,11 @@ fnc_get_soil(df.ids = test.ids.bds,
 fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
                 PTF_to_use = "HYPRES",
-                rootsmethod = "betamodel",
-                beta = 0.95) # specification from LWFBrook90::MakeRelRootDens
-fnc_get_soil(df.ids = test.ids.bds,
+                rootsmethod = "betamodel",  # specification from LWFBrook90R::make_rootden
+                beta = 0.95)                # specification from LWFBrook90R::make_rootden
+testx <- fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "BZE",
-                PTF_to_use = "HYPRES",
+                PTF_to_use = "WESSOLEK",
                 rootsmethod = "betamodel",
                 beta = 0.95)
 fnc_get_soil(df.ids = test.ids.bds,

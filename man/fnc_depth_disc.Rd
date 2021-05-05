@@ -6,6 +6,7 @@
 \usage{
 fnc_depth_disc(
   df,
+  limit_bodentief = F,
   thick_1 = 5,
   thick_2 = 10,
   thick_3 = 20,
@@ -15,6 +16,8 @@ fnc_depth_disc(
 }
 \arguments{
 \item{df}{data frame containing mandatory depth information on horizon number (\code{mat}), \code{upper} and \code{lower} as columns. Information of soil physics are optional and will be kept and returned.}
+
+\item{limit_bodentief}{whether soil-df should be reduced to the depth provided by the "Leitprofil". Default is \code{FALSE}. If \code{FALSE}, the soil-df are created down to a depth of 2.50 m to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. If \code{TRUE}, soil depth may be reduced significantly.}
 
 \item{thick_1}{first set distance between nodes the function will build down to \code{disk_gr1}}
 
@@ -39,12 +42,12 @@ that do not add up to another layer are added to the layer above.
 \examples{
 df.soil <- data.frame(
   "mat" = 1:4,
-  "upper" = c(0,13,60,100),
-  "lower" = c(13,60,100,130),
+  "upper" = c(0,13,60,101),
+  "lower" = c(13,60,101,135),
   "texture" = c("Ls2", "Ls3", "Ls3", "Lts")
 )
 
-df.soil
+df <- df.soil
 fnc_depth_disc(df = df.soil)
 
 }

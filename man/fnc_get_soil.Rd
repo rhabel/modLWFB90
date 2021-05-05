@@ -17,8 +17,9 @@ fnc_get_soil(
   limit_MvG = T,
   df.soils = NULL,
   meta.out = NA,
-  add_nFK = T,
+  add_BodenInfo = T,
   create_roots = T,
+  limit_bodtief = F,
   ...
 )
 }
@@ -29,7 +30,7 @@ fnc_get_soil(
 \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
 }}
 
-\item{soil_option}{whether BZE or STOK data should be used for modelling. While option \code{BZE} with a buffer of 50 shouldn't create many NAs, option \code{STOK} builds on the data of the Standortskartierung Baden-Wuerttemberg that is not available everywhere (i.e. in private forests). \cr Option \code{STOK_BZE} will complete the missing STOK-points with BZE-data. \cr The final option is \code{OWN}, in which case users can enter their own soil data (i.e. from lab or field experiements). If the option \code{OWN} is selected, the dataframes must be passed at \code{df.soils}.}
+\item{soil_option}{whether BZE or STOK data should be used for modelling. While option \code{BZE} with a buffer of 50 shouldn't create many NAs, option \code{STOK} builds on the data of the Standortskartierung Baden-Wuerttemberg that is not available everywhere (i.e. in private forests). \cr Option \code{STOK_BZE} will complete the missing STOK-points with BZE-data. \cr The final option is \code{OWN}, in which case users can enter their own soil data (i.e. from lab or field experiments). If the option \code{OWN} is selected, the dataframes must be passed at \code{df.soils}.}
 
 \item{pth_df.LEIT}{path to .RData file with soil information from Modul1-DB. Should be the extended version containing a column for humus, currently set to latest location.}
 
@@ -55,15 +56,25 @@ If PTFs are to be applied, the columns required in \code{\link{fnc_PTF}} must be
 If roots are to be calculated, the columns required in \code{\link{fnc_roots}} must be provided. Otherwise they need to be stored in a column called \code{rootden}.\cr
 If the nFK shall be calculated at some point, this will be done for the first 1m depth, so in this case one of the layers should end at 100cm depth.}
 
+\item{limit_bodtief}{whether soil-df should be reduced to the depth provided by the BZE-layer "Bodentiefe" (if \code{soil_option = "BZE"}) or to the lowest layer of the "Leitprofil" (if \code{soil_option = "STOK"}).\cr Default is \code{FALSE}. If \code{FALSE}, the soil-df are created down to a depth of 2.50 m to give room for different \code{maxrootdepth} - settings in \code{\link{fnc_get_params}}. If \code{TRUE}, soil depth may be reduced significantly.}
+
 \item{...}{further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}.}
 }
 \value{
 Returns a list of soil data frames completely processed to be further used by \code{\link[LWFBrook90R]{run_multisite_LWFB90}} or \code{\link[LWFBrook90R]{run_LWFB90}}
 }
 \description{
-This function is a wrapper of several functions and chunks of code and the main point of access for the final user. It takes a dataframe of coordinates of the points to be modeled and returns a list of soil data frames as required by \code{LWFBrook90R}. Adjustment options exist for the origin of soil data, the PTF to be used, whether MvG-parameters should be limited to a certain range, as well as all options for roots included in \code{\link[LWFBrook90R]{make_rootden}} and \link{fnc_roots} that can be passed down from here.
+This function is a wrapper of several functions and chunks of code and the main point of access for the final user. It takes a dataframe of coordinates of the points to be modeled and returns a list of soil data frames as required by \code{LWFBrook90R}. Adjustment options exist for the origin of soil data, the PTF to be used, whether MvG-parameters should be limited to a certain range, as well as all options for roots included in \code{\link[LWFBrook90R]{make_rootden}} and \code{\link{fnc_roots}} that can be passed down from here.
 }
 \examples{
+load("H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Kleinprivatwald/Tranche1/ids_tr1.Rdata")
+
+fnc_get_soil(df.ids = test.ids.bds,
+             soil_option = "STOK_BZE",
+             PTF_to_use = "HYPRES",
+             rootsmethod = "hartmann",
+             humus_roots = F,
+             limit_bodtief = F)
 fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
                 PTF_to_use = "HYPRES",
@@ -72,11 +83,11 @@ fnc_get_soil(df.ids = test.ids.bds,
 fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
                 PTF_to_use = "HYPRES",
-                rootsmethod = "betamodel",
-                beta = 0.95) # specification from LWFBrook90::MakeRelRootDens
-fnc_get_soil(df.ids = test.ids.bds,
+                rootsmethod = "betamodel",  # specification from LWFBrook90R::make_rootden
+                beta = 0.95)                # specification from LWFBrook90R::make_rootden
+testx <- fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "BZE",
-                PTF_to_use = "HYPRES",
+                PTF_to_use = "WESSOLEK",
                 rootsmethod = "betamodel",
                 beta = 0.95)
 fnc_get_soil(df.ids = test.ids.bds,

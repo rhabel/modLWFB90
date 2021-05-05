@@ -20,6 +20,14 @@ fnc_extract_points_bze <- function(lay,
   val <- raster::extract(lay, xy, method = "simple") # normaler extract
 
   val2 <- as.data.frame(val)
+
+  # fehlende humusauflagen sollen nicht buffering auslösen
+  # werden bei NA auf null gesetzt laut PSM, deshalb gleich hier
+  val2$lof_cm[is.na(val2$lof_cm)] <- 0
+  val2$oh_cm[is.na(val2$oh_cm)] <- 0
+  val2[val2 ==-9999] <- NA
+
+  # buffering nur für die jetzt fehlenden werte
   val_miss <- val2[!complete.cases(val2),]
 
   #NAs & -9999: ziehe die häufigsten Werte im Umkreis von 50 m
@@ -87,18 +95,18 @@ fnc_extract_points_bze <- function(lay,
 
 
       val2[which_missing, ] <- val_miss[which(colnames(val_miss) == "lof_cm"):which(colnames(val_miss) == "u4")]
-      val2 <- as.data.frame(cbind(xy@data[c("aspect", "slope")],
+      val2 <- as.data.frame(cbind(xy@data[c("ID","aspect", "slope")],
                                   val2))
 
     }else{
-      val2 <- as.data.frame(cbind(xy@data[c("aspect", "slope")],
+      val2 <- as.data.frame(cbind(xy@data[c("ID","aspect", "slope")],
                                   val2))
     }
 
 
 
   }else{
-    val2 <- as.data.frame(cbind(xy@data[c("aspect", "slope")],
+    val2 <- as.data.frame(cbind(xy@data[c("ID","aspect", "slope")],
                                 val2))
   }
 

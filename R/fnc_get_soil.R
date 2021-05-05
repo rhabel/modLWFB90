@@ -1,6 +1,6 @@
 #' Soil-list creation
 #'
-#' This function is a wrapper of several functions and chunks of code and the main point of access for the final user. It takes a dataframe of coordinates of the points to be modeled and returns a list of soil data frames as required by \code{LWFBrook90R}. Adjustment options exist for the origin of soil data, the PTF to be used, whether MvG-parameters should be limited to a certain range, as well as all options for roots included in \code{\link[LWFBrook90R]{make_rootden}} and \link{fnc_roots} that can be passed down from here.
+#' This function is a wrapper of several functions and chunks of code and the main point of access for the final user. It takes a dataframe of coordinates of the points to be modeled and returns a list of soil data frames as required by \code{LWFBrook90R}. Adjustment options exist for the origin of soil data, the PTF to be used, whether MvG-parameters should be limited to a certain range, as well as all options for roots included in \code{\link[LWFBrook90R]{make_rootden}} and \code{\link{fnc_roots}} that can be passed down from here.
 #'
 #'
 #' @param df.ids a data frame containing the following columns:
@@ -8,12 +8,13 @@
 #' \item \code{ID_custom} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to.
 #' \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
 #' }
-#' @param soil_option whether BZE or STOK data should be used for modelling. While option \code{BZE} with a buffer of 50 shouldn't create many NAs, option \code{STOK} builds on the data of the Standortskartierung Baden-Wuerttemberg that is not available everywhere (i.e. in private forests). \cr Option \code{STOK_BZE} will complete the missing STOK-points with BZE-data. \cr The final option is \code{OWN}, in which case users can enter their own soil data (i.e. from lab or field experiements). If the option \code{OWN} is selected, the dataframes must be passed at \code{df.soils}.
+#' @param soil_option whether BZE or STOK data should be used for modelling. While option \code{BZE} with a buffer of 50 shouldn't create many NAs, option \code{STOK} builds on the data of the Standortskartierung Baden-Wuerttemberg that is not available everywhere (i.e. in private forests). \cr Option \code{STOK_BZE} will complete the missing STOK-points with BZE-data. \cr The final option is \code{OWN}, in which case users can enter their own soil data (i.e. from lab or field experiments). If the option \code{OWN} is selected, the dataframes must be passed at \code{df.soils}.
 #' @param pth_df.LEIT path to .RData file with soil information from Modul1-DB. Should be the extended version containing a column for humus, currently set to latest location.
 #' @param pth_WGB_diss_shp path to dissolved WUCHSGEBIET-shapefile, currently set to latest location.
 #' @param pth_STOK_pieces path to Wuchsgeb-STOKA.shapefiles, currently set to latest location.
 #' @param PTF_to_use the PTF to be used in the modeling process. Options are \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}. Alternatively, if MvG parameters have been retrieved elsewhere (i.e. by lab analyses), \code{OWN_PARMS} can be selected to skip this.
 #' @param limit_MvG should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit}}. Default is \code{FALSE}.
+#' @param limit_bodtief whether soil-df should be reduced to the depth provided by the BZE-layer "Bodentiefe" (if \code{soil_option = "BZE"}) or to the lowest layer of the "Leitprofil" (if \code{soil_option = "STOK"}).\cr Default is \code{FALSE}. If \code{FALSE}, the soil-df are created down to a depth of 2.50 m to give room for different \code{maxrootdepth} - settings in \code{\link{fnc_get_params}}. If \code{TRUE}, soil depth may be reduced significantly.
 #' @param ... further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}.
 #' @param bze_buffer whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur in {m}, default is \code{NA}
 #' @param df.soils if \code{OWN} is selected at soil_option, a data frame must be given here that contains the following columns
@@ -46,8 +47,9 @@ fnc_get_soil <- function(df.ids,
                          limit_MvG = T,
                          df.soils = NULL,
                          meta.out = NA,
-                         add_nFK = T,
+                         add_BodenInfo = T,
                          create_roots = T,
+                         limit_bodtief = F,
                          ...){
 
   # sort dfs according to IDs
@@ -151,7 +153,8 @@ fnc_get_soil <- function(df.ids,
       ls.soils <- fnc_soil_stok(df = sf.ids,
                                 df.LEIT = df.LEIT.BW,
                                 PTF_to_use = PTF_to_use,
-                                dgm = df.dgm)
+                                dgm = df.dgm,
+                                limit_bodtief = limit_bodtief)
 
       names(ls.soils) <- df.ids$ID_custom
 
@@ -159,7 +162,7 @@ fnc_get_soil <- function(df.ids,
 
       if(soil_option == "STOK"){
 
-        cat("IDs \n",
+        cat("\nIDs \n",
             as.character(as.data.frame(df.ids)[IDs_miss, "ID_custom"]),
             " \nare not mapped by STOKA. They will not be modelled.\n\n")
 
@@ -167,22 +170,24 @@ fnc_get_soil <- function(df.ids,
         ls.soils.tmp <- fnc_soil_stok(df = sf.ids,
                                       df.LEIT = df.LEIT.BW,
                                       PTF_to_use = PTF_to_use,
-                                      dgm = df.dgm)
+                                      dgm = df.dgm,
+                                      limit_bodtief = limit_bodtief)
         names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
 
         ls.soils[match(names(ls.soils.tmp), names(ls.soils))] <- ls.soils.tmp
 
       } else if (soil_option == "STOK_BZE"){
 
-        cat("IDs \n",
+        cat("\nIDs \n",
             as.character(as.data.frame(df.ids)[IDs_miss, "ID_custom"]),
             " \nare not mapped by STOKA. They will be modelled using regionlized BZE data.\n\n")
 
         ls.soils[IDs_good] <- fnc_soil_stok(df = sf.ids[IDs_good,],
-                                                df.LEIT = df.LEIT.BW,
+                                            df.LEIT = df.LEIT.BW,
 
-                                                PTF_to_use = PTF_to_use,
-                                                dgm = df.dgm)
+                                            PTF_to_use = PTF_to_use,
+                                            dgm = df.dgm,
+                                            limit_bodtief = limit_bodtief)
         df.ids <- df.ids %>%
           dplyr::left_join(df.dgm, by = "ID")
         xy_gk_miss <- fnc_transf_crs(df = df.ids[IDs_miss,],
@@ -190,7 +195,9 @@ fnc_get_soil <- function(df.ids,
         ls.soils[IDs_miss] <- fnc_soil_bze(df.utm = xy_gk_miss,
                                            df.assign = df.ids[IDs_miss,],
                                            buffering = (!is.na(bze_buffer)),
-                                           buff_width = bze_buffer)
+                                           buff_width = bze_buffer,
+
+                                           limit_bodtief = limit_bodtief)
 
         # names(ls.soils) <- df.ids$ID_custom
 
@@ -208,13 +215,14 @@ fnc_get_soil <- function(df.ids,
                              buffering = (!is.na(bze_buffer)),
                              buff_width = bze_buffer,
 
+                             limit_bodtief = limit_bodtief,
                              meta.out = meta.out)
 
 
   } else if (soil_option == "OWN") {
 
     if(!all(df.ids$ID_custom == unique(df.soils$ID_custom))){
-      stop("not all ID_custom of df.ids and df.soils are equal")
+      stop("\n not all ID_custom of df.ids and df.soils are equal")
     } else {
       ls.soils <- df.soils %>%
         dplyr::left_join(df.ids, by = "ID_custom") %>%
@@ -233,7 +241,7 @@ fnc_get_soil <- function(df.ids,
     }
 
   } else {
-    stop("Please provide valid soil-option")
+    stop("\nPlease provide valid soil-option")
   }
 
   # PTF-application: ----------------------------------------- ####
@@ -244,7 +252,7 @@ fnc_get_soil <- function(df.ids,
                     "mpar", "ksat", "tort")[!c("ths", "thr", "alpha", "npar",
                                                "mpar", "ksat", "tort") %in% names(df.soils)]
     if (length(missingcol) > 0){
-      cat(missingcol, "is missing in df.soils for PTF-application of ", PTF_to_use, "\n")
+      cat("\n", missingcol, "is missing in df.soils for PTF-application of ", PTF_to_use, "\n")
       stop("missing columns")
     }
 
@@ -265,10 +273,13 @@ fnc_get_soil <- function(df.ids,
   if(create_roots){
     ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)],
                                                                      FUN = fnc_roots, ...)
+                                                                     # FUN = fnc_roots,
+                                                                     # rootsmethod = "betamodel",
+                                                                     # beta = 0.95)
   }
 
   # nFK:
-  if(add_nFK){
+  if(add_BodenInfo){
     ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)],
                                                                    fnc_add_nFK)
   }

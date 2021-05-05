@@ -12,7 +12,9 @@
 fnc_soil_stok <- function(df,
                           df.LEIT,
                           PTF_to_use,
-                          dgm){
+                          dgm,
+                          limit_bodtief){
+
 
   # get Leitprofile info through parallel processing
   cl <- parallel::makeCluster(parallel::detectCores())
@@ -20,7 +22,7 @@ fnc_soil_stok <- function(df,
 
   ls.soil.par <- foreach::foreach(i = 1:nrow(df),
                    .packages = c("dplyr", "modLWFB90")) %dopar% {
-                     tryCatch({
+                    tryCatch({
                        df.tmp <- df.LEIT %>%
                          dplyr::filter(RST_F == df$RST_F[i]) %>%
                          dplyr::mutate("ID" = df$ID[i],
@@ -32,8 +34,22 @@ fnc_soil_stok <- function(df,
 
                          dplyr::mutate_at(vars(-all_of(c("ID_custom", "humusform"))), as.numeric)
 
-                       # Tiefendiskretisierung, Slope & Aspect
-                       df.tmp <- fnc_depth_disc(df.tmp) %>%
+
+                       # Tiefendiskretisierung, limit if wanted
+                       if(limit_bodtief == TRUE){
+
+                         df.tmp <- modLWFB90::fnc_depth_disc(df.tmp,
+                                                             limit_bodentief = T)
+
+                       }else{
+
+                         df.tmp <- modLWFB90::fnc_depth_disc(df.tmp,
+                                                             limit_bodentief = F)
+
+                       }
+
+                       # translate humusform to humus-cm
+                       df.tmp <- df.tmp %>%
                          dplyr::mutate(oc.pct = case_when((is.na(oc.pct)|(oc.pct < 0)) & PTF_to_use == "PTFPUH2" ~ 0.5,
                                                           (is.na(oc.pct)|(oc.pct < 0)) & PTF_to_use %in% c("HYPRES", "WESSOLEK") ~ 0.1,
                                                           T ~ oc.pct),
@@ -46,6 +62,8 @@ fnc_soil_stok <- function(df,
                                        upper = upper/-100,
                                        lower = lower/-100,
                                        gravel = gravel / 100)
+
+                       # add and prepare
                        df.tmp <- df.tmp %>%
                          dplyr::mutate(nl = 1:nrow(df.tmp)) %>%
                          dplyr::left_join(dgm, by = "ID") %>%
@@ -57,6 +75,7 @@ fnc_soil_stok <- function(df,
                        out <- data.frame("ID" = df$ID[i],
                                          "ID_custom" = as.character(df$ID_custom[i]))
                        return(out)
+                       # cond
                      })
                    }
 
