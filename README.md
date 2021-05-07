@@ -9,7 +9,7 @@ Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=TRUE)
 Sys.setenv(HTTPS_PROXY=Sys.getenv("HTTP_PROXY")) 
 
 remotes::install_github(repo="pschmidtwalter/LWFBrook90R") 
-remotes::install_github(repo="rhabel/modLWFB90")
+remotes::install_github(repo="rhabel/modLWFB90", build_vignettes = T)
 ```
 
 For more info see vignette.
