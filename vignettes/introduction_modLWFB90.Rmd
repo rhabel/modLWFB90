@@ -36,7 +36,7 @@ The package in front of you, *modLWFB90*, even goes one step further: It uses th
 * `easting` and 
 * `northing`    - coordinates in UTM 32N EPSG:32632
  
-Then, all you need to specify is the time period and a number of settings (the origin of the soil data, the PTF to be used, the type of forest you want to model, etc.).
+Then, all you need to specify is the time period, a number of settings (the origin of the soil data, the PTF to be used, the type of forest you want to model, etc.), and the way you want the output to be structured.
   
   
   
@@ -44,14 +44,10 @@ Then, all you need to specify is the time period and a number of settings (the o
 # Available Settings
  
 ## Vegetation
-In the course of the project WHH-KW, parametrisation settings for the main tree species (beech - Buche, spruce - Fichte, larch - Laerche) were agreed upon and can be selected in modLWFB90.
+In the course of the project WHH-KW, parametrisation settings for the main tree species (beech - Buche, spruce - Fichte, oak - Eiche, pine - Kiefer) were agreed upon and can be selected in modLWFB90.
 
 ## Climate data
 For WHH-KW the UHH Hamburg created a new and improved climate data set containing regionalised 250m-raster climate data for the historic time period 1961-2018, as well as the following climate scenarios: 
-
-* ...
-
-The link to the databases containing the raster data for the forest area in BW is included in modLWFB90, together with functions to retrieve climate data. 
 
 ## Soil data
 The following soil options can be selected: 
@@ -73,16 +69,14 @@ Then, install modLWFB90, together with the dependency packages, which are requir
 
 ```{r, eval = F}
 if(!require("remotes")) install.packages("remotes")
-# HTTPS not supported when installing from gis:  
-Sys.getenv("HTTPS_PROXY")                           # look up IP here
-Sys.setenv(HTTPS_PROXY='http://XX.XXX.XXX.XX:XXXX') # insert IP here 
+# HTTPS not supported when installing from github:  
+Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=TRUE)
+Sys.setenv(HTTPS_PROXY=Sys.getenv("HTTPS_PROXY")) # hier deine IP einfuegen
 
-remotes::install_github(repo="pschmidtwalter/LWFBrook90R", build_vignettes=TRUE) 
-remotes::install_github(repo="rhabel/modLWFB90", build_vignettes=T)
+remotes::install_github(repo="pschmidtwalter/LWFBrook90R") 
+remotes::install_github(repo="rhabel/modLWFB90")
 ```
 
-As https is not supported from FVA-servers, this first has to be overwritten...
-   
 
 ```{r, warning = F, message = F}
 library(modLWFB90)
@@ -101,7 +95,7 @@ check_packages <- function(pkg){
 }
 
 # example: 
-check_packages(c("tidyverse", "LWFBrook90R"))
+check_packages(c("LWFBrook90R", "parallel"))
 ```
   
   
@@ -110,17 +104,6 @@ Essential for hydrological modelling are three datasets: Soil, Climate, and Para
 ```{r}
 test.ids.bds
 ```
-<!-- # ```{r} -->
-<!-- # test.ids.bds -->
-<!-- #  -->
-<!-- # # for an overview:  -->
-<!-- # check_packages(c("sf", "mapview")) -->
-<!-- # mapview::mapview(sf::st_as_sf(test.ids.bds, -->
-<!-- #                               coords = c("easting", "northing"), -->
-<!-- #                               crs = 32632),  -->
-<!-- #                  viewer.suppress = T) -->
-<!-- #  -->
-<!-- # ``` -->
 
   
 ### Soil data
@@ -128,45 +111,18 @@ The function to create soil data is called fnc_get_soil and returns a list of so
 ```{r, warning = F, message = F}
 ls.soil <- fnc_get_soil(df.ids = test.ids.bds, 
                         soil_option = "BZE", 
-                        testgebiet = "BDS", 
                         PTF_to_use = "WESSOLEK", 
-                        limit_MvG = T)
+                        limit_MvG = T, 
+                        limit_bodtief = T)
 ls.soil[[1]]
 ```
 
 There's a number of options to choose from: 
 
 * df.ids - your data frame with `ID_custom`, `easting` and `northing` 
-* soil_option - either `STOK`, `BZE`, or `OWN`, if own you need to specify own soil data through df.soils. For more information see `?fnc_get_soil`
-* testgebiet - currently in development stage either `BDS` (Bodensee) or `NPS` (Nationalpark Schwarzwald), shall at some point be replaced by all of BW
+* soil_option - either `STOK`, `BZE`, (`STOK_BZE` for or `OWN`, if own you need to specify own soil data through df.soils. 
 * PTF_to_use - either `HYPRES`, `PTFPUH2` or `WESSOLEK`
-* limit_MvG - limit results of PTF application to "reasonable" ranges, see `?fnc_limit` for more information
-
-Since not all points are mapped by STOK, you can choose between filling non-mapped points with BZE data or not modeling those points to keep it consistent. If you want to model with STOK, you first need to run these lines of code: They load the STOK-shapefiles and the LEITPROFIL-dbs. The input-paths are included in the package and lead to the current location of the files, so they might need to get adjusted at some point in the future.
-
-```{r, eval = F}
-# load Leitprofil-db:
-df.LEIT.hum <- readxl::read_excel(paste0(input_stok, "testregionen/20200129_StokDB_Leitprofile_705.xlsx"),
-                                  sheet = "STANDORTSEINHEITEN") %>%
-  dplyr::select(RST_F, RST_DritteZeileHumus) %>%
-  setNames(c("RST_F", "humusform"))
-df.LEIT.BDS <- readxl::read_excel(paste0(input_stok, "testregionen/20200129_StokDB_Leitprofile_705.xlsx"),
-                                  sheet = "LEITPROFIL") %>%
-  dplyr::left_join(df.LEIT.hum, by = "RST_F")
-
-
-df.LEIT.hum <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_StokDB_Leitprofile_NLP.xlsx"),
-                                  sheet = "STANDORTSEINHEITEN") %>%
-  dplyr::select(RST_F, RST_DritteZeileHumus) %>%
-  setNames(c("RST_F", "humusform"))
-df.LEIT.NPS <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_StokDB_Leitprofile_NLP.xlsx"),
-                                  sheet = "LEITPROFIL")%>%
-  dplyr::left_join(df.LEIT.hum, by = "RST_F")
-
-# load STOK-Shapefiles:
-sf.STOK.BDS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/BDS/BDS_STOKA_Clip_UTM.shp"))
-sf.STOK.NPS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NPS_STOKA_Clip_UTM.shp"))
-```
+* for further settings (e.g. max soil depth or roots distribution) see `?fnc_get_soil`
 
 ***
 There's also the option to compare the soil data created by the different options. Plus, the option to compare the hydraulic parameters created by the differnt PTFs. See `?fnc_compare_soil` for more information.
@@ -182,14 +138,16 @@ ls.clim <- fnc_get_clim(df.ids = test.ids.bds,
                         maxdate = as.Date("2011-12-31"))
 ```
   
-Here you can only specify the time period for which you need climate data. The additional arguments `path_std` and `path_climdb` lead to the current position of the climate databases on the FVA-Servers and may need to be adjusted at some point.   
+Here you can only specify the time period for which you need climate data. The additional arguments `path_std` and `path_climdb` lead to the current position of the climate databases on the FVA-Servers. They may have to be adjusted at some point, but for now they are up to date and shouldn't be changed.   
+   
+If you model many points, large climate data files might use up all your RAM. In this case you should have a look at `fnc_read_climdb` and `fnc_write_climdb`. 
 
   
   
   
 ***
 ### Parameters
-The list of parameters you can pass to LWFBrook90 is pretty exhaustive. See `LWFBrook90R::setparam_LWFB90` for a complete list. In the project WHH-KW, a set of parameters was agreed upon for the most relevant tree species (Buche - `beech`, Eiche - `oak`, Fichte - `spruce`, Douglasie - `douglas`, Kiefer - `pine`). They can be used by specifying the argument `tree_species` either as one value for all points, or as a vector of values for each individual point. Additional information on the modelling points can be passed with the argument `df.ind.info`. See `?fnc_get_params` to find out how to do this.  
+The list of parameters you can pass to LWFBrook90 is pretty exhaustive. See `LWFBrook90R::setparam_LWFB90` for a complete list. In the project WHH-KW, a set of parameters was agreed upon for the most relevant tree species (Buche - `beech`, Eiche - `oak`, Fichte - `spruce`, Kiefer - `pine`). They can be used by specifying the argument `tree_species` either as one value for all points, or as a vector of values for each individual point. Additional information on the modelling points can be passed with the argument `df.ind.info`. See `?fnc_get_params` to find out how to do this.  
   
   The default setting for spruce would look like this: 
 
@@ -204,15 +162,20 @@ ls.parms <- fnc_get_params(df.ids = test.ids.bds,
   
 ***
 ### Options
-Finally, we need to set the modelling options. This is done with the function `setoptions_LWFB90` from the *LWFBrook90* package. If you use *modLWFB90* the only settings you need to adjust are
+Modelling options are set with the function `set_optionsLWFB90` from the *LWFBrook90R* package. If you use *modLWFB90* the only settings you need to adjust are
 
 * `budburst.method` and `leaffall.method` - if you want something other than `fixed`
-* `startdate` and `enddate` - as desired
-* `root.method` - set this to `soilvar`, because roots are created in `fnc_get_soil`, see its help page on how to adjust settings for roots
+* `startdate` and `enddate` - as desired, but should match your settings in `fnc_get_clim`
+* `root.method` 
+
+check `?set_optionsLWFB90` for more information.
 
 
-  
-  
+***
+### Adjust Output
+Finally, we need to define how our output should look like. LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both `run_LWFB90` and `run_multisite_LWFB90` provide an `output_fun` - argument that can be used to reduce the output and directly write it. 
+   This is what the functions `fnc_write` (daily values) and `fnc_write_agg` (options to aggregate over year, vegetation period, or months) function are made for. They write temporary files with the desired output for each point. `fnc_write_to_sql` can be used to convert these files into a SQLite-DB. This "step-in-between" is necessary because SQLite does not support parallel writing. If you model few enough points that your memory can handle them, you can set dir_name to `NA` and get the results loaded into your environment. See the help pages of the write-functions on how to do this.
+
   
 ***
 # Example
@@ -220,35 +183,19 @@ Finally, we need to set the modelling options. This is done with the function `s
 # create ID-dataframe
 df.ids = test.ids.bds
 
-# load STOK-Shapefiles:
-# Leitprofil-db:
-df.LEIT.hum <- readxl::read_excel(paste0(input_stok, "testregionen/20200129_StokDB_Leitprofile_705.xlsx"),
-                                  sheet = "STANDORTSEINHEITEN") %>%
-  dplyr::select(RST_F, RST_DritteZeileHumus) %>%
-  setNames(c("RST_F", "humusform"))
-df.LEIT.BDS <- readxl::read_excel(paste0(input_stok, "testregionen/20200129_StokDB_Leitprofile_705.xlsx"),
-                                  sheet = "LEITPROFIL") %>%
-  dplyr::left_join(df.LEIT.hum, by = "RST_F")
-
-
-df.LEIT.hum <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_StokDB_Leitprofile_NLP.xlsx"),
-                                  sheet = "STANDORTSEINHEITEN") %>%
-  dplyr::select(RST_F, RST_DritteZeileHumus) %>%
-  setNames(c("RST_F", "humusform"))
-df.LEIT.NPS <- readxl::read_excel(paste0(input_stok, "testregionen/20200109_StokDB_Leitprofile_NLP.xlsx"),
-                                  sheet = "LEITPROFIL")%>%
-  dplyr::left_join(df.LEIT.hum, by = "RST_F")
-
-# STOKA - shapefiles
-sf.STOK.BDS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/BDS/BDS_STOKA_Clip_UTM.shp"))
-sf.STOK.NPS <- sf::st_read(dsn = paste0(input_gis, "Testgebiete/NPS/NP_STOKA_Clip_UTM.shp"))
-
 # set options
-options.b90 <- setoptions_LWFB90(budburst.method = "Menzel",
+options.b90 <- set_optionsLWFB90(budburst.method = "Menzel",
                                  leaffall.method = "vonWilpert",
                                  startdate = as.Date("2010-01-01"),
                                  enddate = as.Date("2011-12-31"),
-                                 root.method = "soilvar")
+                                 root.method = "betamodel")
+# set df.output
+df.output <- set_outputLWFB90()
+df.output[,] <- 0L
+df.output[c("Evap", "Swat", "Flow"), c("Day")] <- 1
+df.output[c("Flow"), c("Mon")] <- 1
+
+output_path <- paste0(getwd(), "/")
 
 
 # create data
@@ -268,12 +215,34 @@ ls.soil <- ls.soil[which(!unlist(lapply(ls.soil, is.null))==T)]
 
 
 # Run: 
-res <- msiterunLWFB90(options.b90 = options.b90,
-                      output = -1,
-                      param.b90 = ls.parms,
-                      climate = ls.clim,
-                      soil = ls.soil,
-                      all_combinations = F,
-                      cores = 1) 
-# if you have more than one core available, this will speed things up significantly
+  res <- run_multisite_LWFB90(options_b90 = options.b90,
+                              param_b90 = ls.parms,
+                              soil = ls.soil,
+
+                              climate = ls.clim,
+
+                              output = df.output,
+
+                              all_combinations = F,
+                              cores = parallel::detectCores(),
+                              # if you have more than one core available, this will speed things up significantly
+
+                              output_fun = fnc_write_agg,
+                              aggr_tp = "vegper",
+                              dir_name=paste0(output_path, "tmp/"))
+
+  # save soils 
+  names(ls.soil) <- NULL
+  soils <- bind_rows(ls.soil)
+
+  # create dirs
+  if(!dir.exists(paste0(output_path, "tmp/soils/"))){
+    dir.create(paste0(output_path, "tmp/soils/"), recursive = T)
+  }
+  save(soils, file = paste0(output_path, "tmp/soils/soils.RData"))
+
+  # write to db --------------- ####
+  fnc_write_to_sql(db_name = paste0(output_path, "test_db.sqlite"),
+                   dir_tmp = paste0(output_path, "tmp"))
+
 ```
