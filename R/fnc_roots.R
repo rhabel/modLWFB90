@@ -34,7 +34,12 @@ fnc_roots <- function(df,
 
     df <- df %>%
       dplyr::mutate(fwd_brt = sapply(1:nrow(df),
-                                     function(i) mean(11.63 - 0.084*seq(i.upper[i]+1, i.lower[i]) + 3.22*hum.ka5[i] - 3.42*bd[i] + 0.108*slope[i] + 0.095*nfk[i]*100))) %>%
+                                     function(i) mean(11.63 - 0.084*seq(i.upper[i]+1, i.lower[i]) + 3.22*hum.ka5[i] - 3.42*bd[i] + 0.108*slope[i] + 0.095*nfk[i]*100)))
+
+    df <- df %>%
+      dplyr::mutate(fwd_brt = case_when(i.upper < 0 ~ NA_real_,
+                                        T ~ fwd_brt))
+    df <- df %>%
       dplyr::mutate(fwd_brt = case_when(i.upper < 0 & humus_roots == T ~ max(fwd_brt, na.rm = T)/2,
                                         i.upper < 0 & humus_roots == F ~ 0,
                                         T ~ fwd_brt)) %>%
@@ -42,14 +47,22 @@ fnc_roots <- function(df,
       dplyr::rename(rootden = fwd_brt) %>%
       dplyr::mutate(rootden = ifelse(rootden < 2, 0, rootden))
 
-    range01 <- function(x){(x-min(x))/(max(x)-min(x))}
-    df$rootden <- round(range01(df$rootden), 4)
+    sumroots <- sum(df$rootden)
+    df$rootden <- round(df$rootden/sumroots, 4)
 
     return(df)
   }else{
-    rootden <- make_rootden_adj(soilnodes = df$lower, method = rootsmethod, ...)
+    rootden <- make_rootden_adj(soilnodes = df$lower,
+                                method = rootsmethod, ...)
+
+    # humus
     df$rootden <- c(ifelse(humus_roots == T, round(max(rootden)/2, 4), 0),
                     round(rootden, 4))
+
+    # rel.values
+    sumroots <- sum(df$rootden)
+    df$rootden <- round(df$rootden/sumroots, 4)
+
     return(df)
   }
 
