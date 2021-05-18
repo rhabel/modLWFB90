@@ -71,7 +71,7 @@ Then, install modLWFB90, together with the dependency packages, which are requir
 if(!require("remotes")) install.packages("remotes")
 # HTTPS not supported when installing from github:  
 Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=TRUE)
-Sys.setenv(HTTPS_PROXY=Sys.getenv("HTTPS_PROXY")) # hier deine IP einfuegen
+Sys.setenv(HTTPS_PROXY=Sys.getenv("HTTP_PROXY")) # hier deine IP einfuegen
 
 remotes::install_github(repo="pschmidtwalter/LWFBrook90R") 
 remotes::install_github(repo="rhabel/modLWFB90")
