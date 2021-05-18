@@ -6,6 +6,7 @@
 #' @param df.LEIT a data frame containing LEITPROFILE. At this stage of development, the comprehensive BW-wide database is not complete yet, so the test area needs to be assigned here. However, this is done automatically in  \code{\link{fnc_get_soil}}.
 #' @param PTF_to_use which PTF will later be used in \code{\link{fnc_get_soil}} has an impact on the setting of oc.pct, so this information is passed down from \code{\link{fnc_get_soil}} here.
 #' @param dgm df.dgm gets created in \code{\link{fnc_get_soil}} and is passed here to avoid complications with potential df.dgms in the global environment.
+#' @param limit_bodtief max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}. If not \code{NA} soil-dfs are created down to the depth specified here as depth in \code{m}, negative. Might be used to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. In this case, soil depth may be reduced significantly.
 #'
 #' @return Returns a list of soil data frames.
 
@@ -36,15 +37,15 @@ fnc_soil_stok <- function(df,
 
 
                        # Tiefendiskretisierung, limit if wanted
-                       if(limit_bodtief == TRUE){
+                       if(is.na(limit_bodtief) == TRUE){
 
-                         df.tmp <- modLWFB90::fnc_depth_disc(df.tmp,
-                                                             limit_bodentief = T)
+                         df.tmp <- modLWFB90::fnc_depth_disc(df = df.tmp,
+                                                             limit_bodtief = NA)
 
                        }else{
 
-                         df.tmp <- modLWFB90::fnc_depth_disc(df.tmp,
-                                                             limit_bodentief = F)
+                         df.tmp <- modLWFB90::fnc_depth_disc(df = df.tmp,
+                                                             limit_bodtief = limit_bodtief)
 
                        }
 

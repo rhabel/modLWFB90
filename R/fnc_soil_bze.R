@@ -5,7 +5,7 @@
 #' @param df.gk A spatialpointsdataframe with the desired points in UTM25832.
 #' @param df.assign a dataframe containing the corresponding ID_custom for the IDs in \code{df.gk}
 #' @param meta.out a string containing a path passed down from \code{fnc_get_soil}. Saving location of metadata.
-#' @param limit_bodtief whether soil-df should be reduced to the depth provided by the BZE-layer "Bodentiefe". Default is \code{FALSE}. If \code{FALSE}, the soil-df are created down to a depth of 2.50 m to give room for different \code{maxrootdepth} - settings in \code{\link{fnc_get_params}}. If \code{TRUE}, soil depth may be reduced significantly.
+#' @param limit_bodtief max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}. If not \code{NA} soil-dfs are created down to the depth specified here as depth in \code{m}, negative. Might be used to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. In this case, soil depth may be reduced significantly.
 #' @param ... whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur, options are \code{buffering} as \code{TRUE} or \code{FALSE}, and \code{buff_width} in \code{m}
 #'
 #' @return Returns a list of soil data frames.
@@ -17,7 +17,7 @@ fnc_soil_bze <- function(df.utm,
                          df.assign,
 
                          meta.out,
-                         limit_bodtief = F,
+                         limit_bodtief = NA,
                          ...){
 
   input_bze <- input_bze
@@ -78,7 +78,7 @@ fnc_soil_bze <- function(df.utm,
   # soil$coords_y <-  as.numeric(df.ids$northing)
 
   # discretisation according to distances in fnc_depth_disrc
-  thick1 <- c(rep(5,10),rep(10,5), rep(20, 5), 50)
+  thick1 <- c(rep(5,10),rep(10,5), rep(20, 10))
   skltn1 <- data.table::data.table(upper = c(0,cumsum(thick1[1:length(thick1)-1])), lower = cumsum(thick1))
 
   data.table::setkey(skltn1, upper, lower)
@@ -100,8 +100,11 @@ fnc_soil_bze <- function(df.utm,
   )]
   soilsdiscrete1[, "nl" := 1:.N, by = ID]
 
-  if(limit_bodtief){
-    soilsdiscrete1 <- soilsdiscrete1[i.upper < roots_bottom_rnd]
+  if(is.na(limit_bodtief) == T){
+    soilsdiscrete1 <- soilsdiscrete1[i.upper < roots_bottom_rnd] # wenn kein wert bei limit_bodtief, nutzt bodentiefe (roots_bottom_rnd)
+  }else{
+    soilsdiscrete1 <- soilsdiscrete1[i.upper < limit_bodtief*-100]
+    soilsdiscrete1[which(soilsdiscrete1$lower == min(soilsdiscrete1$lower)),"lower"] <- limit_bodtief
   }
 
   # join to get ID_custom

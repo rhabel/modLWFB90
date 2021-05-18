@@ -50,6 +50,24 @@ fnc_write_agg <- function(x,
   # Aggregierung: ...
   x$swat.profile <- Aggregate.SWAT.ASC(SWATi = x$SWATDAY.ASC, soil = soil.df)
 
+  if(stringr::str_detect(aggr_tp, "daily")){
+    output_vegper <- data.table(ID_custom = id_run,
+                                Flow.DailyToVegper(dat = x$FLOWDAY.ASC,
+                                                   vp.year = min(x$FLOWMON.ASC$YR):max(x$FLOWMON.ASC$YR),
+                                                   vp.start = param_std$budburstdoy,
+                                                   vp.end = param_std$leaffalldoy,
+                                                   bypar = param_std$bypar),
+                                Evap.DailyToVegper(dat = x$EVAPDAY.ASC,
+                                                   vp.year = min(x$FLOWMON.ASC$YR):max(x$FLOWMON.ASC$YR),
+                                                   vp.start = param_std$budburstdoy,
+                                                   vp.end = param_std$leaffalldoy)[,-c(1:3), with = F],
+                                SWATProfile.DailyToVegper(dat = x$swat.profile,
+                                                          vp.year = min(x$FLOWMON.ASC$YR):max(x$FLOWMON.ASC$YR),
+                                                          vp.start = param_std$budburstdoy,
+                                                          vp.end = param_std$leaffalldoy)[,-1, with=F])
+    setnames(output_vegper, names(output_vegper), tolower(names(output_vegper)))
+  }
+
   if(stringr::str_detect(aggr_tp, "yearly")){
     output_yearly <- data.table(ID_custom = id_run,
                                 Flow.MonthlyToYearly(dat = x$FLOWMON.ASC,
@@ -107,6 +125,12 @@ fnc_write_agg <- function(x,
     keep <- c("id_custom", "yr",
               col_select_yr)
     output_yearly <- output_yearly[, keep, with = FALSE]
+  }
+
+  if(!any(is.na(col_select_day))){
+    keep <- c("id_custom", "yr", "mo", "da",
+              col_select_day)
+    output_daily <- output_daily[, keep, with = FALSE]
   }
 
   ls.out <- list()

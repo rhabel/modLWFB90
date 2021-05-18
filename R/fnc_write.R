@@ -16,7 +16,7 @@ fnc_write <- function(x,
                       dailycols = NA,
                       layercols = NA,
                       dir_name = NA){
-  #
+
   # soil.df <- ls.soils[[1]]
   # colnames(soil.df) <- tolower(colnames(soil.df))
   # id_run <- ls.soils[[1]]$ID_custom[1]
