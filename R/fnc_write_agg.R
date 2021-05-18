@@ -4,13 +4,15 @@
 #'
 #' @param x one of the intermediate producs of \code{\link[LWFBrook90R]{run_LWFB90}} or  \code{\link[LWFBrook90R]{run_multisite_LWFB90}}, which is further processed internally. Can't be adjusted.
 #' @param aggr_tp a string containing the desired aggregation time period. Can be \code{monthly},  \code{vegper}, or  \code{monthly_vegper}. The latter does both.
-#' @param col_select_vp a string containing the desired columns from the vegperiod-aggregation (see details)
+#' @param col_select_day a string containing the desired columns from the daily-aggregation (see details)
 #' @param col_select_mon a string containing the desired columns from the monthly-aggregation (see details)
+#' @param col_select_vp a string containing the desired columns from the vegperiod-aggregation (see details)
+#' @param col_select_yr a string containing the desired columns from the yearly-aggregation (see details)
 #' @param dir_name directory for tmp files, if \code{NA} as in default, results are returned to console
 #'
 #' @return Returns the desired output to .Rdata files
 #'
-#' @section Vegperiod and monthly outputs:
+#' @section Output column selection:
 #' For a complete list of possible output types plus description, see \code{"U:/db_brook90_output/whh_db_documentation"}
 #'
 #' @examples
@@ -25,8 +27,9 @@
 
 fnc_write_agg <- function(x,
                           aggr_tp,
-                          col_select_vp = NA,
+                          col_select_day = NA,
                           col_select_mon = NA,
+                          col_select_vp = NA,
                           col_select_yr = NA,
                           dir_name = NA){
 
@@ -51,21 +54,12 @@ fnc_write_agg <- function(x,
   x$swat.profile <- Aggregate.SWAT.ASC(SWATi = x$SWATDAY.ASC, soil = soil.df)
 
   if(stringr::str_detect(aggr_tp, "daily")){
-    output_vegper <- data.table(ID_custom = id_run,
-                                Flow.DailyToVegper(dat = x$FLOWDAY.ASC,
-                                                   vp.year = min(x$FLOWMON.ASC$YR):max(x$FLOWMON.ASC$YR),
-                                                   vp.start = param_std$budburstdoy,
-                                                   vp.end = param_std$leaffalldoy,
-                                                   bypar = param_std$bypar),
-                                Evap.DailyToVegper(dat = x$EVAPDAY.ASC,
-                                                   vp.year = min(x$FLOWMON.ASC$YR):max(x$FLOWMON.ASC$YR),
-                                                   vp.start = param_std$budburstdoy,
-                                                   vp.end = param_std$leaffalldoy)[,-c(1:3), with = F],
-                                SWATProfile.DailyToVegper(dat = x$swat.profile,
-                                                          vp.year = min(x$FLOWMON.ASC$YR):max(x$FLOWMON.ASC$YR),
-                                                          vp.start = param_std$budburstdoy,
-                                                          vp.end = param_std$leaffalldoy)[,-1, with=F])
-    setnames(output_vegper, names(output_vegper), tolower(names(output_vegper)))
+    output_daily <- data.table(ID_custom = id_run,
+                               Flow.DailyToDailyAgg(dat = x$FLOWDAY.ASC,
+                                                    bypar = param_std$bypar),
+                               Evap.DailyToDailyAgg(dat = x$EVAPDAY.ASC),
+                               x$swat.profile[,-c(1:4), with=F])
+    setnames(output_daily, names(output_daily), tolower(names(output_daily)))
   }
 
   if(stringr::str_detect(aggr_tp, "yearly")){
@@ -135,6 +129,10 @@ fnc_write_agg <- function(x,
 
   ls.out <- list()
   if(is.na(dir_name)){
+    if(stringr::str_detect(aggr_tp, "daily")){
+      ls.out <- append(ls.out, list(output_daily))
+      names(ls.out)[length(ls.out)] <- "output_daily"
+    }
     if(stringr::str_detect(aggr_tp, "vegper")){
       ls.out <- append(ls.out, list(output_vegper))
       names(ls.out)[length(ls.out)] <- "output_vegper"
@@ -151,6 +149,16 @@ fnc_write_agg <- function(x,
     return(ls.out)
   }else{
     # write to tmp
+    if(stringr::str_detect(aggr_tp, "yearly")){
+
+      if(!dir.exists(paste0(dir_name, "/yearly/"))){
+        dir.create(paste0(dir_name, "/yearly/"), recursive = T)}
+
+      save(output_yearly,
+           file = paste0(dir_name, "/yearly/", id_run, ".RData"))
+
+    }
+
     if(stringr::str_detect(aggr_tp, "yearly")){
 
       if(!dir.exists(paste0(dir_name, "/yearly/"))){
@@ -185,10 +193,10 @@ fnc_write_agg <- function(x,
 #
 # b90.result <- run_LWFB90(options_b90 = options_b90,
 #                          param_b90 = param_b90,
-#                          climate = slb1_meteo,
+#                          climate = ls.clim[[1]],
 #                          soil = ls.soil[[1]],
 #                          output = df.output,
 #                          output_fun = fnc_write_agg,
 #
-#                          aggr_tp = "vegper",
-#                          dir_name = paste0(path_output, "tmp/"))
+#                          aggr_tp = "daily",
+#                          dir_name = NA)
