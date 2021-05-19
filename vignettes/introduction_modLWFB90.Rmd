@@ -110,7 +110,7 @@ test.ids.bds
 The function to create soil data is called fnc_get_soil and returns a list of soil data frames, so best assign it to a list object like this: 
 ```{r, warning = F, message = F}
 ls.soil <- fnc_get_soil(df.ids = test.ids.bds, 
-                        soil_option = "BZE", 
+                        soil_option = "STOK", 
                         PTF_to_use = "WESSOLEK", 
                         limit_MvG = T, 
                         limit_bodtief = T)
