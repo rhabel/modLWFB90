@@ -41,6 +41,7 @@ fnc_add_nFK <- function(df){
                     nFK_100 =  round(sum(nFK.mm * (lower >= -1.0)),1),
                     nFK_100_nohum =  round(sum(nFK.mm * (upper <= 0 & lower >= -1.0)),1))]
 
+  # add texture:
   sscdata <- as.data.frame(soil)[c("sand", "silt", "clay")]
   colnames(sscdata) <- c("SAND", "SILT", "CLAY")
   sscdata <- sscdata[rowSums(sscdata)!=0, ]

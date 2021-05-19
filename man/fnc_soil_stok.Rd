@@ -14,6 +14,8 @@ fnc_soil_stok(df, df.LEIT, PTF_to_use, dgm, limit_bodtief)
 \item{PTF_to_use}{which PTF will later be used in \code{\link{fnc_get_soil}} has an impact on the setting of oc.pct, so this information is passed down from \code{\link{fnc_get_soil}} here.}
 
 \item{dgm}{df.dgm gets created in \code{\link{fnc_get_soil}} and is passed here to avoid complications with potential df.dgms in the global environment.}
+
+\item{limit_bodtief}{max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}. If not \code{NA} soil-dfs are created down to the depth specified here as depth in \code{m}, negative. Might be used to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. In this case, soil depth may be reduced significantly.}
 }
 \value{
 Returns a list of soil data frames.

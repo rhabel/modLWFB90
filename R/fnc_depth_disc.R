@@ -7,7 +7,7 @@
 #' that do not add up to another layer are added to the layer above.
 #'
 #' @param df data frame containing mandatory depth information on horizon number (\code{mat}), \code{upper} and \code{lower} as columns. Information of soil physics are optional and will be kept and returned.
-#' @param limit_bodentief whether soil-df should be reduced to the depth provided by the "Leitprofil". Default is \code{FALSE}. If \code{FALSE}, the soil-df are created down to a depth of 2.50 m to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. If \code{TRUE}, soil depth may be reduced significantly.
+#' @param limit_bodtief max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}. If not \code{NA} soil-dfs are created down to the depth specified here as depth in \code{m}, negative. Might be used to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. In this case, soil depth may be reduced significantly.
 #' @param thick_1 first set distance between nodes the function will build down to \code{disk_gr1}
 #' @param thick_2 second set distance between nodes the function will build down to \code{disk_gr2}
 #' @param thick_3 third set distance between nodes the function will build below \code{disk_gr2}
@@ -19,14 +19,14 @@
 #' @example inst/examples/fnc_depth_disc_ex.R
 
 fnc_depth_disc <- function(df,
-                           limit_bodentief = F,
+                           limit_bodtief = NA,
                            thick_1 = 5, thick_2 = 10, thick_3 = 20,
                            disk_gr1 = 50, disk_gr2 = 100){
 
 
   # limit to STOK-Profile max or 2.50m
-  if(!limit_bodentief){
-    df$lower[nrow(df)] <- 250
+  if(is.na(limit_bodtief) == F){
+    df$lower[nrow(df)] <- limit_bodtief*-100
   }
 
   upper <- df$upper
@@ -197,6 +197,7 @@ fnc_depth_disc <- function(df,
     }
 
   }
+
   df.soil <- data.frame("thickness" = thickness,
                         "mat" = material) %>%
     left_join(df, by = "mat")
@@ -207,12 +208,12 @@ fnc_depth_disc <- function(df,
     dplyr::mutate(lower = upper+thickness) %>%
     dplyr::select(-thickness)
 
-  # ab 200 cm eigentlich 50 er schritte, in aktueller einstellung höchstens eine Schicht,
-  # die man am einfachsten selbst eliminiert
-  if((!limit_bodentief) & (df.soil$upper[nrow(df.soil)-1] >= 200)){
-    df.soil$lower[nrow(df.soil)-1] <- 250
-    df.soil <- df.soil[-nrow(df.soil)]
-  }
+  # # ab 200 cm eigentlich 50 er schritte, in aktueller einstellung höchstens eine Schicht,
+  # # die man am einfachsten selbst eliminiert
+  # if((!limit_bodtief) & (df.soil$upper[nrow(df.soil)-1] >= 200)){
+  #   df.soil$lower[nrow(df.soil)-1] <- 250
+  #   df.soil <- df.soil[-nrow(df.soil)]
+  # }
 
   # add rows in 1m depth
   if ((max(df.soil$lower) > 100)  & (!(100 %in% df.soil$lower))){

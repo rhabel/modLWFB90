@@ -19,7 +19,7 @@ fnc_get_soil(
   meta.out = NA,
   add_BodenInfo = T,
   create_roots = T,
-  limit_bodtief = T,
+  limit_bodtief = NA,
   ...
 )
 }
@@ -60,7 +60,7 @@ If the nFK shall be calculated at some point, this will be done for the first 1m
 
 \item{create_roots}{decides whether roots should be created manually (if set to \code{TRUE})}
 
-\item{limit_bodtief}{whether soil-df should be reduced to the depth provided by the BZE-layer "Bodentiefe" (if \code{soil_option = "BZE"}) or to the lowest layer of the "Leitprofil" (if \code{soil_option = "STOK"}).\cr Default is \code{TRUE}. If \code{FALSE}, the soil-df are created down to a depth of 2.50 m to give room for different \code{maxrootdepth} - settings in \code{\link{fnc_get_params}}. If \code{TRUE}, soil depth may be reduced significantly.}
+\item{limit_bodtief}{max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}. If not \code{NA} soil-dfs are created down to the depth specified here as depth in \code{m}, negative. Might be used to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. In this case, soil depth may be reduced significantly.}
 
 \item{...}{further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}.}
 }

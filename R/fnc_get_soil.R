@@ -16,7 +16,7 @@
 #' @param pth_STOK_pieces path to Wuchsgeb-STOKA.shapefiles, currently set to latest location.
 #' @param PTF_to_use the PTF to be used in the modeling process. Options are \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}. Alternatively, if MvG parameters have been retrieved elsewhere (i.e. by lab analyses), \code{OWN_PARMS} can be selected to skip this.
 #' @param limit_MvG should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit}}. Default is \code{FALSE}.
-#' @param limit_bodtief whether soil-df should be reduced to the depth provided by the BZE-layer "Bodentiefe" (if \code{soil_option = "BZE"}) or to the lowest layer of the "Leitprofil" (if \code{soil_option = "STOK"}).\cr Default is \code{TRUE}. If \code{FALSE}, the soil-df are created down to a depth of 2.50 m to give room for different \code{maxrootdepth} - settings in \code{\link{fnc_get_params}}. If \code{TRUE}, soil depth may be reduced significantly.
+#' @param limit_bodtief max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}. If not \code{NA} soil-dfs are created down to the depth specified here as depth in \code{m}, negative. Might be used to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. In this case, soil depth may be reduced significantly.
 #' @param ... further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}.
 #' @param bze_buffer whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur in {m}, default is \code{NA}
 #' @param df.soils if \code{OWN} is selected at soil_option, a data frame must be given here that contains the following columns
@@ -51,7 +51,7 @@ fnc_get_soil <- function(df.ids,
                          meta.out = NA,
                          add_BodenInfo = T,
                          create_roots = T,
-                         limit_bodtief = T,
+                         limit_bodtief = NA,
                          ...){
 
   # sort dfs according to IDs
@@ -283,9 +283,11 @@ fnc_get_soil <- function(df.ids,
   # nFK:
   if(add_BodenInfo){
     ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)],
-                                                                   fnc_add_nFK)
+                                                                     fnc_add_nFK)
   }
 
 
   return(ls.soils)
 }
+
+# df.ids <- test.ids.bds

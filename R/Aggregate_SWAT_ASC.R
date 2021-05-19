@@ -55,18 +55,20 @@ Aggregate.SWAT.ASC <- function(SWATi, soil){
     SWAT_we = round(sum(SWATI * (rootden > 0)),1),
     SWAT_0100 =  round(sum(SWATI * (upper <= 0 & lower >= -1.0)),1),
     SWAT_060 =  round(sum(SWATI * (upper <= 0 & lower >= -0.6)),1),
+    AWAT_prf = round(sum(AWAT),1),
     AWAT_we =  round(sum(AWAT * (rootden > 0)),1),
     AWAT_0100 =  round(sum(AWAT * (upper <= 0 & lower >= -1.0)),1),
     AWAT_060 =  round(sum(AWAT * (upper <= 0 & lower >= -0.6)),1),
+    RELAWAT_prf =  round(sum(AWAT) / sum(nFK.mm),3),
     RELAWAT_we =  round(sum(AWAT * (rootden > 0)) / sum(nFK.mm * (rootden > 0)),3),
     RELAWAT_0100 =  round(sum(AWAT * (upper <= 0 & lower >= -1.0)) / sum(nFK.mm * (upper <= 0 & lower >= -1.0)),3),
     RELAWAT_060 =  round(sum(AWAT * (upper <= 0 & lower >= -0.6)) / sum(nFK.mm * (upper <= 0 & lower >= -0.6)),3),
     #AWAT40 = round(sum(AWATpsicr * 0.6 * (rootden > 0)),1), #ich kriege nicht ganz dasselbe raus wie miscday.awat40!
     #AWAT40rw = round(sum(AWATpsicr * 0.6 * rootden/sum(rootden),1),
 
-    RELSWAT_we =  round(sum(SWATI * (rootden > 0)) / sum(nFK.mm * (rootden > 0)),3),
-    RELSWAT_0100 =  round(sum(SWATI * (upper <= 0 & lower >= -1.0)) / sum(nFK.mm * (upper <= 0 & lower >= -1.0)),3),
-    RELSWAT_060 =  round(sum(SWATI * (upper <= 0 & lower >= -0.6)) / sum(nFK.mm * (upper <= 0 & lower >= -0.6)),3),
+    # RELSWAT_we =  round(sum(SWATI * (rootden > 0)) / sum(nFK.mm * (rootden > 0)),3),
+    # RELSWAT_0100 =  round(sum(SWATI * (upper <= 0 & lower >= -1.0)) / sum(nFK.mm * (upper <= 0 & lower >= -1.0)),3),
+    # RELSWAT_060 =  round(sum(SWATI * (upper <= 0 & lower >= -0.6)) / sum(nFK.mm * (upper <= 0 & lower >= -0.6)),3),
 
     PSIlogmean_we = round(-1*10 ^ (weighted.mean(log10(PSIMI * -10),
                                                  (ths * (1 - gravel) * 100 * thick * 10) * (rootden > 0)))

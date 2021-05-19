@@ -4,14 +4,14 @@
 \alias{fnc_soil_bze}
 \title{Soil-list creation from BZE data}
 \usage{
-fnc_soil_bze(df.utm, df.assign, meta.out, limit_bodtief = F, ...)
+fnc_soil_bze(df.utm, df.assign, meta.out, limit_bodtief = NA, ...)
 }
 \arguments{
 \item{df.assign}{a dataframe containing the corresponding ID_custom for the IDs in \code{df.gk}}
 
 \item{meta.out}{a string containing a path passed down from \code{fnc_get_soil}. Saving location of metadata.}
 
-\item{limit_bodtief}{whether soil-df should be reduced to the depth provided by the BZE-layer "Bodentiefe". Default is \code{FALSE}. If \code{FALSE}, the soil-df are created down to a depth of 2.50 m to give room for different \code{maxrootdepth} - settings in \code{\link{fnc_get_params}}. If \code{TRUE}, soil depth may be reduced significantly.}
+\item{limit_bodtief}{max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}. If not \code{NA} soil-dfs are created down to the depth specified here as depth in \code{m}, negative. Might be used to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. In this case, soil depth may be reduced significantly.}
 
 \item{...}{whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur, options are \code{buffering} as \code{TRUE} or \code{FALSE}, and \code{buff_width} in \code{m}}
 
