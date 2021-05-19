@@ -112,8 +112,7 @@ The function to create soil data is called fnc_get_soil and returns a list of so
 ls.soil <- fnc_get_soil(df.ids = test.ids.bds, 
                         soil_option = "STOK", 
                         PTF_to_use = "WESSOLEK", 
-                        limit_MvG = T, 
-                        limit_bodtief = T)
+                        limit_MvG = T)
 ls.soil[[1]]
 ```
 
