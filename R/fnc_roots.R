@@ -17,8 +17,6 @@ fnc_roots <- function(df,
                       humus_roots = T,
                       ...){
 
-  rootsmethod <- match.arg(rootsmethod, choices = c("hartmann", "betamodel", "table", "constant", "linear"))
-
   if(rootsmethod == "hartmann"){
     df <- df %>%
       dplyr::mutate(nfk = (fnc_MvG.swc(63,alpha/100, npar, ths, thr) - fnc_MvG.swc(15000,alpha/100, npar, ths, thr)),
@@ -61,7 +59,7 @@ fnc_roots <- function(df,
 
     # rel.values
     sumroots <- sum(df$rootden)
-    df$rootden <- round(df$rootden/sumroots, 4)
+    df$rootden <- round(df$rootden/sumroots, 5)
 
     return(df)
   }
@@ -74,9 +72,6 @@ make_rootden_adj <- function(soilnodes,
                          beta = 0.97,
                          rootdat = NULL
 ) {
-
-
-  method <- match.arg(method, choices = c("betamodel", "table", "constant", "linear"))
 
   if (method == "betamodel") {
 
@@ -101,7 +96,7 @@ make_rootden_adj <- function(soilnodes,
     RLenDcum <- 1 - (beta ^ soilnodes_maxrtdep)
 
     # density
-    rootden <- diff(RLenDcum)/diff(soilnodes) # important to use soilnodes here, so rootden is reduced if the lowest layer is only partially within maxrootdpeth
+    rootden <- diff(RLenDcum)/diff(soilnodes) * 1000# important to use soilnodes here, so rootden is reduced if the lowest layer is only partially within maxrootdpeth
     rootden[which(soilnodes_maxrtdep > maxrootdepth) - 1] <- 0
 
   }

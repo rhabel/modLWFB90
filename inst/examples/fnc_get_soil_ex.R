@@ -1,28 +1,32 @@
 load("H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Kleinprivatwald/Tranche1/ids_tr1.Rdata")
 
+# STOK based, filled with BZE if STOK unavaioable
+fnc_get_soil(df.ids = test.ids.bds,
+             soil_option = "STOK_BZE",
+             PTF_to_use = "HYPRES",
+             rootsmethod = "hartmann")
+
+# same example, but with a uniform depth of 2m
 fnc_get_soil(df.ids = test.ids.bds,
              soil_option = "STOK_BZE",
              PTF_to_use = "HYPRES",
              rootsmethod = "hartmann",
-             humus_roots = F,
-             limit_bodtief = F)
+             limit_bodtief = -2)
+
+# roots methods can be set individually
+fnc_get_soil(df.ids = test.ids.bds,
+             soil_option = "BZE",
+             PTF_to_use = "HYPRES",
+             rootsmethod = "betamodel",
+             limit_bodtief = -2,
+
+             maxrootdepth = c(-1, -2, -1, -2, -0.5),
+             beta = 0.98)
+
+
+# points in gaps of STOK-maps are not modelled
 fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
-                PTF_to_use = "HYPRES",
-                rootsmethod = "hartmann",
-                humus_roots = F)
-fnc_get_soil(df.ids = test.ids.bds,
-                soil_option = "STOK",
-                PTF_to_use = "HYPRES",
-                rootsmethod = "betamodel",  # specification from LWFBrook90R::make_rootden
-                beta = 0.95)                # specification from LWFBrook90R::make_rootden
-testx <- fnc_get_soil(df.ids = test.ids.bds,
-                soil_option = "BZE",
-                PTF_to_use = "WESSOLEK",
-                rootsmethod = "betamodel",
-                beta = 0.95)
-fnc_get_soil(df.ids = test.ids.bds,
-                soil_option = "STOK_BZE",
                 PTF_to_use = "HYPRES",
                 rootsmethod = "betamodel",
                 beta = 0.95)
@@ -43,7 +47,6 @@ df.own.test <- data.frame("ID_custom" = c(rep("E",4), rep("D",4), rep("C",4), re
 
 fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "OWN",
-                testgebiet = "BDS",
                 PTF_to_use = "HYPRES",
                 df.soils = df.own.test,
                 rootsmethod = "betamodel",

@@ -17,7 +17,7 @@
 #' @param PTF_to_use the PTF to be used in the modeling process. Options are \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}. Alternatively, if MvG parameters have been retrieved elsewhere (i.e. by lab analyses), \code{OWN_PARMS} can be selected to skip this.
 #' @param limit_MvG should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit}}. Default is \code{FALSE}.
 #' @param limit_bodtief max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}. If not \code{NA} soil-dfs are created down to the depth specified here as depth in \code{m}, negative. Might be used to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. In this case, soil depth may be reduced significantly.
-#' @param ... further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}.
+#' @param ... further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}. \cr Can be either single values, applied to all soil data frames equally, or vector with the same length as \code{df.ids} specifying the roots setting for each modelling point. see example
 #' @param bze_buffer whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur in {m}, default is \code{NA}
 #' @param df.soils if \code{OWN} is selected at soil_option, a data frame must be given here that contains the following columns
 #' \itemize{
@@ -39,12 +39,8 @@
 
 fnc_get_soil <- function(df.ids,
                          soil_option,
-
-                         pth_df.LEIT = "H:/FVA-Projekte/P01540_WHHKW/Daten/Ergebnisse/Modellierung_Testregionen/Leitprofile/Modul1DB.Rdata",
-                         pth_WGB_diss_shp = "H:/BU/Gis/Themen/Vektor/Wugeb_Dissolve.shp",
-                         pth_STOK_pieces = "H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Wuchsgebiete/Wuchsgebiete_red/",
-
                          PTF_to_use,
+
                          bze_buffer = NA,
                          limit_MvG = T,
                          df.soils = NULL,
@@ -52,7 +48,13 @@ fnc_get_soil <- function(df.ids,
                          add_BodenInfo = T,
                          create_roots = T,
                          limit_bodtief = NA,
-                         ...){
+
+                         ...,
+
+                         pth_df.LEIT = "H:/FVA-Projekte/P01540_WHHKW/Daten/Ergebnisse/Modellierung_Testregionen/Leitprofile/Modul1DB.Rdata",
+                         pth_WGB_diss_shp = "H:/BU/Gis/Themen/Vektor/Wugeb_Dissolve.shp",
+                         pth_STOK_pieces = "H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Wuchsgebiete/Wuchsgebiete_red/"
+                         ){
 
   # sort dfs according to IDs
   df.ids$ID <- 1:nrow(df.ids)
@@ -246,6 +248,7 @@ fnc_get_soil <- function(df.ids,
     stop("\nPlease provide valid soil-option")
   }
 
+
   # PTF-application: ----------------------------------------- ####
   if(PTF_to_use == "OWN_PARMS"){
 
@@ -273,11 +276,22 @@ fnc_get_soil <- function(df.ids,
 
   # Roots:
   if(create_roots){
-    ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)],
-                                                                     FUN = fnc_roots, ...)
-                                                                     # FUN = fnc_roots,
-                                                                     # rootsmethod = "betamodel",
-                                                                     # beta = 0.95)
+
+    backtoNULL <- which(!unlist(lapply(ls.soils, is.null))==F)
+
+    ls.soils <- mapply(FUN = fnc_roots,
+                       ls.soils,
+                       # rootsmethod = "betamodel",
+                       # beta = 0.97,
+                       # maxrootdepth = c(-1,-1.5,-0.5, -1.5,-2),
+
+                       ...,
+
+                       SIMPLIFY = F)
+
+
+    ls.soils[backtoNULL] <- list(NULL)
+
   }
 
   # nFK:
@@ -290,4 +304,3 @@ fnc_get_soil <- function(df.ids,
   return(ls.soils)
 }
 
-# df.ids <- test.ids.bds

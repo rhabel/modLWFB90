@@ -6,7 +6,7 @@ fun1 <- function(lst, n){
 }
 
 # tree-species
-fun1(ls.param, which(names(ls.param[[1]]) == "budburst.species"))
+fun1(ls.param, which(names(ls.param[[1]]) == "budburst_species"))
 fun1(ls.param, which(names(ls.param[[1]]) == "glmax"))
 fun1(ls.param, which(names(ls.param[[1]]) == "coords_x"))
 
@@ -19,7 +19,7 @@ ls.param <- fnc_set_params(df.ids = test.ids.bds,
                            tree_species = "oak",
                            df.ind.info = df.infos)
 # tree-species
-fun1(ls.param, which(names(ls.param[[1]]) == "budburst.species"))
+fun1(ls.param, which(names(ls.param[[1]]) == "budburst_species"))
 fun1(ls.param, which(names(ls.param[[1]]) == "height"))
-fun1(ls.param, which(names(ls.param[[1]]) == "age.ini"))
+fun1(ls.param, which(names(ls.param[[1]]) == "age_ini"))
 
