@@ -13,7 +13,7 @@
 #'
 #' @export
 fnc_roots <- function(df,
-                      rootsmethod = "hartmann",
+                      rootsmethod = "betamodel",
                       humus_roots = T,
                       ...){
 

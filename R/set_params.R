@@ -163,7 +163,7 @@ params_douglasfir <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                                   albsn = 0.34,
                                                   lwidth = 0.001,
                                                   rhotp = 2.6,
-                                                  glmax = 0.0025,
+                                                  glmax = 0.0035,
                                                   radex = 0.45,
                                                   glmin = 0.0001,
                                                   mxkpl = 8,
@@ -194,4 +194,4 @@ params_default <- LWFBrook90R::set_paramLWFB90()
 
 # save(params_beech, params_oak, params_pine, params_spruce, params_douglasfir, params_default,
 #      file = "./data/params_species.rda")
-
+# load("H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90/data/params_species.rda")
