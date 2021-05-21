@@ -239,20 +239,6 @@ fnc_get_soil <- function(df.ids,
       }
       ls.soils <- lapply(ls.soils, FUN = dplyr::mutate, upper = upper/-100)
       ls.soils <- lapply(ls.soils, FUN = dplyr::mutate, lower = lower/-100)
-      ls.soils <- lapply(ls.soils, FUN = function(x){
-        humus <- x$humus[1]
-        df <- x[0,]
-        df[1,] <- NA
-        df$mat <- 0; df$ID <- unique(x$ID); df$ID_custom <- unique(x$ID_custom);
-        df$gravel <- 0; df$ths <- 0.848; df$thr <- 0; df$alpha <- 98; df$npar <- 1.191; df$mpar <- 0.160;
-        df$ksat <- 98000; df$tort <- 0.5; df$upper <- humus; df$lower <- 0
-
-        x <- rbind(df, x)
-        for(i in 1:ncol(x)){
-          if(is.na(x[1,i])){x[1,i] <- x[2,i]}
-        }
-        x <- x[,-which(colnames(x) == "humus")]
-      })
       ls.soils <- lapply(ls.soils, function(x){cbind(x[,1:3], "nl" = 1:nrow(x), x[4:ncol(x)])})
 
       names(ls.soils) <- df.ids$ID_custom
@@ -271,9 +257,28 @@ fnc_get_soil <- function(df.ids,
                     "mpar", "ksat", "tort")[!c("ths", "thr", "alpha", "npar",
                                                "mpar", "ksat", "tort") %in% names(df.soils)]
     if (length(missingcol) > 0){
-      cat("\n", missingcol, "is missing in df.soils for PTF-application of ", PTF_to_use, "\n")
+      cat("\n", missingcol, "is missing")
       stop("missing columns")
+    }else{
+      ls.soils <- lapply(ls.soils, FUN = function(x){
+        if("humus" %in% colnames(x)){
+          humus <- x$humus[1]
+          df <- x[0,]
+          df[1,] <- NA
+          df$mat <- 0; df$ID <- unique(x$ID); df$ID_custom <- unique(x$ID_custom);
+          df$gravel <- 0; df$ths <- 0.848; df$thr <- 0; df$alpha <- 98; df$npar <- 1.191; df$mpar <- 0.160;
+          df$ksat <- 98000; df$tort <- 0.5; df$upper <- humus; df$lower <- 0
+
+          x <- rbind(df, x)
+          for(i in 1:ncol(x)){
+            if(is.na(x[1,i])){x[1,i] <- x[2,i]}
+          }
+          x <- x[,-which(colnames(x) == "humus")]
+        }
+
+      })
     }
+
 
   } else {
     ls.soils[as.numeric(which(!unlist(lapply(ls.soils, is.null))==T))] <- lapply(ls.soils[as.numeric(which(!unlist(lapply(ls.soils, is.null))==T))],
