@@ -7,11 +7,6 @@
 fnc_get_soil(
   df.ids,
   soil_option,
- 
-    pth_df.LEIT = "H:/FVA-Projekte/P01540_WHHKW/Daten/Ergebnisse/Modellierung_Testregionen/Leitprofile/Modul1DB.Rdata",
-  pth_WGB_diss_shp = "H:/BU/Gis/Themen/Vektor/Wugeb_Dissolve.shp",
- 
-    pth_STOK_pieces = "H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Wuchsgebiete/Wuchsgebiete_red/",
   PTF_to_use,
   bze_buffer = NA,
   limit_MvG = T,
@@ -20,7 +15,12 @@ fnc_get_soil(
   add_BodenInfo = T,
   create_roots = T,
   limit_bodtief = NA,
-  ...
+  ...,
+ 
+    pth_df.LEIT = "H:/FVA-Projekte/P01540_WHHKW/Daten/Ergebnisse/Modellierung_Testregionen/Leitprofile/Modul1DB.Rdata",
+  pth_WGB_diss_shp = "H:/BU/Gis/Themen/Vektor/Wugeb_Dissolve.shp",
+ 
+    pth_STOK_pieces = "H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Wuchsgebiete/Wuchsgebiete_red/"
 )
 }
 \arguments{
@@ -31,12 +31,6 @@ fnc_get_soil(
 }}
 
 \item{soil_option}{whether BZE or STOK data should be used for modelling. While option \code{BZE} with a buffer of 50 shouldn't create many NAs, option \code{STOK} builds on the data of the Standortskartierung Baden-Wuerttemberg that is not available everywhere (i.e. in private forests). \cr Option \code{STOK_BZE} will complete the missing STOK-points with BZE-data. \cr The final option is \code{OWN}, in which case users can enter their own soil data (i.e. from lab or field experiments). If the option \code{OWN} is selected, the dataframes must be passed at \code{df.soils}.}
-
-\item{pth_df.LEIT}{path to .RData file with soil information from Modul1-DB. Should be the extended version containing a column for humus, currently set to latest location.}
-
-\item{pth_WGB_diss_shp}{path to dissolved WUCHSGEBIET-shapefile, currently set to latest location.}
-
-\item{pth_STOK_pieces}{path to Wuchsgeb-STOKA.shapefiles, currently set to latest location.}
 
 \item{PTF_to_use}{the PTF to be used in the modeling process. Options are \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}. Alternatively, if MvG parameters have been retrieved elsewhere (i.e. by lab analyses), \code{OWN_PARMS} can be selected to skip this.}
 
@@ -62,7 +56,13 @@ If the nFK shall be calculated at some point, this will be done for the first 1m
 
 \item{limit_bodtief}{max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}. If not \code{NA} soil-dfs are created down to the depth specified here as depth in \code{m}, negative. Might be used to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. In this case, soil depth may be reduced significantly.}
 
-\item{...}{further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}.}
+\item{...}{further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}. \cr Can be either single values, applied to all soil data frames equally, or vector with the same length as \code{df.ids} specifying the roots setting for each modelling point. see example}
+
+\item{pth_df.LEIT}{path to .RData file with soil information from Modul1-DB. Should be the extended version containing a column for humus, currently set to latest location.}
+
+\item{pth_WGB_diss_shp}{path to dissolved WUCHSGEBIET-shapefile, currently set to latest location.}
+
+\item{pth_STOK_pieces}{path to Wuchsgeb-STOKA.shapefiles, currently set to latest location.}
 }
 \value{
 Returns a list of soil data frames completely processed to be further used by \code{\link[LWFBrook90R]{run_multisite_LWFB90}} or \code{\link[LWFBrook90R]{run_LWFB90}}
@@ -73,29 +73,33 @@ This function is a wrapper of several functions and chunks of code and the main 
 \examples{
 load("H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Kleinprivatwald/Tranche1/ids_tr1.Rdata")
 
+# STOK based, filled with BZE if STOK unavaioable
+fnc_get_soil(df.ids = test.ids.bds,
+             soil_option = "STOK_BZE",
+             PTF_to_use = "HYPRES",
+             rootsmethod = "hartmann")
+
+# same example, but with a uniform depth of 2m
 fnc_get_soil(df.ids = test.ids.bds,
              soil_option = "STOK_BZE",
              PTF_to_use = "HYPRES",
              rootsmethod = "hartmann",
-             humus_roots = F,
-             limit_bodtief = F)
+             limit_bodtief = -2)
+
+# roots methods can be set individually
+fnc_get_soil(df.ids = test.ids.bds,
+             soil_option = "BZE",
+             PTF_to_use = "HYPRES",
+             rootsmethod = "betamodel",
+             limit_bodtief = -2,
+
+             maxrootdepth = c(-1, -2, -1, -2, -0.5),
+             beta = 0.98)
+
+
+# points in gaps of STOK-maps are not modelled
 fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "STOK",
-                PTF_to_use = "HYPRES",
-                rootsmethod = "hartmann",
-                humus_roots = F)
-fnc_get_soil(df.ids = test.ids.bds,
-                soil_option = "STOK",
-                PTF_to_use = "HYPRES",
-                rootsmethod = "betamodel",  # specification from LWFBrook90R::make_rootden
-                beta = 0.95)                # specification from LWFBrook90R::make_rootden
-testx <- fnc_get_soil(df.ids = test.ids.bds,
-                soil_option = "BZE",
-                PTF_to_use = "WESSOLEK",
-                rootsmethod = "betamodel",
-                beta = 0.95)
-fnc_get_soil(df.ids = test.ids.bds,
-                soil_option = "STOK_BZE",
                 PTF_to_use = "HYPRES",
                 rootsmethod = "betamodel",
                 beta = 0.95)
@@ -116,7 +120,6 @@ df.own.test <- data.frame("ID_custom" = c(rep("E",4), rep("D",4), rep("C",4), re
 
 fnc_get_soil(df.ids = test.ids.bds,
                 soil_option = "OWN",
-                testgebiet = "BDS",
                 PTF_to_use = "HYPRES",
                 df.soils = df.own.test,
                 rootsmethod = "betamodel",

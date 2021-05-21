@@ -10,7 +10,6 @@
 #' @param add_tranches when large areas are modelled with a high resolution, it can be useful to model your area as tranches. In this case the IDs are assigned to 9 Tranches, similar to a SUDOKU-field. This way you can calculate the results tranche by tranche and in a 9th of the total computing time you get a result covering the whole modelling area. If \code{TRUE}, df.ids are stored as 9 tranches named \code{out_name _ trX.rds} in \code{out_dir}.
 #'
 #' @return returns a list of points with ID_custom (optional), x- and y- coordinates
-#' @example
 #'
 #'
 #' @export
@@ -192,8 +191,3 @@ fnc_create_IDs <- function(poly,
 
 
 }
-#
-# poly <- "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/GIS/Testgebiete/tmp/testshp.shp"
-# res = 50
-# out_dir <- "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/GIS/Testgebiete/tmp/"
-# sf::st_write(sf.ids, "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/GIS/Testgebiete/tmp/testshp_points.shp")
