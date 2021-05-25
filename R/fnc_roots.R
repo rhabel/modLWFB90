@@ -51,15 +51,18 @@ fnc_roots <- function(df,
     return(df)
   }else{
     rootden <- make_rootden_adj(soilnodes = df$lower,
-                                method = rootsmethod, ...)
+                                method = rootsmethod)#, ...)
 
-    if(df$upper[1] > 0){
-      # humus
-      df$rootden <- c(ifelse(humus_roots == T, max(rootden)/2, 0),
-                      round(rootden, 4))
-    }else{
-      df$rootden <- c(rootden, tail(rootden, 1))
+    if(length(rootden) != 0){
+      if(df$upper[1] > 0){
+        # humus
+        df$rootden <- c(ifelse(humus_roots == T, max(rootden)/2, 0),
+                        round(rootden, 4))
+      }else{
+        df$rootden <- c(rootden, tail(rootden, 1))
+      }
     }
+
 
     # rel.values
     sumroots <- sum(df$rootden)
