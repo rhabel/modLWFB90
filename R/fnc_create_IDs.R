@@ -100,7 +100,7 @@ fnc_create_IDs <- function(poly,
 
   if(add_tranches == F){
     saveRDS(df.ids,
-            file = paste0(out.dir, out_name, ".rds"))
+            file = paste0(out_dir, out_name, ".rds"))
   }else{
     # to Tranche -------------------- ####
     # replicate Easting
