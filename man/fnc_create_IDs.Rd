@@ -8,7 +8,7 @@ fnc_create_IDs(
   poly,
   res = 250,
   ID_pre = "ID_",
-  out_dir,
+  out_dir = NA,
   out_name = "IDs",
   add_tranches = F
 )
@@ -20,7 +20,7 @@ fnc_create_IDs(
 
 \item{ID_pre}{optional, prefix for ID_custom-name as character. Default is \code{ID_}}
 
-\item{out_dir}{mandatory, directory where df.ids shall be stored.}
+\item{out_dir}{directory where df.ids shall be stored as \code{.rds}, if set to \code{NA}, a data frame will be returned to the console}
 
 \item{out_name}{optional, name for ID-files, default is \code{IDs.rds}}
 
