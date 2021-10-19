@@ -24,24 +24,27 @@ License: `use_mit_license()`, `use_gpl3_license()` or friends to
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Imports:
+    dplyr, 
+    data.table (>= 1.10.4),
+    doParallel,
+    foreach (>= 1.5.0),   
     methods,
+    parallel,
+    raster,
+    readr,
+    readxl,
+    rgdal,
+    rgeos,
+    RSQLite,
     sirad,
     sf, 
-    readxl, 
-    soiltexture, 
-    doParallel,
-    rgdal,
-    parallel,
-    rgeos,
+    soiltexture,
     sp,
-    vegperiod (>= 0.3.0),
-    foreach (>= 1.5.0),     
-    data.table (>= 1.10.4), 
-    RSQLite, 
-    raster,     
-    tidyverse
+    stringr,
+    tidyr,
+    vegperiod (>= 0.3.0)
 Depends:
     LWFBrook90R (>= 0.4.0)
 Suggests: 
