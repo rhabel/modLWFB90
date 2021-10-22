@@ -18,6 +18,7 @@ fnc_soil_bze <- function(df.utm,
 
                          meta.out,
                          limit_bodtief = NA,
+                         incl_GEOLA,
                          ...){
 
   input_bze <- input_bze
@@ -100,46 +101,83 @@ fnc_soil_bze <- function(df.utm,
   )]
   soilsdiscrete1[, "nl" := 1:.N, by = ID]
 
-  if(is.na(limit_bodtief) == T){
-    soilsdiscrete1 <- soilsdiscrete1[i.upper < roots_bottom_rnd] # wenn kein wert bei limit_bodtief, nutzt bodentiefe (roots_bottom_rnd)
-  }else{
-    soilsdiscrete1 <- soilsdiscrete1[i.upper < limit_bodtief*-100]
-    soilsdiscrete1[which(soilsdiscrete1$lower == min(soilsdiscrete1$lower)),"lower"] <- limit_bodtief
-  }
-
   # join to get ID_custom
   df.assign <- as.data.table(df.assign[,-which(colnames(df.assign) %in% c("aspect", "slope"))])
   setkey(df.assign, ID)
   ls.soils.tmp <- df.assign[soilsdiscrete1]
-  ls.soils.tmp <- ls.soils.tmp[, list(ID, ID_custom, mat, nl, upper, lower,
-                                      sand, schluff, ton, gba, trd, corg,
-                                      aspect, slope, profile_top)]
-  colnames(ls.soils.tmp) <- c("ID", "ID_custom", "mat", "nl","upper", "lower", "sand", "silt", "clay", "gravel", "bd", "oc.pct", "aspect" ,"slope" ,"humus")
 
-  ls.soils.tmp[, "ID_custom" := as.character(ID_custom)]
+  # limit to either Dietmar-depth, GEOLA-depth, or limit_bodtief
+  if(is.na(limit_bodtief) == T){
 
-  ls.soils.tmp <- split(ls.soils.tmp, by = "ID")
-  ls.soils.tmp <- lapply(ls.soils.tmp, function(df) as.data.frame(df))
+    # incl GEOLA
+    if(incl_GEOLA){
 
-  # add 1m - horizon if necessary...
-  # ls.soils.tmp <- lapply(ls.soils.tmp, as.data.frame, stringsAsFactors = F)
-  # ls.soils.tmp <- lapply(ls.soils.tmp, function(df){
-  #   if ((max(df$lower) < -1.0)  & (!(-1.0 %in% df$lower)) & (!(-1.0 %in% df$upper))){
-  #     cross_1m <- which(df$lower < -1.0 & df$upper > -1.0)
-  #     if(cross_1m == nrow(df)){
-  #       df <- rbind(df, df[cross_1m,])
-  #       df[cross_1m, "lower"] <- -1.0
-  #       df[(cross_1m+1), "upper"] <- -1.0
-  #     }else{
-  #       df <- rbind(df[1:cross_1m,],
-  #                   df[cross_1m,],
-  #                   df[(cross_1m+1):nrow(df), ])
-  #       df[cross_1m, "lower"] <- -1.0
-  #       df[(cross_1m+1), "upper"] <- -1.0
-  #     }
-  #   }
-  #   return(df)
-  #   })
+      ls.soils.tmp <- split(ls.soils.tmp, by = "ID")
+      ls.soils.tmp <- lapply(ls.soils.tmp,
+                               FUN = function(x){
+                                 if(unique(x$BODENTY) == "Gleye/Auenboeden"){
+                                   return(x)
+                                 }else if(unique(x$BODENTY) == "Stauwasserboeden"){
+                                   x <- x[which(x$i.upper < as.numeric(unique(x$roots_bottom_rnd))),]
+                                   return(x)
+                                 }else{
+                                   x <- x[i.upper < as.numeric(unique(x$GRUND_C))]
+                                   x$lower[nrow(x)] <- as.numeric(unique(x$GRUND_C))/-100
+                                   return(x)
+                                 }
+                                 }
+                               )
+
+    }else{
+
+      ls.soils.tmp <- split(ls.soils.tmp, by = "ID")
+      ls.soils.tmp <- lapply(ls.soils.tmp,
+                             FUN = function(x){x[which(x$i.upper < as.numeric(unique(x$roots_bottom_rnd))),]})
+
+    }
+
+  }else{
+
+    # remove all layers below set maxdepth
+    ls.soils.tmp <- split(ls.soils.tmp, by = "ID")
+    ls.soils.tmp <- mapply(FUN = function(x,limit){
+                             x <- x[which(x$i.upper < limit*-100),]
+                             x$lower[nrow(x)] <- limit
+                             return(x)
+                           },
+                           ls.soils.tmp,
+                           limit = limit_bodtief,
+                           SIMPLIFY = F)
+
+  }
+
+  if(incl_GEOLA){
+    ls.soils.tmp <- lapply(ls.soils.tmp,
+                           FUN = function(x){
+                             x <- as.data.frame(x)
+                             x <- x[c("ID", "ID_custom", "mat", "nl", "upper", "lower",
+                                      "sand", "schluff", "ton", "gba", "trd", "corg",
+                                      "aspect", "slope", "profile_top", "BODENTY")]
+                             colnames(x) <- c("ID", "ID_custom", "mat", "nl","upper", "lower",
+                                              "sand", "silt", "clay", "gravel", "bd", "oc.pct",
+                                              "aspect" ,"slope" ,"humus", "BODENTY")
+                             x$ID_custom <- as.character(x$ID_custom)
+                             return(x)})
+  }else{
+    ls.soils.tmp <- lapply(ls.soils.tmp,
+                           FUN = function(x){
+                             x <- as.data.frame(x)
+                             x <- x[c("ID", "ID_custom", "mat", "nl", "upper", "lower",
+                                      "sand", "schluff", "ton", "gba", "trd", "corg",
+                                      "aspect", "slope", "profile_top")]
+                             colnames(x) <- c("ID", "ID_custom", "mat", "nl","upper", "lower",
+                                              "sand", "silt", "clay", "gravel", "bd", "oc.pct",
+                                              "aspect" ,"slope" ,"humus")
+                             x$ID_custom <- as.character(x$ID_custom)
+                             return(x)})
+
+  }
+
 
   # remove NA-dfs
   which.na <- which(unlist(lapply(ls.soils.tmp, function(x) any(is.na(x)))==T))

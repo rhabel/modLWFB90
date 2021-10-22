@@ -4,7 +4,7 @@
 \alias{fnc_soil_stok}
 \title{Soil-list creation from STOKA data}
 \usage{
-fnc_soil_stok(df, df.LEIT, PTF_to_use, dgm, limit_bodtief)
+fnc_soil_stok(df, df.LEIT, PTF_to_use, dgm, limit_bodtief, incl_GEOLA)
 }
 \arguments{
 \item{df}{A data frame containing the columns \code{ID} and \code{ID_custom} as distinct assignment from the initial \code{df.ids} dataframe and the column \code{RST_F}, which is created in \code{\link{fnc_get_soil}} through a spatial join of the coordinates with the STOK-BW shapefile (or, at this stage, the shapefile of test areas).}

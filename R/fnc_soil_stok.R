@@ -14,7 +14,8 @@ fnc_soil_stok <- function(df,
                           df.LEIT,
                           PTF_to_use,
                           dgm,
-                          limit_bodtief){
+                          limit_bodtief,
+                          incl_GEOLA){
 
 
   # get Leitprofile info through parallel processing
@@ -35,6 +36,9 @@ fnc_soil_stok <- function(df,
 
                          dplyr::mutate_at(vars(-all_of(c("ID_custom", "humusform"))), as.numeric)
 
+                       if(incl_GEOLA){
+                         df.tmp[nrow(df.tmp), "lower"] <-  as.numeric(max(df$GRUND_C, max(df.tmp$lower)))
+                       }
 
                        # Tiefendiskretisierung, limit if wanted
                        if(is.na(limit_bodtief) == TRUE){
