@@ -49,6 +49,7 @@ fnc_get_soil <- function(df.ids,
                          create_roots = T,
                          limit_bodtief = NA,
                          incl_GEOLA = T,
+                         add_dummy = T,
 
                          ...,
 
@@ -126,6 +127,7 @@ fnc_get_soil <- function(df.ids,
       #spatial join sf.ids with sf.geola
       sf.ids <-  sf.ids %>%
         sf::st_join(sf.geola)
+      sf.ids <- sf.ids[!duplicated(sf.ids), ]
     }
 
     #spatial join sf.ids with sf.gebiet
@@ -133,7 +135,7 @@ fnc_get_soil <- function(df.ids,
                   sf::st_join(sf.gebiet) %>%
                   sf::st_drop_geometry() %>%
                   dplyr::select(-c(HOE, RST_Z1, MOR_Strat1, HU, WHH, WAS, area_ha, WugebNr))
-
+    sf.ids <- sf.ids[!duplicated(sf.ids), ]
 
     # Identify missing and non-forest RST_F
     #no forest
@@ -171,7 +173,7 @@ fnc_get_soil <- function(df.ids,
                                 limit_bodtief = limit_bodtief,
                                 incl_GEOLA = incl_GEOLA)
 
-      names(ls.soils) <- df.ids$ID_custom
+      bodentypen <- unlist(lapply(ls.soils, function(x) unique(x$BODENTYP)))
 
     } else {
 
@@ -188,9 +190,11 @@ fnc_get_soil <- function(df.ids,
                                       dgm = df.dgm,
                                       limit_bodtief = limit_bodtief,
                                       incl_GEOLA = incl_GEOLA)
-        names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
 
+        names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
         ls.soils[match(names(ls.soils.tmp), names(ls.soils))] <- ls.soils.tmp
+
+        bodentypen <- unlist(lapply(ls.soils, function(x) unique(x$BODENTYP)))
 
       } else if (soil_option == "STOK_BZE"){
 
@@ -357,7 +361,7 @@ fnc_get_soil <- function(df.ids,
   }
 
 
-  # Roots:
+  # Roots: --------------------------------------------------- ####
   if(create_roots){
 
     backtoNULL <- which(!unlist(lapply(ls.soils, is.null))==F)
@@ -366,8 +370,8 @@ fnc_get_soil <- function(df.ids,
                        ls.soils,
                        # rootsmethod = "betamodel",
                        # beta = 0.97,
-                       # maxrootdepth = c(-1,-1.5,-0.5, -1.5,-2),
-                       # maxrootdepth = -0.7,
+                       # # maxrootdepth = c(-1,-1.5,-0.5, -1.5,-2),
+                       # maxrootdepth = -2,
 
                        ...,
 
@@ -378,62 +382,97 @@ fnc_get_soil <- function(df.ids,
 
   }
 
-  # GEOLA application for BZE data needs MvG-parms, so it is applied here
-  if(incl_GEOLA & str_detect(soil_option, "BZE")){
+  # GEOLA application ---------------------------------------- ####
+  if(incl_GEOLA){
 
-    if(soil_option == "BZE"){
+    backtoNULL <- which(!unlist(lapply(ls.soils, is.null))==F)
 
-      ls.soils <- mapply(FUN = function(x, bodentyp){
-        if(bodentyp == "Stauwasserboeden"){
-          mvg <- hydpar_hypres(clay = 30, silt = 70, bd = 2, topsoil = F)
-          mvg$ksat <- 10 # Aus Sd-Definition in der KA5
-          n_rep <- 3 #
-
-          lastrow <- subset(x, nl == max(nl))
-
-          #df.sd erstellen (letzte Zeile von df.soil, um Bodeninfo zu uebernehmen)
-          df.sd <- as.data.frame(lapply(lastrow, rep, n_rep))
-
-          # Veraenderliche Spalten aendern
-          df.sd <- df.sd %>%
-            mutate(mat = mat + 1) %>%
-            mutate(nl = nl + c(1: n_rep)) %>%
-            mutate(lower = lastrow$lower + c(-0.1, -0.2, -0.3)) %>% #gaendert zu 30 cm Sd a 10 cm Schritten
-            mutate(upper = lastrow$lower + c(0, -0.1, -0.2)) %>%
-
-            mutate(rootden = 0) %>%
-            mutate(sand = 0) %>%
-            mutate(silt = 70) %>%
-            mutate(clay = 30) %>%
-            mutate(bd = 2) %>%
-
-            #MvG-Parameter Ls2 fuer Stauhorizont
-            mutate(ths = rep(mvg$ths, n_rep)) %>%
-            mutate(thr = rep(mvg$thr, n_rep)) %>%
-            mutate(alpha = rep(mvg$alpha, n_rep)) %>%
-            mutate(npar = rep(mvg$npar, n_rep)) %>%
-            mutate(mpar = rep(mvg$mpar, n_rep)) %>%
-            mutate(tort = rep(mvg$tort, n_rep)) %>%
-            mutate(ksat = rep(mvg$ksat, n_rep)) %>%
-            relocate(names(lastrow))
-
-          # df.stau an df.soils anfuegen
-          x <-   rbind(x, df.sd)
+    if(soil_option == "STOK"){
+      if(length(backtoNULL) == 0){
+        ls.soils <- mapply(FUN = function(x, bodentyp){
+          x$soiltype <- bodentyp
           return(x)
-        } else if(bodentyp == "Gleye/Auenboeden"){
-          # stop water from leaving horizon below 2.60
-          x$mat[tail(x$nl, 2)] <- max(x$mat)+1
-          x$ksat[tail(x$nl, 2)] <- 0.0001
-          x$rootden[tail(x$nl, 2)] <- 0
+        },
+        ls.soils,
+        bodentypen,
+        SIMPLIFY = F)
+      }else{
+        ls.soils[-backtoNULL] <- mapply(FUN = function(x, bodentyp){
+          x$soiltype <- bodentyp
           return(x)
-        }else{
-          return(x)
-        }
-      },
-      ls.soils,
-      bodentyp = bodentypen)
+        },
+        ls.soils[-backtoNULL],
+        bodentypen,
+        SIMPLIFY = F)
+      }
+
+    }
+
+    if(str_detect(soil_option, "BZE")){
+      if(soil_option == "BZE"){
+
+        ls.soils <- mapply(FUN = function(x, bodentyp){
+          if(bodentyp == "Stauwasserboeden"){
+            mvg <- hydpar_hypres(clay = 30, silt = 70, bd = 2, topsoil = F)
+            mvg$ksat <- 10 # Aus Sd-Definition in der KA5
+            n_rep <- 3 #
+
+            lastrow <- subset(x, nl == max(nl))
+
+            #df.sd erstellen (letzte Zeile von df.soil, um Bodeninfo zu uebernehmen)
+            df.sd <- as.data.frame(lapply(lastrow, rep, n_rep))
+
+            # Veraenderliche Spalten aendern
+            if("rootden" %in% colnames(x)){
+              df.sd <- df.sd %>% mutate(rootden = 0)
+            }
+            df.sd <- df.sd %>%
+              mutate(mat = mat + 1) %>%
+              mutate(nl = nl + c(1: n_rep)) %>%
+              mutate(lower = lastrow$lower + c(-0.1, -0.2, -0.3)) %>% #gaendert zu 30 cm Sd a 10 cm Schritten
+              mutate(upper = lastrow$lower + c(0, -0.1, -0.2)) %>%
+
+              # mutate(rootden = 0) %>%
+              mutate(sand = 0) %>%
+              mutate(silt = 70) %>%
+              mutate(clay = 30) %>%
+              mutate(bd = 2) %>%
+
+              #MvG-Parameter Ls2 fuer Stauhorizont
+              mutate(ths = rep(mvg$ths, n_rep)) %>%
+              mutate(thr = rep(mvg$thr, n_rep)) %>%
+              mutate(alpha = rep(mvg$alpha, n_rep)) %>%
+              mutate(npar = rep(mvg$npar, n_rep)) %>%
+              mutate(mpar = rep(mvg$mpar, n_rep)) %>%
+              mutate(tort = rep(mvg$tort, n_rep)) %>%
+              mutate(ksat = rep(mvg$ksat, n_rep)) %>%
+              relocate(names(lastrow))
+
+            # df.stau an df.soils anfuegen
+            x <-   rbind(x, df.sd)
+            x$soiltype <- bodentyp
+            return(x)
+          } else if(bodentyp == "Gleye/Auenboeden"){
+            # stop water from leaving horizon below 2.60
+            x$mat[tail(x$nl, 2)] <- max(x$mat)+1
+            x$ksat[tail(x$nl, 2)] <- 0.0001
+            x$rootden[tail(x$nl, 2)] <- 0
+            x$soiltype <- bodentyp
+
+            return(x)
+          }else{
+            x$soiltype <- bodentyp
+            return(x)
+          }
+        },
+        ls.soils,
+        bodentyp = bodentypen,
+        SIMPLIFY = F)
+      }
     }
   }
+
+
 
   # add dummy soil horizons
   if(add_dummy){
@@ -449,8 +488,11 @@ fnc_get_soil <- function(df.ids,
                                                                                 thr = 0,
                                                                                 alpha = 1.3,
                                                                                 ksat = 50,
-                                                                                tort = -0.5,
-                                                                                rootden = 0) %>%
+                                                                                tort = -0.5)
+                                                                       if("rootden" %in% colnames(x)){
+                                                                         df.dummy <- df.dummy %>% mutate(rootden = 0)
+                                                                       }
+                                                                       df.dummy <- df.dummy %>%
                                                                          relocate(names(x))
                                                                        x <- rbind(x, df.dummy)
                                                                        return(x)

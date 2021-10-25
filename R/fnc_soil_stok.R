@@ -37,7 +37,8 @@ fnc_soil_stok <- function(df,
                          dplyr::mutate_at(vars(-all_of(c("ID_custom", "humusform"))), as.numeric)
 
                        if(incl_GEOLA){
-                         df.tmp[nrow(df.tmp), "lower"] <-  as.numeric(max(df$GRUND_C, max(df.tmp$lower)))
+                         df.tmp[nrow(df.tmp), "lower"] <-  as.numeric(max(df$GRUND_C[i], max(df.tmp$lower)))
+                         df.tmp$BODENTYP <-  rep(df$BODENTY[i], nrow(df.tmp))
                        }
 
                        # Tiefendiskretisierung, limit if wanted
@@ -72,7 +73,8 @@ fnc_soil_stok <- function(df,
                        df.tmp <- df.tmp %>%
                          dplyr::mutate(nl = 1:nrow(df.tmp)) %>%
                          dplyr::left_join(dgm, by = "ID") %>%
-                         dplyr::select(ID, ID_custom, mat, nl, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus) %>%
+                         dplyr::select(-humusform) %>%
+                         dplyr::select(ID, ID_custom, mat, nl, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, everything()) %>%
                          dplyr::mutate(ID_custom = as.character(ID_custom))
 
                      },
@@ -94,6 +96,7 @@ fnc_soil_stok <- function(df,
   names(ls.soil.par) <- unlist(lapply(ls.soil.par, function(x) unique(x$ID_custom)))
   # set NULL to missing data
   ls.soil.par[which(unlist(lapply(ls.soil.par, function(x) nrow(x))) == 1)] <- NULL
+  ls.soil.par[which(unlist(lapply(ls.soil.par, function(x) unique(x$mat))) == -9999)] <- NULL
 
 
   return(ls.soil.par)

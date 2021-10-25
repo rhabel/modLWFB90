@@ -16,6 +16,7 @@ fnc_get_soil(
   create_roots = T,
   limit_bodtief = NA,
   incl_GEOLA = T,
+  add_dummy = T,
   ...,
  
     pth_df.LEIT = "H:/FVA-Projekte/P01540_WHHKW/Daten/Ergebnisse/Modellierung_Testregionen/Leitprofile/Modul1DB.Rdata",
