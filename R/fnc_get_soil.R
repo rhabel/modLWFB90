@@ -48,12 +48,16 @@ fnc_get_soil <- function(df.ids,
                          add_BodenInfo = T,
                          create_roots = T,
                          limit_bodtief = NA,
+                         incl_GEOLA = T,
+                         add_dummy = T,
 
                          ...,
 
                          pth_df.LEIT = "H:/FVA-Projekte/P01540_WHHKW/Daten/Ergebnisse/Modellierung_Testregionen/Leitprofile/Modul1DB.Rdata",
                          pth_WGB_diss_shp = "H:/BU/Gis/Themen/Vektor/Wugeb_Dissolve.shp",
-                         pth_STOK_pieces = "H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Wuchsgebiete/Wuchsgebiete_red/"
+                         pth_STOK_pieces = "H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Wuchsgebiete/Wuchsgebiete_red/",
+                         pth_GEOLA_pieces = "H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Geola/"
+
                          ){
 
   # sort dfs according to IDs
@@ -81,11 +85,7 @@ fnc_get_soil <- function(df.ids,
     # load df.LEIT
     load(file = pth_df.LEIT)
 
-    # subset currently still active for faster processing - to be expanded to BW in the future
-
-    #sf.testgeb <- get(paste0("sf.STOK.", testgebiet))
-    #df.LEIT <- get(paste0("df.LEIT.", testgebiet))
-
+    # CRS for GEOLA and Wuchsgebiete
     sf.ids <- sf::st_as_sf(df.ids.25832, coords = c("easting", "northing"), crs = 25832)
 
     #Due to RAM issues the STOKA-shapefile was divided into 7 parts, each of them comprising a Wuchsbezirk
@@ -93,17 +93,7 @@ fnc_get_soil <- function(df.ids,
     sf.wugeb <- sf::st_read(pth_WGB_diss_shp, quiet = T) %>%
       sf::st_transform(crs= 25832)
     wugeb <- sort(paste0(unique(unlist(sf::st_intersects(sf.ids, sf.wugeb), recursive = F)), ".shp"), decreasing = F)
-    rm(sf.wugeb); gc()
-
-    #Read required STOKA shapefiles and transform CRS according to sf.ids
-
-      # files <- list.files(pth_STOK_pieces, pattern = ".shp")
-      # files <- files[files %in% wugeb]
-
-      # files <- list.files(pth_STOK_pieces)
-      # files <- files[!nchar(files) > 5]
-      # files <- sort(files[substr(files, 3, 5) == "shp"], decreasing = F)
-      # files <- files[files[] == wugeb[]]
+    #Read required STOKA shapefiles for RST_F and OA_ID
 
     cl <- parallel::makeCluster(ifelse(length(wugeb) < parallel::detectCores(),
                                        length(wugeb), parallel::detectCores()))
@@ -114,18 +104,38 @@ fnc_get_soil <- function(df.ids,
                      .combine = rbind) %dopar% {
                        sf::st_read(paste0(pth_STOK_pieces, i), quiet = T)
                      }
+
     parallel::stopCluster(cl)
 
 
-    #Join sf.ids with sf.gebiet
+    # join with GEOLA
+    if(incl_GEOLA){
+
+      cl <- parallel::makeCluster(ifelse(length(wugeb) < parallel::detectCores(),
+                                         length(wugeb), parallel::detectCores()))
+      doParallel::registerDoParallel(cl)
+
+      sf.geola <- foreach::foreach(i = wugeb,
+                                   .packages = "sf",
+                                   .combine = rbind) %dopar% {
+                                     sf::st_read(paste0(pth_GEOLA_pieces, i),
+                                                 quiet = T)
+                                   }
+
+      parallel::stopCluster(cl)
+
+      #spatial join sf.ids with sf.geola
+      sf.ids <-  sf.ids %>%
+        sf::st_join(sf.geola)
+      sf.ids <- sf.ids[!duplicated(sf.ids), ]
+    }
+
+    #spatial join sf.ids with sf.gebiet
     sf.ids <-  sf.ids %>%
                   sf::st_join(sf.gebiet) %>%
                   sf::st_drop_geometry() %>%
-                  dplyr::select(ID, ID_custom, RST_F, OA_ID)
-
-    # clear up space
-    rm(sf.gebiet); gc()
-
+                  dplyr::select(-c(HOE, RST_Z1, MOR_Strat1, HU, WHH, WAS, area_ha, WugebNr))
+    sf.ids <- sf.ids[!duplicated(sf.ids), ]
 
     # Identify missing and non-forest RST_F
     #no forest
@@ -145,7 +155,9 @@ fnc_get_soil <- function(df.ids,
                     unique(.)
 
     RST_miss <- c(RST_noforest, RST_LEIT, RST_moor)
-    rm(list = c("RST_noforest", "RST_moor", "RST_LEIT"));
+
+    # clear up space
+    rm(sf.gebiet, sf.geola, sf.wugeb, RST_noforest, RST_moor, RST_LEIT); gc()
 
 
     IDs_miss <- sf.ids$ID[(is.na(sf.ids$RST_F) | sf.ids$RST_F %in% RST_miss)] # remove non-forest-rst_fs
@@ -158,9 +170,10 @@ fnc_get_soil <- function(df.ids,
                                 df.LEIT = df.LEIT.BW,
                                 PTF_to_use = PTF_to_use,
                                 dgm = df.dgm,
-                                limit_bodtief = limit_bodtief)
+                                limit_bodtief = limit_bodtief,
+                                incl_GEOLA = incl_GEOLA)
 
-      names(ls.soils) <- df.ids$ID_custom
+      bodentypen <- unlist(lapply(ls.soils, function(x) unique(x$BODENTYP)))
 
     } else {
 
@@ -175,10 +188,13 @@ fnc_get_soil <- function(df.ids,
                                       df.LEIT = df.LEIT.BW,
                                       PTF_to_use = PTF_to_use,
                                       dgm = df.dgm,
-                                      limit_bodtief = limit_bodtief)
-        names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
+                                      limit_bodtief = limit_bodtief,
+                                      incl_GEOLA = incl_GEOLA)
 
+        names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
         ls.soils[match(names(ls.soils.tmp), names(ls.soils))] <- ls.soils.tmp
+
+        bodentypen <- unlist(lapply(ls.soils, function(x) unique(x$BODENTYP)))
 
       } else if (soil_option == "STOK_BZE"){
 
@@ -186,12 +202,21 @@ fnc_get_soil <- function(df.ids,
             as.character(as.data.frame(df.ids)[IDs_miss, "ID_custom"]),
             " \nare not mapped by STOKA. They will be modelled using regionlized BZE data.\n\n")
 
+        if(length(limit_bodtief) > 1){
+          limit_bodtiefSTOK <- limit_bodtief[IDs_good]
+          limit_bodtiefBZE <- limit_bodtief[IDs_miss]
+        }else{
+          limit_bodtiefSTOK <- limit_bodtief
+          limit_bodtiefBZE <- limit_bodtief
+        }
+
         ls.soils[IDs_good] <- fnc_soil_stok(df = sf.ids[IDs_good,],
                                             df.LEIT = df.LEIT.BW,
 
                                             PTF_to_use = PTF_to_use,
                                             dgm = df.dgm,
-                                            limit_bodtief = limit_bodtief)
+                                            limit_bodtief = limit_bodtiefSTOK,
+                                            incl_GEOLA = incl_GEOLA)
         df.ids <- df.ids %>%
           dplyr::left_join(df.dgm, by = "ID")
         xy_gk_miss <- fnc_transf_crs(df = df.ids[IDs_miss,],
@@ -201,7 +226,8 @@ fnc_get_soil <- function(df.ids,
                                            buffering = (!is.na(bze_buffer)),
                                            buff_width = bze_buffer,
 
-                                           limit_bodtief = limit_bodtief)
+                                           limit_bodtief = limit_bodtiefBZE,
+                                           incl_GEOLA = incl_GEOLA)
 
         # names(ls.soils) <- df.ids$ID_custom
 
@@ -210,18 +236,60 @@ fnc_get_soil <- function(df.ids,
     }
 
   } else if (soil_option == "BZE") {
+
     df.ids <- df.ids %>%
       dplyr::left_join(df.dgm, by = "ID")
+
+    if(incl_GEOLA){
+      # join with GEOLA
+      sf.ids <- sf::st_as_sf(df.ids.25832,
+                             coords = c("easting", "northing"), crs = 25832)
+      sf.wugeb <- sf::st_read(pth_WGB_diss_shp, quiet = T) %>%
+        sf::st_transform(crs= 25832)
+
+      wugeb <- sort(paste0(unique(unlist(sf::st_intersects(sf.ids,
+                                                           sf.wugeb),
+                                         recursive = F)), ".shp"),
+                    decreasing = F)
+
+      #Read required GEOLA shapefiles
+      cl <- parallel::makeCluster(ifelse(length(wugeb) < parallel::detectCores(),
+                                         length(wugeb),
+                                         parallel::detectCores()))
+      doParallel::registerDoParallel(cl)
+
+      sf.geola <- foreach::foreach(i = wugeb,
+                                   .packages = "sf",
+                                   .combine = rbind) %dopar% {
+                                     sf::st_read(paste0(pth_GEOLA_pieces, i),
+                                                 quiet = T)
+                                   }
+
+      parallel::stopCluster(cl)
+
+      sf.ids <-  sf.ids %>%
+        sf::st_join(sf.geola) %>%
+        sf::st_drop_geometry()
+
+      df.ids <- df.ids %>%
+        dplyr::left_join(sf.ids, by = c("ID", "ID_custom"))
+    }
+
+
+
     xy_proj <- fnc_transf_crs(df = df.ids,
                               to_crs = "UTM_25832")
+
     ls.soils <- fnc_soil_bze(df.utm = xy_proj,
                              df.assign = df.ids,
                              buffering = (!is.na(bze_buffer)),
                              buff_width = bze_buffer,
 
                              limit_bodtief = limit_bodtief,
-                             meta.out = meta.out)
+                             meta.out = meta.out,
+                             incl_GEOLA = incl_GEOLA)
 
+    bodentypen <- unlist(lapply(ls.soils, function(x) unique(x$BODENTY)))
 
   } else if (soil_option == "OWN") {
 
@@ -293,7 +361,7 @@ fnc_get_soil <- function(df.ids,
   }
 
 
-  # Roots:
+  # Roots: --------------------------------------------------- ####
   if(create_roots){
 
     backtoNULL <- which(!unlist(lapply(ls.soils, is.null))==F)
@@ -302,7 +370,8 @@ fnc_get_soil <- function(df.ids,
                        ls.soils,
                        # rootsmethod = "betamodel",
                        # beta = 0.97,
-                       # maxrootdepth = c(-1,-1.5,-0.5, -1.5,-2),
+                       # # maxrootdepth = c(-1,-1.5,-0.5, -1.5,-2),
+                       # maxrootdepth = -2,
 
                        ...,
 
@@ -311,6 +380,123 @@ fnc_get_soil <- function(df.ids,
 
     ls.soils[backtoNULL] <- list(NULL)
 
+  }
+
+  # GEOLA application ---------------------------------------- ####
+  if(incl_GEOLA){
+
+    backtoNULL <- which(!unlist(lapply(ls.soils, is.null))==F)
+
+    if(soil_option == "STOK"){
+      if(length(backtoNULL) == 0){
+        ls.soils <- mapply(FUN = function(x, bodentyp){
+          x$soiltype <- bodentyp
+          return(x)
+        },
+        ls.soils,
+        bodentypen,
+        SIMPLIFY = F)
+      }else{
+        ls.soils[-backtoNULL] <- mapply(FUN = function(x, bodentyp){
+          x$soiltype <- bodentyp
+          return(x)
+        },
+        ls.soils[-backtoNULL],
+        bodentypen,
+        SIMPLIFY = F)
+      }
+
+    }
+
+    if(stringr::str_detect(soil_option, "BZE")){
+      if(soil_option == "BZE"){
+
+        ls.soils <- mapply(FUN = function(x, bodentyp){
+          if(bodentyp == "Stauwasserboeden"){
+            mvg <- hydpar_hypres(clay = 30, silt = 70, bd = 2, topsoil = F)
+            mvg$ksat <- 10 # Aus Sd-Definition in der KA5
+            n_rep <- 3 #
+
+            lastrow <- subset(x, nl == max(nl))
+
+            #df.sd erstellen (letzte Zeile von df.soil, um Bodeninfo zu uebernehmen)
+            df.sd <- as.data.frame(lapply(lastrow, rep, n_rep))
+
+            # Veraenderliche Spalten aendern
+            if("rootden" %in% colnames(x)){
+              df.sd <- df.sd %>% mutate(rootden = 0)
+            }
+            df.sd <- df.sd %>%
+              mutate(mat = mat + 1) %>%
+              mutate(nl = nl + c(1: n_rep)) %>%
+              mutate(lower = lastrow$lower + c(-0.1, -0.2, -0.3)) %>% #gaendert zu 30 cm Sd a 10 cm Schritten
+              mutate(upper = lastrow$lower + c(0, -0.1, -0.2)) %>%
+
+              # mutate(rootden = 0) %>%
+              mutate(sand = 0) %>%
+              mutate(silt = 70) %>%
+              mutate(clay = 30) %>%
+              mutate(bd = 2) %>%
+
+              #MvG-Parameter Ls2 fuer Stauhorizont
+              mutate(ths = rep(mvg$ths, n_rep)) %>%
+              mutate(thr = rep(mvg$thr, n_rep)) %>%
+              mutate(alpha = rep(mvg$alpha, n_rep)) %>%
+              mutate(npar = rep(mvg$npar, n_rep)) %>%
+              mutate(mpar = rep(mvg$mpar, n_rep)) %>%
+              mutate(tort = rep(mvg$tort, n_rep)) %>%
+              mutate(ksat = rep(mvg$ksat, n_rep)) %>%
+              relocate(names(lastrow))
+
+            # df.stau an df.soils anfuegen
+            x <-   rbind(x, df.sd)
+            x$soiltype <- bodentyp
+            return(x)
+          } else if(bodentyp == "Gleye/Auenboeden"){
+            # stop water from leaving horizon below 2.60
+            x$mat[tail(x$nl, 2)] <- max(x$mat)+1
+            x$ksat[tail(x$nl, 2)] <- 0.0001
+            x$rootden[tail(x$nl, 2)] <- 0
+            x$soiltype <- bodentyp
+
+            return(x)
+          }else{
+            x$soiltype <- bodentyp
+            return(x)
+          }
+        },
+        ls.soils,
+        bodentyp = bodentypen,
+        SIMPLIFY = F)
+      }
+    }
+  }
+
+
+
+  # add dummy soil horizons
+  if(add_dummy){
+    ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)],
+                                                                     FUN = function(x){
+                                                                       lastrow <- x[nrow(x),]
+                                                                       df.dummy <- as.data.frame(lapply(lastrow, rep, 6)) %>%
+                                                                         mutate(mat = mat + 1,
+                                                                                nl = nl + c(1:6),
+                                                                                upper = lastrow$lower + c(0, -0.1, -0.2, -0.4, -0.6, -0.8),
+                                                                                lower = lastrow$lower + c(-0.1, -0.2, -0.4, -0.6, -0.8, -1),
+                                                                                ths = 0.1,
+                                                                                thr = 0,
+                                                                                alpha = 1.3,
+                                                                                ksat = 50,
+                                                                                tort = -0.5)
+                                                                       if("rootden" %in% colnames(x)){
+                                                                         df.dummy <- df.dummy %>% mutate(rootden = 0)
+                                                                       }
+                                                                       df.dummy <- df.dummy %>%
+                                                                         relocate(names(x))
+                                                                       x <- rbind(x, df.dummy)
+                                                                       return(x)
+                                                                     })
   }
 
   # nFK:

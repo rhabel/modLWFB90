@@ -4,7 +4,7 @@
 \alias{fnc_soil_bze}
 \title{Soil-list creation from BZE data}
 \usage{
-fnc_soil_bze(df.utm, df.assign, meta.out, limit_bodtief = NA, ...)
+fnc_soil_bze(df.utm, df.assign, meta.out, limit_bodtief = NA, incl_GEOLA, ...)
 }
 \arguments{
 \item{df.assign}{a dataframe containing the corresponding ID_custom for the IDs in \code{df.gk}}

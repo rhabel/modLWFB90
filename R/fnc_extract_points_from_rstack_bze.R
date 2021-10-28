@@ -11,10 +11,11 @@
 #' @return Set of soil information that is further processed in function fnc_soil_bze()
 #'
 fnc_extract_points_bze <- function(lay,
-                               xy,
-                               meta.out,
-                               buffering = F,
-                               buff_width = 50) {
+                                   xy,
+                                   meta.out,
+                                   buffering = F,
+                                   buff_width = 50) {
+
 
 
   val <- raster::extract(lay, xy, method = "simple") # normaler extract
