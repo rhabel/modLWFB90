@@ -408,7 +408,7 @@ fnc_get_soil <- function(df.ids,
 
     }
 
-    if(str_detect(soil_option, "BZE")){
+    if(stringr::str_detect(soil_option, "BZE")){
       if(soil_option == "BZE"){
 
         ls.soils <- mapply(FUN = function(x, bodentyp){
