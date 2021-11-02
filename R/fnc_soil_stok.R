@@ -45,7 +45,8 @@ fnc_soil_stok <- function(df,
                        if(is.na(limit_bodtief) == TRUE){
 
                          df.tmp <- modLWFB90::fnc_depth_disc(df = df.tmp,
-                                                             limit_bodtief = NA)
+                                                             limit_bodtief = ifelse(df$BODENTY[i] == "Gleye/Auenboeden",
+                                                                                    -3,NA))
 
                        }else{
 

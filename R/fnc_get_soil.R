@@ -393,6 +393,9 @@ fnc_get_soil <- function(df.ids,
 
       ls.soils[non.nas] <- mapply(FUN = function(x, bodentyp){
           x$soiltype <- bodentyp
+          if(bodentyp == "Gleye/Auenboeden"){
+            x[c(nrow(x)-1, nrow(x)), "ksat"] <- 0.0001
+          }
           return(x)
         },
         ls.soils[non.nas],
