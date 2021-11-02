@@ -59,7 +59,7 @@ fnc_PTF <- function(df, PTF_used){
 
     }else{
       missingcol <- c("clay", "silt", "bd", "oc.pct")[!c("clay", "silt", "bd", "oc.pct") %in% names(df)]
-      stop(paste0(missingcol, "is missing in df for PTF-application of ", PTF_used))
+      stop(paste0("\n", missingcol, "is missing in df for PTF-application of ", PTF_used))
     }
 
   } else if (PTF_used == "PTFPUH2") {
@@ -71,7 +71,7 @@ fnc_PTF <- function(df, PTF_used){
                                                oc.pct = df$oc.pct))
     }else{
       missingcol <- c("sand", "clay", "silt", "bd", "oc.pct")[!c("sand", "clay", "silt", "bd", "oc.pct") %in% names(df)]
-      stop(paste0(missingcol, "is missing in df for PTF-application of ", PTF_used))
+      stop(paste0("\n", missingcol, "is missing in df for PTF-application of ", PTF_used))
     }
 
 
@@ -90,7 +90,7 @@ fnc_PTF <- function(df, PTF_used){
 
     }else{
       missingcol <- c("sand", "clay", "silt")[!c("sand", "clay", "silt") %in% names(df)]
-      stop(paste0(missingcol, "is missing in df for PTF-application of ", PTF_used))
+      stop(paste0("\n", missingcol, "is missing in df for PTF-application of ", PTF_used))
     }
 
   } else {

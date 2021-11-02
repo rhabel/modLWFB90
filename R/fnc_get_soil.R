@@ -126,7 +126,9 @@ fnc_get_soil <- function(df.ids,
 
       #spatial join sf.ids with sf.geola
       sf.ids <-  sf.ids %>%
-        sf::st_join(sf.geola)
+        sf::st_join(sf.geola) %>%
+        dplyr::mutate(GRUND_C = as.numeric(GRUND_C))
+
       sf.ids <- sf.ids[!duplicated(sf.ids), ]
     }
 
@@ -269,13 +271,13 @@ fnc_get_soil <- function(df.ids,
 
       sf.ids <-  sf.ids %>%
         sf::st_join(sf.geola) %>%
-        sf::st_drop_geometry()
+        sf::st_drop_geometry()%>%
+        dplyr::mutate(GRUND_C = as.numeric(GRUND_C))
 
       df.ids <- df.ids %>%
-        dplyr::left_join(sf.ids, by = c("ID", "ID_custom"))
+        dplyr::left_join(sf.ids, by = c("ID", "ID_custom")) %>%
+        distinct(.)
     }
-
-
 
     xy_proj <- fnc_transf_crs(df = df.ids,
                               to_crs = "UTM_25832")
@@ -352,6 +354,7 @@ fnc_get_soil <- function(df.ids,
     ls.soils[as.numeric(which(!unlist(lapply(ls.soils, is.null))==T))] <- lapply(ls.soils[as.numeric(which(!unlist(lapply(ls.soils, is.null))==T))],
                                                                                  FUN = fnc_PTF,
                                                                                  PTF_used = PTF_to_use)
+
   }
 
   # MvG-limitation if desired: ------------------------------- ####
@@ -364,54 +367,44 @@ fnc_get_soil <- function(df.ids,
   # Roots: --------------------------------------------------- ####
   if(create_roots){
 
-    backtoNULL <- which(!unlist(lapply(ls.soils, is.null))==F)
+    non.nas <- which(unlist(lapply(ls.soils, is.null))==F)
 
-    ls.soils <- mapply(FUN = fnc_roots,
-                       ls.soils,
-                       # rootsmethod = "betamodel",
-                       # beta = 0.97,
-                       # # maxrootdepth = c(-1,-1.5,-0.5, -1.5,-2),
-                       # maxrootdepth = -2,
+    ls.soils[non.nas] <- mapply(FUN = fnc_roots,
+                                    ls.soils[non.nas],
 
-                       ...,
+                                    # rootsmethod = "betamodel",
+                                    # beta = 0.97,
+                                    # maxrootdepth = -2,
+                                    # # maxrootdepth = c(-1,-1.5,-0.5, -1.5,-2),
 
-                       SIMPLIFY = F)
+                                    ...,
 
+                                    SIMPLIFY = F)
 
-    ls.soils[backtoNULL] <- list(NULL)
 
   }
 
   # GEOLA application ---------------------------------------- ####
   if(incl_GEOLA){
 
-    backtoNULL <- which(!unlist(lapply(ls.soils, is.null))==F)
+    non.nas <- which(unlist(lapply(ls.soils, is.null))==F)
 
     if(soil_option == "STOK"){
-      if(length(backtoNULL) == 0){
-        ls.soils <- mapply(FUN = function(x, bodentyp){
+
+      ls.soils[non.nas] <- mapply(FUN = function(x, bodentyp){
           x$soiltype <- bodentyp
           return(x)
         },
-        ls.soils,
+        ls.soils[non.nas],
         bodentypen,
         SIMPLIFY = F)
-      }else{
-        ls.soils[-backtoNULL] <- mapply(FUN = function(x, bodentyp){
-          x$soiltype <- bodentyp
-          return(x)
-        },
-        ls.soils[-backtoNULL],
-        bodentypen,
-        SIMPLIFY = F)
-      }
 
     }
 
     if(stringr::str_detect(soil_option, "BZE")){
       if(soil_option == "BZE"){
 
-        ls.soils <- mapply(FUN = function(x, bodentyp){
+        ls.soils[non.nas] <- mapply(FUN = function(x, bodentyp){
           if(bodentyp == "Stauwasserboeden"){
             mvg <- hydpar_hypres(clay = 30, silt = 70, bd = 2, topsoil = F)
             mvg$ksat <- 10 # Aus Sd-Definition in der KA5
@@ -465,7 +458,7 @@ fnc_get_soil <- function(df.ids,
             return(x)
           }
         },
-        ls.soils,
+        ls.soils[non.nas],
         bodentyp = bodentypen,
         SIMPLIFY = F)
       }
