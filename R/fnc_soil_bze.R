@@ -33,7 +33,7 @@ fnc_soil_bze <- function(df.utm,
          "t0", "t1", "t2", "t3", "t4",
          "u0", "u1", "u2", "u3", "u4")
 
-
+  # raster
   cl <- parallel::makeCluster(parallel::detectCores())  #Cluster mit verfügbarer Anzahl von Kernen starten
   doParallel::registerDoParallel(cl)
 
@@ -53,6 +53,7 @@ fnc_soil_bze <- function(df.utm,
 
   soilraster <- raster::stack(unlist(ls.text))
   names(soilraster) <- c(a, b)
+
 
   # stechen
   soil <- fnc_extract_points_bze(lay = soilraster,
@@ -106,23 +107,34 @@ fnc_soil_bze <- function(df.utm,
   setkey(df.assign, ID)
   ls.soils.tmp <- df.assign[soilsdiscrete1]
 
+  ls.soils.tmp <- split(ls.soils.tmp, by = "ID")
+  names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
+
+  # remove NA-dfs
+  which.na <- which(unlist(lapply(ls.soils.tmp, function(x) any(is.na(x)))==T))
+  which.non.na <- which(unlist(lapply(ls.soils.tmp, function(x) any(is.na(x)))==F))
+  if(length(which.na) != 0){
+    ls.soils.tmp[which.na] <- list(NULL)
+    message(paste0("ID: ", names(ls.soils.tmp)[which.na], " won't be modelled. There's no BZE_R data at coordinate + set buffer width. \n"))
+  }
+
   # limit to either Dietmar-depth, GEOLA-depth, or limit_bodtief
   if(is.na(limit_bodtief) == T){
 
     # incl GEOLA
     if(incl_GEOLA){
 
-      ls.soils.tmp <- split(ls.soils.tmp, by = "ID")
-      ls.soils.tmp <- lapply(ls.soils.tmp,
+      ls.soils.tmp[which.non.na] <- lapply(ls.soils.tmp[which.non.na],
                                FUN = function(x){
                                  if(unique(x$BODENTY) == "Gleye/Auenboeden"){
                                    return(x)
                                  }else if(unique(x$BODENTY) == "Stauwasserboeden"){
-                                   x <- x[which(x$i.upper < as.numeric(unique(x$roots_bottom_rnd))),]
+                                   x <- x[i.upper < as.numeric(unique(x$roots_bottom_rnd))]
                                    return(x)
                                  }else{
-                                   x <- x[i.upper < as.numeric(unique(x$GRUND_C))]
-                                   x$lower[nrow(x)] <- as.numeric(unique(x$GRUND_C))/-100
+                                   whichmax <- as.numeric(max(unique(x$GRUND_C), unique(x$roots_bottom_rnd)))
+                                   x <- x[which(x$i.upper < whichmax),]
+                                   x$lower[nrow(x)] <- whichmax/-100
                                    return(x)
                                  }
                                  }
@@ -130,8 +142,7 @@ fnc_soil_bze <- function(df.utm,
 
     }else{
 
-      ls.soils.tmp <- split(ls.soils.tmp, by = "ID")
-      ls.soils.tmp <- lapply(ls.soils.tmp,
+      ls.soils.tmp[which.non.na] <- lapply(ls.soils.tmp[which.non.na],
                              FUN = function(x){x[which(x$i.upper < as.numeric(unique(x$roots_bottom_rnd))),]})
 
     }
@@ -139,20 +150,19 @@ fnc_soil_bze <- function(df.utm,
   }else{
 
     # remove all layers below set maxdepth
-    ls.soils.tmp <- split(ls.soils.tmp, by = "ID")
-    ls.soils.tmp <- mapply(FUN = function(x,limit){
+    ls.soils.tmp[which.non.na] <- mapply(FUN = function(x,limit){
                              x <- x[which(x$i.upper < limit*-100),]
                              x$lower[nrow(x)] <- limit
                              return(x)
                            },
-                           ls.soils.tmp,
-                           limit = limit_bodtief,
+                           ls.soils.tmp[which.non.na],
+                           limit = ifelse(length(limit_bodtief) > 1,limit_bodtief[which.non.na] ,limit_bodtief),
                            SIMPLIFY = F)
 
   }
 
   if(incl_GEOLA){
-    ls.soils.tmp <- lapply(ls.soils.tmp,
+    ls.soils.tmp[which.non.na] <- lapply(ls.soils.tmp[which.non.na],
                            FUN = function(x){
                              x <- as.data.frame(x)
                              x <- x[c("ID", "ID_custom", "mat", "nl", "upper", "lower",
@@ -164,7 +174,7 @@ fnc_soil_bze <- function(df.utm,
                              x$ID_custom <- as.character(x$ID_custom)
                              return(x)})
   }else{
-    ls.soils.tmp <- lapply(ls.soils.tmp,
+    ls.soils.tmp[which.non.na] <- lapply(ls.soils.tmp[which.non.na],
                            FUN = function(x){
                              x <- as.data.frame(x)
                              x <- x[c("ID", "ID_custom", "mat", "nl", "upper", "lower",
@@ -177,16 +187,6 @@ fnc_soil_bze <- function(df.utm,
                              return(x)})
 
   }
-
-
-  # remove NA-dfs
-  which.na <- which(unlist(lapply(ls.soils.tmp, function(x) any(is.na(x)))==T))
-  names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
-  ls.soils.tmp[which.na] <- list(NULL)
-  if(length(which.na) != 0){
-    message(paste0("ID: ", names(ls.soils.tmp)[which.na], " won't be modelled. There's no BZE_R data at coordinate + set buffer width. \n"))
-  }
-
 
   return(ls.soils.tmp)
 }
