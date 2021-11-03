@@ -51,7 +51,8 @@ fnc_roots <- function(df,
     return(df)
   }else{
     rootden <- make_rootden_adj(soilnodes = df$lower,
-                                method = rootsmethod)#, ...)
+                                method = rootsmethod,
+                                ...)
 
     if(length(rootden) != 0){
       if(df$upper[1] > 0){

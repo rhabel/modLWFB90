@@ -176,6 +176,7 @@ fnc_get_soil <- function(df.ids,
                                 incl_GEOLA = incl_GEOLA)
 
       bodentypen <- unlist(lapply(ls.soils, function(x) unique(x$BODENTYP)))
+      dpth_lim_soil <- unlist(lapply(ls.soils, function(x) unique(x$dpth_ini)))
 
     } else {
 
@@ -197,6 +198,7 @@ fnc_get_soil <- function(df.ids,
         ls.soils[match(names(ls.soils.tmp), names(ls.soils))] <- ls.soils.tmp
 
         bodentypen <- unlist(lapply(ls.soils, function(x) unique(x$BODENTYP)))
+        dpth_lim_soil <- unlist(lapply(ls.soils, function(x) unique(x$dpth_ini)))
 
       } else if (soil_option == "STOK_BZE"){
 
@@ -230,6 +232,9 @@ fnc_get_soil <- function(df.ids,
 
                                            limit_bodtief = limit_bodtiefBZE,
                                            incl_GEOLA = incl_GEOLA)
+
+        bodentypen <- unlist(lapply(ls.soils, function(x) unique(x$BODENTYP)))
+        dpth_lim_soil <- unlist(lapply(ls.soils, function(x) unique(x$dpth_ini)))
 
         # names(ls.soils) <- df.ids$ID_custom
 
@@ -291,7 +296,8 @@ fnc_get_soil <- function(df.ids,
                              meta.out = meta.out,
                              incl_GEOLA = incl_GEOLA)
 
-    bodentypen <- unlist(lapply(ls.soils, function(x) unique(x$BODENTY)))
+    bodentypen <- unlist(lapply(ls.soils, function(x) unique(x$BODENTYP)))
+    dpth_lim_soil <- unlist(lapply(ls.soils, function(x) unique(x$dpth_ini)))
 
   } else if (soil_option == "OWN") {
 
@@ -363,23 +369,47 @@ fnc_get_soil <- function(df.ids,
                                                                      FUN = fnc_limit)
   }
 
-
   # Roots: --------------------------------------------------- ####
   if(create_roots){
 
     non.nas <- which(unlist(lapply(ls.soils, is.null))==F)
 
-    ls.soils[non.nas] <- mapply(FUN = fnc_roots,
-                                    ls.soils[non.nas],
+    if(soil_option != "OWN"){
 
-                                    # rootsmethod = "betamodel",
-                                    # beta = 0.97,
-                                    # maxrootdepth = -2,
-                                    # # maxrootdepth = c(-1,-1.5,-0.5, -1.5,-2),
+      # roots limited by soil conditions and/or vegetation parameters
+      if(length(maxrootdepth) == 1){
+        maxrootdepth_cm <- maxrootdepth*-100
+        dpth_lim_veg <- rep(maxrootdepth_cm, length(non.nas))
+      }
 
-                                    ...,
+      maxdepth <- pmin(dpth_lim_soil, dpth_lim_veg, na.rm = T)/-100
 
-                                    SIMPLIFY = F)
+      ls.soils[non.nas] <- mapply(FUN = fnc_roots,
+                                  ls.soils[non.nas],
+
+                                  maxrootdepth = maxdepth,
+                                  # rootsmethod = "betamodel",
+                                  # beta = 0.97,
+                                  # # maxrootdepth = c(-1,-1.5,-0.5, -1.5,-2),
+
+                                  ...,
+
+                                  SIMPLIFY = F)
+    }else{
+      ls.soils[non.nas] <- mapply(FUN = fnc_roots,
+                                  ls.soils[non.nas],
+
+                                  # rootsmethod = "betamodel",
+                                  # beta = 0.97,
+                                  # maxrootdepth = -2,
+                                  # # maxrootdepth = c(-1,-1.5,-0.5, -1.5,-2),
+
+                                  ...,
+
+                                  SIMPLIFY = F)
+    }
+
+
 
 
   }
@@ -470,7 +500,7 @@ fnc_get_soil <- function(df.ids,
 
 
 
-  # add dummy soil horizons
+  # add dummy soil horizons ---------------------------------- ####
   if(add_dummy){
     ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)],
                                                                      FUN = function(x){
@@ -495,11 +525,22 @@ fnc_get_soil <- function(df.ids,
                                                                      })
   }
 
-  # nFK:
+  # add_BodenInfo: ------------------------------------------- ####
   if(add_BodenInfo){
     ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)],
                                                                      fnc_add_nFK)
   }
+
+  # reduce --------------------------------------------------- ####
+  to_2 <- c("sand", "silt","clay", "oc.pct", "ksat", "tort")
+  to_3 <- c("gravel", "bd", "ths", "thr", "alpha", "npar", "mpar", "rootden" )
+  ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)],
+                                                                   FUN = function(x){
+                                                                     x <- x %>%
+                                                                       dplyr::mutate(across(any_of(to_2), ~round(.x, 2)),
+                                                                                     across(any_of(to_3), ~round(.x, 3)))
+                                                                   })
+
 
 
   return(ls.soils)
