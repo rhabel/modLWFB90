@@ -127,14 +127,17 @@ fnc_soil_bze <- function(df.utm,
       ls.soils.tmp[which.non.na] <- lapply(ls.soils.tmp[which.non.na],
                                FUN = function(x){
                                  if(unique(x$BODENTY) == "Gleye/Auenboeden"){
+                                   x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
                                    return(x)
                                  }else if(unique(x$BODENTY) == "Stauwasserboeden"){
                                    x <- x[i.upper < as.numeric(unique(x$roots_bottom_rnd))]
+                                   x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
                                    return(x)
                                  }else{
                                    whichmax <- as.numeric(max(unique(x$GRUND_C), unique(x$roots_bottom_rnd)))
                                    x <- x[which(x$i.upper < whichmax),]
                                    x$lower[nrow(x)] <- whichmax/-100
+                                   x$dpth_ini <- whichmax
                                    return(x)
                                  }
                                  }
@@ -143,7 +146,12 @@ fnc_soil_bze <- function(df.utm,
     }else{
 
       ls.soils.tmp[which.non.na] <- lapply(ls.soils.tmp[which.non.na],
-                             FUN = function(x){x[which(x$i.upper < as.numeric(unique(x$roots_bottom_rnd))),]})
+                             FUN = function(x){
+                               x[which(x$i.upper < as.numeric(unique(x$roots_bottom_rnd))),]
+                               x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
+                               x$BODENTY <- "unknown"
+
+                             })
 
     }
 
@@ -151,42 +159,35 @@ fnc_soil_bze <- function(df.utm,
 
     # remove all layers below set maxdepth
     ls.soils.tmp[which.non.na] <- mapply(FUN = function(x,limit){
-                             x <- x[which(x$i.upper < limit*-100),]
-                             x$lower[nrow(x)] <- limit
-                             return(x)
-                           },
-                           ls.soils.tmp[which.non.na],
-                           limit = ifelse(length(limit_bodtief) > 1,limit_bodtief[which.non.na] ,limit_bodtief),
-                           SIMPLIFY = F)
+
+      x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
+      x$BODENTY <- "unknown"
+      x <- x[which(x$i.upper < limit*-100),]
+      x$lower[nrow(x)] <- limit
+      return(x)
+    },
+    ls.soils.tmp[which.non.na],
+    limit = ifelse(length(limit_bodtief) > 1,limit_bodtief[which.non.na] ,limit_bodtief),
+    SIMPLIFY = F)
+
+
 
   }
 
-  if(incl_GEOLA){
+
+  # sort and rename
     ls.soils.tmp[which.non.na] <- lapply(ls.soils.tmp[which.non.na],
                            FUN = function(x){
                              x <- as.data.frame(x)
                              x <- x[c("ID", "ID_custom", "mat", "nl", "upper", "lower",
                                       "sand", "schluff", "ton", "gba", "trd", "corg",
-                                      "aspect", "slope", "profile_top", "BODENTY")]
+                                      "aspect", "slope", "profile_top", "BODENTY", "dpth_ini")]
                              colnames(x) <- c("ID", "ID_custom", "mat", "nl","upper", "lower",
                                               "sand", "silt", "clay", "gravel", "bd", "oc.pct",
-                                              "aspect" ,"slope" ,"humus", "BODENTY")
-                             x$ID_custom <- as.character(x$ID_custom)
-                             return(x)})
-  }else{
-    ls.soils.tmp[which.non.na] <- lapply(ls.soils.tmp[which.non.na],
-                           FUN = function(x){
-                             x <- as.data.frame(x)
-                             x <- x[c("ID", "ID_custom", "mat", "nl", "upper", "lower",
-                                      "sand", "schluff", "ton", "gba", "trd", "corg",
-                                      "aspect", "slope", "profile_top")]
-                             colnames(x) <- c("ID", "ID_custom", "mat", "nl","upper", "lower",
-                                              "sand", "silt", "clay", "gravel", "bd", "oc.pct",
-                                              "aspect" ,"slope" ,"humus")
+                                              "aspect" ,"slope" ,"humus", "BODENTYP", "dpth_ini")
                              x$ID_custom <- as.character(x$ID_custom)
                              return(x)})
 
-  }
 
   return(ls.soils.tmp)
 }

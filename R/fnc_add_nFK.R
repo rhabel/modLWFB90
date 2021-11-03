@@ -33,6 +33,8 @@ fnc_add_nFK <- function(df){
 
   soil <- soil[, c("FK","PWP", "nFK","FK.mm","PWP.mm", "nFK.mm") := lapply(.SD, round, 3),
                .SDcols = c("FK","PWP", "nFK","FK.mm","PWP.mm", "nFK.mm")]
+  soil <- soil[, c("FK.mm","PWP.mm", "nFK.mm") := lapply(.SD, round, 1),
+               .SDcols = c("FK.mm","PWP.mm", "nFK.mm")]
 
   soil <- soil[,c("nFK_WR", "nFK_WR_nohum",
                   "nFK_100", "nFK_100_nohum") := list(
