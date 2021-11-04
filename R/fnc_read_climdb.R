@@ -24,7 +24,7 @@ fnc_read_climdb <- function(IDs,
                       "id_standard" = id_standard)
 
 
-  load(paste0(clim_dir, df.id$id_standard, ".RData"))
+  dt.clim.tmp <- readRDS(paste0(clim_dir, df.id$id_standard, ".rds"))
   dt.clim.tmp[,"ID_custom" := IDs]
 
   #### if we get complaints that our files get too large, only integers get stored in .RData with...

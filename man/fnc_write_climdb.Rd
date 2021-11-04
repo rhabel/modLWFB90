@@ -9,6 +9,7 @@ fnc_write_climdb(
   clim_dir,
   mindate = as.Date("2010-01-01"),
   maxdate = as.Date("2011-12-31"),
+  points_at_once = 1000,
   path_std = "R:/klima/whh/brook90_input/locations",
   path_climdb = "R:/klima/whh/brook90_input/db/",
   append = F
@@ -24,6 +25,8 @@ fnc_write_climdb(
 \item{mindate}{first day of modelling time period as \code{Date}- object}
 
 \item{maxdate}{last day of modelling time period as \code{Date}- object}
+
+\item{points_at_once}{this functions processes a large amount of data in the memory. For performance purposes, the points in \code{df.ids} are split into batches of \code{points_at_once}. Default is \code{1000}, can be reduced if function crashes}
 
 \item{path_std}{path to standard locations directory}
 
