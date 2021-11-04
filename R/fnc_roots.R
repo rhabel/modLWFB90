@@ -75,11 +75,15 @@ fnc_roots <- function(df,
 }
 
 make_rootden_adj <- function(soilnodes,
-                         maxrootdepth = min(soilnodes),
-                         method = "betamodel",
-                         beta = 0.97,
-                         rootdat = NULL
-) {
+                             roots_max_adj = min(soilnodes),
+                             roots_max = min(soilnodes),
+                             method = "betamodel",
+                             beta = 0.97,
+                             rootdat = NULL) {
+
+  maxrootdepth <- roots_max_adj
+
+  # roots_max <- roots_max+1
 
   if (method == "betamodel") {
 

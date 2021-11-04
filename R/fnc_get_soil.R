@@ -400,7 +400,7 @@ fnc_get_soil <- function(df.ids,
       ls.soils[non.nas] <- mapply(FUN = fnc_roots,
                                   ls.soils[non.nas],
 
-                                  maxrootdepth = maxdepth,
+                                  roots_max_adj = maxdepth,
                                   # beta = 0.97,
                                   # rootsmethod = "betamodel",
                                   # # maxrootdepth = c(-1,-1.5,-0.5, -1.5,-2),
