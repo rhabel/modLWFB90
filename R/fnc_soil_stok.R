@@ -35,13 +35,13 @@ fnc_soil_stok <- function(df,
                          setNames(c("ID", "ID_custom", "horizont", "mat", "upper", "lower", "sand", "silt", "clay", "gravel", "bd", "oc.pct", "humusform")) %>%
 
                          dplyr::mutate_at(vars(-all_of(c("ID_custom", "humusform", "horizont"))), as.numeric) %>%
-                         dplyr::mutate(horizon = stringr::str_sub(stringr::str_replace_all(horizont, " 1| 2| 3", ""), -3, -1))
+                         dplyr::mutate(horizont = stringr::str_sub(stringr::str_replace_all(horizont, " 1| 2| 3", ""), -3, -1))
 
                        # remove roots from Sd/Gr-Horizons
                        noroots <- which(stringr::str_detect(df.tmp$horizont,"Sd|Srd|Gor|Gr"))
                        if(length(noroots)>0){rootslim_soil <- df.tmp$lower[noroots-1]}else{rootslim_soil <- max(df.tmp$lower)}
                        df.tmp$dpth_ini <- rootslim_soil
-                       df.rmp$BODENTYP
+                       df.tmp$BODENTYP <- "unknown"
 
                        if(incl_GEOLA){
 
@@ -96,7 +96,7 @@ fnc_soil_stok <- function(df,
                        df.tmp <- df.tmp %>%
                          dplyr::mutate(nl = 1:nrow(df.tmp)) %>%
                          dplyr::left_join(dgm, by = "ID") %>%
-                         dplyr::select(-humusform, -horizon) %>%
+                         dplyr::select(-humusform, -horizont) %>%
                          dplyr::select(ID, ID_custom, mat, nl, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, everything()) %>%
                          dplyr::mutate(ID_custom = as.character(ID_custom))
 

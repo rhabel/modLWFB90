@@ -8,16 +8,18 @@
 #' \item \code{ID_custom} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to.
 #' \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
 #' }
-#' @param soil_option whether BZE or STOK data should be used for modelling. While option \code{BZE} with a buffer of 50 shouldn't create many NAs, option \code{STOK} builds on the data of the Standortskartierung Baden-Wuerttemberg that is not available everywhere (i.e. in private forests). \cr Option \code{STOK_BZE} will complete the missing STOK-points with BZE-data. \cr The final option is \code{OWN}, in which case users can enter their own soil data (i.e. from lab or field experiments). If the option \code{OWN} is selected, the dataframes must be passed at \code{df.soils}.
+#' @param soil_option whether BZE or STOK data should be used for modelling. While option \code{BZE} with a buffer of 50 shouldn't create many NAs, option \code{STOK} builds on the data of the Standortskartierung Baden-Wuerttemberg that is not available everywhere (i.e. in private forests). \cr Option \code{STOK_BZE} will complete the missing STOK-points with BZE-data. \cr The final option is \code{OWN}, in which case users can enter their own soil data (i.e. from lab or field experiments). If the option \code{OWN} is selected, the dataframes must be passed at \code{df.soils}. \cr \cr at the moment the combination \code{STOK_BZE} does not work yet with \code{incl_GEOLA}
 #' @param create_roots decides whether roots should be created manually (if set to \code{TRUE})
 #' @param add_BodenInfo shall further soil info (nFK, PWP, FK, texture ...) be added to the soil-df, default is \code{TRUE}
+#' @param add_dummy adds 1m of dummy-soil layer to the bottom of the soil profile. Adding a dummy layer has been observed to improve results. Default is \code{TRUE}
+#' @param incl_GEOLA information from the \emph{Geowissenschaftliche Landesaufnahme} will be used to get additional data on soil depth and max root depth, as well as identifying soil types that will be modelled differently to include the effect of groundwater (Gleye / Auenboeden) or alternating Saturation (Stauwasserboeden). Default is \code{TRUE}
 #' @param pth_df.LEIT path to .RData file with soil information from Modul1-DB. Should be the extended version containing a column for humus, currently set to latest location.
 #' @param pth_WGB_diss_shp path to dissolved WUCHSGEBIET-shapefile, currently set to latest location.
 #' @param pth_STOK_pieces path to Wuchsgeb-STOKA.shapefiles, currently set to latest location.
 #' @param PTF_to_use the PTF to be used in the modeling process. Options are \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}. Alternatively, if MvG parameters have been retrieved elsewhere (i.e. by lab analyses), \code{OWN_PARMS} can be selected to skip this.
 #' @param limit_MvG should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit}}. Default is \code{FALSE}.
-#' @param limit_bodtief max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}. If not \code{NA} soil-dfs are created down to the depth specified here as depth in \code{m}, negative. Might be used to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. In this case, soil depth may be reduced significantly.
-#' @param ... further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}. \cr Can be either single values, applied to all soil data frames equally, or vector with the same length as \code{df.ids} specifying the roots setting for each modelling point. see example
+#' @param limit_bodtief max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}, \code{BZE} or the GEOLA-dataset. If not \code{NA}, soil-dfs are created down to the depth specified here as depth in \code{m}, negative
+#' @param ... further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}. \cr Only exception is the roots functions' parameter \code{maxrootdepth}, which, if desired, has to be specified here as  \code{roots_max}, because maximal root depth setting according to vegetation parameters will be complemented by root limitations from soil conditions. \cr Settings can be either single values, applied to all soil data frames equally, or vector with the same length as \code{df.ids} specifying the roots setting for each modelling point. see example
 #' @param bze_buffer whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur in {m}, default is \code{NA}
 #' @param df.soils if \code{OWN} is selected at soil_option, a data frame must be given here that contains the following columns
 #' \itemize{
@@ -59,6 +61,7 @@ fnc_get_soil <- function(df.ids,
                          pth_GEOLA_pieces = "H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Geola/"
 
                          ){
+  argg <- c(as.list(environment()), list(...))
 
   # sort dfs according to IDs
   df.ids$ID <- 1:nrow(df.ids)
@@ -377,19 +380,28 @@ fnc_get_soil <- function(df.ids,
     if(soil_option != "OWN"){
 
       # roots limited by soil conditions and/or vegetation parameters
-      if(length(maxrootdepth) == 1){
-        maxrootdepth_cm <- maxrootdepth*-100
-        dpth_lim_veg <- rep(maxrootdepth_cm, length(non.nas))
+      if(any(stringr::str_detect(names(argg), "roots_max"))){
+        roots_max_cm <- roots_max*-100
+
+        if(length(roots_max) == 1){
+          dpth_lim_veg <- rep(roots_max_cm, length(non.nas))
+        }else{
+          dpth_lim_veg <- roots_max_cm
+        }
+
+        maxdepth <- pmin(dpth_lim_soil, dpth_lim_veg, na.rm = T)/-100
+
+      } else {
+        maxdepth <- dpth_lim_soil/-100
       }
 
-      maxdepth <- pmin(dpth_lim_soil, dpth_lim_veg, na.rm = T)/-100
 
       ls.soils[non.nas] <- mapply(FUN = fnc_roots,
                                   ls.soils[non.nas],
 
                                   maxrootdepth = maxdepth,
-                                  # rootsmethod = "betamodel",
                                   # beta = 0.97,
+                                  # rootsmethod = "betamodel",
                                   # # maxrootdepth = c(-1,-1.5,-0.5, -1.5,-2),
 
                                   ...,
@@ -453,25 +465,23 @@ fnc_get_soil <- function(df.ids,
               df.sd <- df.sd %>% mutate(rootden = 0)
             }
             df.sd <- df.sd %>%
-              mutate(mat = mat + 1) %>%
-              mutate(nl = nl + c(1: n_rep)) %>%
-              mutate(lower = lastrow$lower + c(-0.1, -0.2, -0.3)) %>% #gaendert zu 30 cm Sd a 10 cm Schritten
-              mutate(upper = lastrow$lower + c(0, -0.1, -0.2)) %>%
+              mutate(mat = mat + 1,
+                     nl = nl + c(1: n_rep),
+                     lower = lastrow$lower + c(-0.1, -0.2, -0.3),
+                     upper = lastrow$lower + c(0, -0.1, -0.2),
+                     sand = 0,
+                     silt = 70,
+                     clay = 30,
+                     bd = 2,
 
-              # mutate(rootden = 0) %>%
-              mutate(sand = 0) %>%
-              mutate(silt = 70) %>%
-              mutate(clay = 30) %>%
-              mutate(bd = 2) %>%
-
-              #MvG-Parameter Ls2 fuer Stauhorizont
-              mutate(ths = rep(mvg$ths, n_rep)) %>%
-              mutate(thr = rep(mvg$thr, n_rep)) %>%
-              mutate(alpha = rep(mvg$alpha, n_rep)) %>%
-              mutate(npar = rep(mvg$npar, n_rep)) %>%
-              mutate(mpar = rep(mvg$mpar, n_rep)) %>%
-              mutate(tort = rep(mvg$tort, n_rep)) %>%
-              mutate(ksat = rep(mvg$ksat, n_rep)) %>%
+                     #MvG-Parameter Ls2 fuer Stauhorizont
+                     ths = mvg$ths,
+                     thr = mvg$thr,
+                     alpha = mvg$alpha,
+                     npar = mvg$npar,
+                     mpar = mvg$mpar,
+                     tort = mvg$tort,
+                     ksat = mvg$ksat) %>%
               relocate(names(lastrow))
 
             # df.stau an df.soils anfuegen
@@ -532,7 +542,7 @@ fnc_get_soil <- function(df.ids,
   }
 
   # reduce --------------------------------------------------- ####
-  to_2 <- c("sand", "silt","clay", "oc.pct", "ksat", "tort")
+  to_2 <- c("sand", "silt","clay", "oc.pct",  "tort")
   to_3 <- c("gravel", "bd", "ths", "thr", "alpha", "npar", "mpar", "rootden" )
   ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)],
                                                                    FUN = function(x){
