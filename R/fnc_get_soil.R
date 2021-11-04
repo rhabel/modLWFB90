@@ -381,6 +381,7 @@ fnc_get_soil <- function(df.ids,
 
       # roots limited by soil conditions and/or vegetation parameters
       if(any(stringr::str_detect(names(argg), "roots_max"))){
+        roots_max <- argg[[which(names(argg) == "roots_max")]]
         roots_max_cm <- roots_max*-100
 
         if(length(roots_max) == 1){
