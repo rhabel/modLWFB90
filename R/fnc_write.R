@@ -8,6 +8,7 @@
 #' @param dir_name directory for tmp files
 #'
 #' @return writes output to
+#' @example inst/examples/fnc_check_errors_ex.R
 #'
 #' @import data.table
 #' @export

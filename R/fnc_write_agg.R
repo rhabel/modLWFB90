@@ -22,6 +22,8 @@
 #' df.output[c("Evap", "Flow", "Swat"), c("Day")] <- 1
 #' df.output[c("Flow"), c("Mon")] <- 1
 #'
+#' # for full example, see help page of ?fnc_write_to_sql
+#'
 #' @import data.table
 #' @export
 

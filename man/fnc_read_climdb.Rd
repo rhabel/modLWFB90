@@ -26,7 +26,7 @@ This function reads in the Project Climate Data files written by \code{\link{fnc
 \examples{
 
 fnc_write_climdb(df.ids = test.ids.bds,
-                 clim_dir = "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/clim_files/",
+                 clim_dir = "./tmp/clim_files/",
                  mindate = as.Date("2000-01-01"),
                  maxdate = as.Date("2010-12-31"))
 

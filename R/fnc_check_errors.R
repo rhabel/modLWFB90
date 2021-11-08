@@ -1,6 +1,6 @@
 #' Save error messages and simulation time
 #'
-#' When running multiple points with \code{\link[LWFBrook90]{run_multisite_LWFB90}} and storing the results in an sqlite-database with \code{fnc_write_to_sql}, you lose the information on how long each simulation took (which is an indicator for flawed input data), and which ones failed and why. This function helps storing this information.
+#' When running multiple points with \code{\link[LWFBrook90]{run_multisite_LWFB90}} and storing the results in an sqlite-database with \code{\link{fnc_write_to_sql}}, you lose the information on how long each simulation took (which is an indicator for flawed input data), and which ones failed and why. This function helps storing this information.
 #'
 #' @param res results of a \code{run_multisite_LWFB90} execution, saved by an assignment operator, see example
 #' @param meta a data frame with the following columns
@@ -12,14 +12,13 @@
 #'
 #' @return returns a the meta-dataframe with error messages and simulation times added
 #'
-#' @example
-#' inst/examples/fnc_check_errors_ex.R
+#' @example inst/examples/fnc_check_errors_ex.R
 #'
 #' @import stringr
 #' @export
 
 fnc_check_errors <- function(res,
-                         meta){
+                             meta){
 
   # which worked, which didn't
   suc.mod <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(lapply(res, function(x) names(x)), "simulation_duration")],

@@ -22,6 +22,8 @@ fnc_write_climdb(
 \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
 }}
 
+\item{clim_dir}{directory, where climate files will be stored. will be created, if non existent}
+
 \item{mindate}{first day of modelling time period as \code{Date}- object}
 
 \item{maxdate}{last day of modelling time period as \code{Date}- object}
@@ -43,7 +45,7 @@ This function creates a Project Climate Datafiles in the format required by \cod
 \examples{
 
 fnc_write_climdb(df.ids = test.ids.bds,
-                 clim_dir = "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/clim_files/",
+                 clim_dir = "./tmp/clim_files/",
                  mindate = as.Date("2000-01-01"),
                  maxdate = as.Date("2010-12-31"))
 

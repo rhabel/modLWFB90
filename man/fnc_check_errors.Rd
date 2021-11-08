@@ -20,7 +20,7 @@ fnc_check_errors(res, meta)
 returns a the meta-dataframe with error messages and simulation times added
 }
 \description{
-When running multiple points with \code{\link[LWFBrook90]{run_multisite_LWFB90}} and storing the results in an sqlite-database with \code{fnc_write_to_sql}, you lose the information on how long each simulation took (which is an indicator for flawed input data), and which ones failed and why. This function helps storing this information.
+When running multiple points with \code{\link[LWFBrook90]{run_multisite_LWFB90}} and storing the results in an sqlite-database with \code{\link{fnc_write_to_sql}}, you lose the information on how long each simulation took (which is an indicator for flawed input data), and which ones failed and why. This function helps storing this information.
 }
 \examples{
 df.ids <- test_ids_bze

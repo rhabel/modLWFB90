@@ -7,6 +7,7 @@
 #' \item \code{ID_custom} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to.
 #' \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
 #' }
+#' @param clim_dir directory, where climate files will be stored. will be created, if non existent
 #' @param mindate first day of modelling time period as \code{Date}- object
 #' @param maxdate last day of modelling time period as \code{Date}- object
 #' @param points_at_once this functions processes a large amount of data in the memory. For performance purposes, the points in \code{df.ids} are split into batches of \code{points_at_once}. Default is \code{1000}, can be reduced if function crashes
@@ -37,7 +38,9 @@ fnc_write_climdb <- function(df.ids,
   if(append == F & dir.exists(clim_dir)){
     unlink(paste0(clim_dir, "*"))
   }
-
+  if(!dir.exists(clim_dir)){
+    dir.create(clim_dir)
+  }
 
   # IDs okay? ---------- ####
   # sort dfs according to IDs
