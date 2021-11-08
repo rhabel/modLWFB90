@@ -30,10 +30,10 @@ fnc_write_agg(
 \item{dir_name}{directory for tmp files, if \code{NA} as in default, results are returned to console}
 }
 \value{
-Returns the desired output to .Rdata files
+Returns the desired output to .rds files
 }
 \description{
-LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it to a database. This is what this function is made for. \cr In comparison to \code{\link{fnc_write}}, which only reduces the columns returned by \code{\link[LWFBrook90R]{run_LWFB90}} (see help page), this function enables aggregation over vegperiod and monthly, plus a more detailed selection of drought indices. See detail section.\cr\cr IMPORTANT: FOR RUNNING THIS AGGREGATE FUNCTION, \code{output} in \code{run_multiside_LWFB90} MUST BE SET TO A \code{df.output} AS SET BY THE CODE IN THE EXAMPLE SECTION \cr The function writes .RData files with the desired output for each point. \code{\link{fnc_write_to_sql}} can be used to convert these files into a SQLite-DB. This "step-in-between" is necessary because SQLite does not support parallel writing.
+LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it to a database. This is what this function is made for. \cr In comparison to \code{\link{fnc_write}}, which only reduces the columns returned by \code{\link[LWFBrook90R]{run_LWFB90}} (see help page), this function enables aggregation over vegperiod and monthly, plus a more detailed selection of drought indices. See detail section.\cr\cr IMPORTANT: FOR RUNNING THIS AGGREGATE FUNCTION, \code{output} in \code{run_multiside_LWFB90} MUST BE SET TO A \code{df.output} AS SET BY THE CODE IN THE EXAMPLE SECTION \cr The function writes .rds files with the desired output for each point. \code{\link{fnc_write_to_sql}} can be used to convert these files into a SQLite-DB. This "step-in-between" is necessary because SQLite does not support parallel writing.
 }
 \section{Output column selection}{
 

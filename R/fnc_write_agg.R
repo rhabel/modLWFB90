@@ -1,6 +1,6 @@
 #' Function to aggregate and write data from automated LWFB90-Runs
 #'
-#' LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it to a database. This is what this function is made for. \cr In comparison to \code{\link{fnc_write}}, which only reduces the columns returned by \code{\link[LWFBrook90R]{run_LWFB90}} (see help page), this function enables aggregation over vegperiod and monthly, plus a more detailed selection of drought indices. See detail section.\cr\cr IMPORTANT: FOR RUNNING THIS AGGREGATE FUNCTION, \code{output} in \code{run_multiside_LWFB90} MUST BE SET TO A \code{df.output} AS SET BY THE CODE IN THE EXAMPLE SECTION \cr The function writes .RData files with the desired output for each point. \code{\link{fnc_write_to_sql}} can be used to convert these files into a SQLite-DB. This "step-in-between" is necessary because SQLite does not support parallel writing.
+#' LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it to a database. This is what this function is made for. \cr In comparison to \code{\link{fnc_write}}, which only reduces the columns returned by \code{\link[LWFBrook90R]{run_LWFB90}} (see help page), this function enables aggregation over vegperiod and monthly, plus a more detailed selection of drought indices. See detail section.\cr\cr IMPORTANT: FOR RUNNING THIS AGGREGATE FUNCTION, \code{output} in \code{run_multiside_LWFB90} MUST BE SET TO A \code{df.output} AS SET BY THE CODE IN THE EXAMPLE SECTION \cr The function writes .rds files with the desired output for each point. \code{\link{fnc_write_to_sql}} can be used to convert these files into a SQLite-DB. This "step-in-between" is necessary because SQLite does not support parallel writing.
 #'
 #' @param x one of the intermediate producs of \code{\link[LWFBrook90R]{run_LWFB90}} or  \code{\link[LWFBrook90R]{run_multisite_LWFB90}}, which is further processed internally. Can't be adjusted.
 #' @param aggr_tp a string containing the desired aggregation time period. Can be \code{monthly},  \code{vegper}, or  \code{monthly_vegper}. The latter does both.
@@ -10,7 +10,7 @@
 #' @param col_select_yr a string containing the desired columns from the yearly-aggregation (see details)
 #' @param dir_name directory for tmp files, if \code{NA} as in default, results are returned to console
 #'
-#' @return Returns the desired output to .Rdata files
+#' @return Returns the desired output to .rds files
 #'
 #' @section Output column selection:
 #' For a complete list of possible output types plus description, see \code{"U:/db_brook90_output/whh_db_documentation"}
@@ -154,8 +154,8 @@ fnc_write_agg <- function(x,
       if(!dir.exists(paste0(dir_name, "/yearly/"))){
         dir.create(paste0(dir_name, "/yearly/"), recursive = T)}
 
-      save(output_yearly,
-           file = paste0(dir_name, "/yearly/", id_run, ".RData"))
+      saveRDS(output_yearly,
+              file = paste0(dir_name, "/yearly/", id_run, ".rds"))
 
     }
 
@@ -164,8 +164,8 @@ fnc_write_agg <- function(x,
       if(!dir.exists(paste0(dir_name, "/yearly/"))){
         dir.create(paste0(dir_name, "/yearly/"), recursive = T)}
 
-      save(output_yearly,
-           file = paste0(dir_name, "/yearly/", id_run, ".RData"))
+      saveRDS(output_yearly,
+              file = paste0(dir_name, "/yearly/", id_run, ".rds"))
 
     }
 
@@ -174,8 +174,8 @@ fnc_write_agg <- function(x,
       if(!dir.exists(paste0(dir_name, "/monthly/"))){
         dir.create(paste0(dir_name, "/monthly/"), recursive = T)}
 
-      save(output_monthly,
-           file = paste0(dir_name, "/monthly/", id_run, ".RData"))
+      saveRDS(output_monthly,
+              file = paste0(dir_name, "/monthly/", id_run, ".rds"))
 
     }
 
@@ -184,8 +184,8 @@ fnc_write_agg <- function(x,
       if(!dir.exists(paste0(dir_name, "/vegper/"))){
         dir.create(paste0(dir_name, "/vegper/"), recursive = T)}
 
-      save(output_vegper,
-           file = paste0(dir_name, "/vegper/", id_run, ".RData"))
+      saveRDS(output_vegper,
+              file = paste0(dir_name, "/vegper/", id_run, ".rds"))
 
     }
   }

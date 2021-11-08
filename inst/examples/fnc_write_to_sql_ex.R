@@ -29,18 +29,29 @@ res <- run_multisite_LWFB90(options_b90 = set_optionsLWFB90(),
 
                             output_fun = fnc_write_agg,
                             aggr_tp = "vegper",
-                            col_select_vp = c("id_custom", "yr", "tran", "ptran"),
+                            col_select_vp = c("tran", "ptran"),
                             dir_name= "./tmp/")
 
 ls.soil <- bind_rows(ls.soil)
 
 # create dirs
-if(!dir.exists(paste0(output_path_final, "./tmp/soils/"))){
-  dir.create(paste0(output_path_final, "./tmp/soils/"), recursive = T)
+if(!dir.exists("./tmp/soils/")){
+  dir.create("./tmp/soils/", recursive = T)
 }
 
-save(soils, file = paste0(output_path_final, "tmp/soils/soils.RData"))
+saveRDS(ls.soil, file = "./tmp/soils/soils.rds")
 
 # write to db
-fnc_write_to_sql(db_name = "./tmp/testdb.sqlite",
+fnc_write_to_sql(db_name = "./tmp/testdb2.sqlite",
                  dir_tmp = "./tmp/")
+
+# check how the result looks:
+con <- dbConnect(drv = RSQLite::SQLite(), dbname =  "./tmp/testdb.sqlite")
+dbListTables(conn = con)
+dbGetQuery(con, "SELECT * FROM soils WHERE ID_custom = 'A'")
+dbGetQuery(con, "SELECT * FROM vegper WHERE ID_custom = 'A'")
+dbGetQuery(con, "SELECT * FROM vegper")
+dbDisconnect(con)
+
+# # delete example tmp file
+# unlink("./tmp/", recursive = T)

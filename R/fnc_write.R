@@ -1,6 +1,6 @@
 #' Function to reduce data output from automated LWFB90-Runs
 #'
-#' LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it. This is what this function is made for. It writes .RData files with the desired output for each point. \code{\link{fnc_write_to_sql}} can be used to convert these files into a SQLite-DB. \cr This "step-in-between" is necessary because SQLite does not support parallel writing.
+#' LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it. This is what this function is made for. It writes .rds files with the desired output for each point. \code{\link{fnc_write_to_sql}} can be used to convert these files into a SQLite-DB. \cr This "step-in-between" is necessary because SQLite does not support parallel writing.
 #'
 #' @param x one of the intermediate producs of \code{\link[LWFBrook90R]{run_LWFB90}} or  \code{\link[LWFBrook90R]{run_multisite_LWFB90}}, which is further processed internally. Can't be adjusted.
 #' @param layercols a sting containing the desired output products. Full list of possible output columns can be find on the help page of \code{\link[LWFBrook90R]{run_LWFB90}} under \code{Layer outputs}
@@ -68,8 +68,8 @@ fnc_write <- function(x,
       if(!dir.exists(paste0(dir_name, "daily/"))){
         dir.create(paste0(dir_name, "daily/"), recursive = T)}
 
-      save(daily,
-           file = paste0(dir_name, "daily/", id_run, ".RData"))
+      saveRDS(daily,
+              file = paste0(dir_name, "daily/", id_run, ".rds"))
 
     }
 
@@ -78,8 +78,8 @@ fnc_write <- function(x,
       if(!dir.exists(paste0(dir_name, "layer/"))){
         dir.create(paste0(dir_name, "layer/"), recursive = T)}
 
-      save(layer,
-           file = paste0(dir_name, "layer/", id_run, ".RData"))
+      saveRDS(layer,
+              file = paste0(dir_name, "layer/", id_run, ".rds"))
 
     }
   }

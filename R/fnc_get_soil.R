@@ -197,11 +197,11 @@ fnc_get_soil <- function(df.ids,
                                       limit_bodtief = limit_bodtief,
                                       incl_GEOLA = incl_GEOLA)
 
-        names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
+        # names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
         ls.soils[match(names(ls.soils.tmp), names(ls.soils))] <- ls.soils.tmp
 
-        bodentypen <- unlist(lapply(ls.soils, function(x) unique(x$BODENTYP)))
-        dpth_lim_soil <- unlist(lapply(ls.soils, function(x) unique(x$dpth_ini)))
+        bodentypen <- unlist(lapply(ls.soils.tmp, function(x) unique(x$BODENTYP)))
+        dpth_lim_soil <- unlist(lapply(ls.soils.tmp, function(x) unique(x$dpth_ini)))
 
       } else if (soil_option == "STOK_BZE"){
 
