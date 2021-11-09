@@ -19,7 +19,6 @@ fnc_extract_points_bze <- function(lay,
 
 
   val <- raster::extract(lay, xy, method = "simple") # normaler extract
-
   val2 <- as.data.frame(val)
 
   # fehlende humusauflagen sollen nicht buffering auslösen

@@ -14,11 +14,11 @@
 #' @export
 
 fnc_read_climdb <- function(IDs,
-                            clim_dir,
-                            id_standard,
+                                clim_dir,
+                                id_standard,
 
-                            mindate = NA,
-                            maxdate = NA) {
+                                mindate = NA,
+                                maxdate = NA) {
 
   df.id <- data.frame("ID_custom" = IDs,
                       "id_standard" = id_standard)

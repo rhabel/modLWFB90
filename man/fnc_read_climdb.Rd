@@ -24,27 +24,24 @@ returns climate data in correct format
 This function reads in the Project Climate Data files written by \code{\link{fnc_write_climdb}} and processes the data correctly, so that it can be used via the function parameters \code{climate} and \code{climate_args} in \code{\link[LWFBrook90R]{run_multisite_LWFB90}}. Function arguments must be passed to \code{\link[LWFBrook90R]{run_multisite_LWFB90}} as list of lists. Upper level containing the ID_custom names of the points to be modelled, the lower level containing the respective ID_custom name as well as the path to the project climate data base
 }
 \examples{
-
 fnc_write_climdb(df.ids = test.ids.bds,
-                 clim_dir = "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/clim_files/",
+                 clim_dir = "./tmp/clim_files/",
                  mindate = as.Date("2000-01-01"),
                  maxdate = as.Date("2010-12-31"))
 
 # set clim_args
-test.ids.bds <- left_join(test.ids.bds, fnc_relateCoords(test.ids.bds)[c("ID_custom", "id_standard")])
+test.ids.bds <- left_join(test_ids_bds, fnc_relateCoords(test.ids.bds)[c("ID_custom", "id_standard")])
 clim_args <-
   lapply(split(test.ids.bds, seq(nrow(test.ids.bds))),
          function(x) list(IDs = as.character(x$ID_custom),
                           id_standard = x$id_standard,
-                          clim_dir = "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/clim_files/"))
+                          clim_dir = "./tmp/clim_files/"))
 names(clim_args) <- as.character(test.ids.bds$ID_custom)
 
 soil.test <- fnc_get_soil(df.ids = test.ids.bds,
                           soil_option = "BZE",
-                          testgebiet = "BDS",
-                          PTF_to_use = "HYPRES",
-                          rootsmethod = "hartmann",
-                          humus_roots = F)
+                          PTF_to_use = "WESSOLEK")
+
 parms.test <- fnc_get_params(df.ids = test.ids.bds,
                              tree_species = "spruce")
 
@@ -58,11 +55,11 @@ res <- run_multisite_LWFB90(options_b90 = set_optionsLWFB90(startdate = as.Date(
                             climate = fnc_read_climdb,
                             climate_args = clim_args,
 
-                            cores = 5)
+                            cores = parallel::detectCores())
 
 # single df
 fnc_read_climdb(IDs = test.ids.bds[1, "ID_custom"],
                 id_standard = test.ids.bds[1, "id_standard"],
-                clim_dir = "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/test/clim_files/")
+                clim_dir = "./tmp/clim_files/")
 
 }
