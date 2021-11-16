@@ -114,8 +114,8 @@ fnc_soil_bze <- function(df.utm,
   which.na <- which(unlist(lapply(ls.soils.tmp, function(x) any(is.na(x)))==T))
   which.non.na <- which(unlist(lapply(ls.soils.tmp, function(x) any(is.na(x)))==F))
   if(length(which.na) != 0){
-    ls.soils.tmp[which.na] <- list(NULL)
     message(paste0("ID: ", names(ls.soils.tmp)[which.na], " won't be modelled. There's no BZE_R data at coordinate + set buffer width. \n"))
+    ls.soils.tmp[which.na] <- NULL
   }
 
   # limit to either Dietmar-depth, GEOLA-depth, or limit_bodtief
@@ -124,41 +124,52 @@ fnc_soil_bze <- function(df.utm,
     # incl GEOLA
     if(incl_GEOLA){
 
-      ls.soils.tmp[which.non.na] <- lapply(ls.soils.tmp[which.non.na],
-                               FUN = function(x){
-                                 if(unique(x$BODENTY) == "Gleye/Auenboeden"){
-                                   x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
-                                   return(x)
-                                 }else if(unique(x$BODENTY) == "Stauwasserboeden"){
-                                   x <- x[i.upper < as.numeric(unique(x$roots_bottom_rnd))]
-                                   x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
-                                   return(x)
-                                 }else{
-                                   whichmax <- as.numeric(max(unique(x$GRUND_C), unique(x$roots_bottom_rnd)))
-                                   x <- x[which(x$i.upper < whichmax),]
-                                   x$lower[nrow(x)] <- whichmax/-100
-                                   x$dpth_ini <- whichmax
-                                   return(x)
-                                 }
-                                 }
-                               )
+      cl <- parallel::makeCluster(parallel::detectCores())
+      doParallel::registerDoParallel(cl)
+
+      ls.soils.tmp <- foreach::foreach(i = 1:length(ls.soils.tmp)) %dopar% {
+
+        x <- ls.soils.tmp[[i]]
+
+        if(unique(x$BODENTY) == "Gleye/Auenboeden"){
+          x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
+        }else if(unique(x$BODENTY) == "Stauwasserboeden"){
+          x <- x[i.upper < as.numeric(unique(x$roots_bottom_rnd))]
+          x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
+        }else{
+          whichmax <- as.numeric(max(unique(x$GRUND_C), unique(x$roots_bottom_rnd)))
+          x <- x[which(x$i.upper < whichmax),]
+          x$lower[nrow(x)] <- whichmax/-100
+          x$dpth_ini <- whichmax
+        }
+        x <- x
+      }
+
+      parallel::stopCluster(cl)
 
     }else{
 
-      ls.soils.tmp[which.non.na] <- lapply(ls.soils.tmp[which.non.na],
-                             FUN = function(x){
-                               x[which(x$i.upper < as.numeric(unique(x$roots_bottom_rnd))),]
-                               x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
-                               x$BODENTY <- "unknown"
+      cl <- parallel::makeCluster(parallel::detectCores())
+      doParallel::registerDoParallel(cl)
 
-                             })
+      ls.soils.tmp <- foreach::foreach(i = 1:length(ls.soils.tmp)) %dopar% {
+
+        x <- ls.soils.tmp[[i]]
+
+        x[which(x$i.upper < as.numeric(unique(x$roots_bottom_rnd))),]
+        x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
+        x$BODENTY <- "unknown"
+
+      }
+      parallel::stopCluster(cl)
+
 
     }
 
   }else{
 
     # remove all layers below set maxdepth
-    ls.soils.tmp[which.non.na] <- mapply(FUN = function(x,limit){
+    ls.soils.tmp <- mapply(FUN = function(x,limit){
 
       x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
       x$BODENTY <- "unknown"
@@ -166,28 +177,31 @@ fnc_soil_bze <- function(df.utm,
       x$lower[nrow(x)] <- limit
       return(x)
     },
-    ls.soils.tmp[which.non.na],
-    limit = ifelse(length(limit_bodtief) > 1,limit_bodtief[which.non.na] ,limit_bodtief),
+    ls.soils.tmp,
+    limit = ifelse(length(limit_bodtief) > 1,limit_bodtief[which.non.na],limit_bodtief),
     SIMPLIFY = F)
 
 
 
   }
 
-
   # sort and rename
-    ls.soils.tmp[which.non.na] <- lapply(ls.soils.tmp[which.non.na],
-                           FUN = function(x){
-                             x <- as.data.frame(x)
-                             x <- x[c("ID", "ID_custom", "mat", "nl", "upper", "lower",
-                                      "sand", "schluff", "ton", "gba", "trd", "corg",
-                                      "aspect", "slope", "profile_top", "BODENTY", "dpth_ini")]
-                             colnames(x) <- c("ID", "ID_custom", "mat", "nl","upper", "lower",
-                                              "sand", "silt", "clay", "gravel", "bd", "oc.pct",
-                                              "aspect" ,"slope" ,"humus", "BODENTYP", "dpth_ini")
-                             x$ID_custom <- as.character(x$ID_custom)
-                             return(x)})
+  cl <- parallel::makeCluster(parallel::detectCores())
+  doParallel::registerDoParallel(cl)
 
+  ls.soils.tmp <- foreach::foreach(i = 1:length(ls.soils.tmp)) %dopar% {
+
+    x <- as.data.frame(ls.soils.tmp[[i]])
+
+    x <- x[c("ID", "ID_custom", "mat", "nl", "upper", "lower",
+             "sand", "schluff", "ton", "gba", "trd", "corg",
+             "aspect", "slope", "profile_top", "BODENTY", "dpth_ini")]
+    colnames(x) <- c("ID", "ID_custom", "mat", "nl","upper", "lower",
+                     "sand", "silt", "clay", "gravel", "bd", "oc.pct",
+                     "aspect" ,"slope" ,"humus", "BODENTYP", "dpth_ini")
+    x$ID_custom <- as.character(x$ID_custom)
+  }
+  parallel::stopCluster(cl)
 
   return(ls.soils.tmp)
 }

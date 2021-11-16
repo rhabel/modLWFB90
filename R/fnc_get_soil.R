@@ -77,10 +77,6 @@ fnc_get_soil <- function(df.ids,
                   as.data.frame(fnc_extract_points_dgm(lay = dgm.stack,
                                                        xy = xy_gk)))
 
-  # initialise list
-  ls.soils <- vector("list", length = nrow(df.ids))
-  names(ls.soils) <- df.ids$ID_custom
-
   # choice of data origin:  ---------------------------------- ####
 
   if(stringr::str_detect(soil_option, "STOK")){
@@ -190,20 +186,21 @@ fnc_get_soil <- function(df.ids,
             " \nare not mapped by STOKA. They will not be modelled.\n\n")
 
         sf.ids <- sf.ids[-IDs_miss,] # remove missing IDs
-        ls.soils.tmp <- fnc_soil_stok(df = sf.ids,
+        ls.soils <- fnc_soil_stok(df = sf.ids,
                                       df.LEIT = df.LEIT.BW,
                                       PTF_to_use = PTF_to_use,
                                       dgm = df.dgm,
                                       limit_bodtief = limit_bodtief,
                                       incl_GEOLA = incl_GEOLA)
 
-        # names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
-        ls.soils[match(names(ls.soils.tmp), names(ls.soils))] <- ls.soils.tmp
-
-        bodentypen <- unlist(lapply(ls.soils.tmp, function(x) unique(x$BODENTYP)))
-        dpth_lim_soil <- unlist(lapply(ls.soils.tmp, function(x) unique(x$dpth_ini)))
+        bodentypen <- unlist(lapply(ls.soils, function(x) unique(x$BODENTYP)))
+        dpth_lim_soil <- unlist(lapply(ls.soils, function(x) unique(x$dpth_ini)))
 
       } else if (soil_option == "STOK_BZE"){
+
+        # initialise list
+        ls.soils <- vector("list", length = nrow(df.ids))
+        names(ls.soils) <- df.ids$ID_custom
 
         cat("\nIDs \n",
             as.character(as.data.frame(df.ids)[IDs_miss, "ID_custom"]),
@@ -299,6 +296,8 @@ fnc_get_soil <- function(df.ids,
                              meta.out = meta.out,
                              incl_GEOLA = incl_GEOLA)
 
+    all.nas <- which(! df.ids$ID_custom %in% names(ls.soils) )
+
     bodentypen <- unlist(lapply(ls.soils, function(x) unique(x$BODENTYP)))
     dpth_lim_soil <- unlist(lapply(ls.soils, function(x) unique(x$dpth_ini)))
 
@@ -360,22 +359,37 @@ fnc_get_soil <- function(df.ids,
 
 
   } else {
-    ls.soils[as.numeric(which(!unlist(lapply(ls.soils, is.null))==T))] <- lapply(ls.soils[as.numeric(which(!unlist(lapply(ls.soils, is.null))==T))],
-                                                                                 FUN = fnc_PTF,
-                                                                                 PTF_used = PTF_to_use)
+
+    cl <- parallel::makeCluster(parallel::detectCores())
+    doParallel::registerDoParallel(cl)
+    ls.soils <- foreach::foreach(i = 1:length(ls.soils),
+                                 .packages = "modLWFB90") %dopar% {
+                                   df.out <- fnc_PTF(ls.soils[[i]],
+                                                     PTF_used = PTF_to_use)
+                                 }
+    parallel::stopCluster(cl)
 
   }
 
   # MvG-limitation if desired: ------------------------------- ####
   if(limit_MvG){
-    ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)],
-                                                                     FUN = fnc_limit)
+
+    cl <- parallel::makeCluster(parallel::detectCores())
+    doParallel::registerDoParallel(cl)
+
+    ls.soils <- foreach::foreach(i = 1:length(ls.soils),
+                             .packages = c("modLWFB90")) %dopar% {
+      df.out <- modLWFB90:::fnc_limit(ls.soils[[i]])
+    }
+
+
+    parallel::stopCluster(cl)
+
   }
 
   # Roots: --------------------------------------------------- ####
   if(create_roots){
 
-    non.nas <- which(unlist(lapply(ls.soils, is.null))==F)
 
     if(soil_option != "OWN"){
 
@@ -385,9 +399,9 @@ fnc_get_soil <- function(df.ids,
         roots_max_cm <- roots_max*-100
 
         if(length(roots_max) == 1){
-          dpth_lim_veg <- rep(roots_max_cm, length(non.nas))
+          dpth_lim_veg <- rep(roots_max_cm, length(ls.soils))
         }else{
-          dpth_lim_veg <- roots_max_cm
+          dpth_lim_veg <- roots_max_cm[!all.nas]
         }
 
         maxdepth <- pmin(dpth_lim_soil, dpth_lim_veg, na.rm = T)/-100
@@ -397,8 +411,8 @@ fnc_get_soil <- function(df.ids,
       }
 
 
-      ls.soils[non.nas] <- mapply(FUN = fnc_roots,
-                                  ls.soils[non.nas],
+      ls.soils <- mapply(FUN = fnc_roots,
+                                  ls.soils,
 
                                   roots_max_adj = maxdepth,
                                   # beta = 0.97,
@@ -409,17 +423,34 @@ fnc_get_soil <- function(df.ids,
 
                                   SIMPLIFY = F)
     }else{
-      ls.soils[non.nas] <- mapply(FUN = fnc_roots,
-                                  ls.soils[non.nas],
+      if(any(stringr::str_detect(names(argg), "roots_max"))){
+        roots_max <- argg[[which(names(argg) == "roots_max")]]
+        ls.soils <- mapply(FUN = fnc_roots,
+                           ls.soils,
 
-                                  # rootsmethod = "betamodel",
-                                  # beta = 0.97,
-                                  # maxrootdepth = -2,
-                                  # # maxrootdepth = c(-1,-1.5,-0.5, -1.5,-2),
+                           # rootsmethod = "betamodel",
+                           # beta = 0.97,
+                           maxrootdepth = roots_max,
+                           # # maxrootdepth = c(-1,-1.5,-0.5, -1.5,-2),
 
-                                  ...,
+                           ...,
 
-                                  SIMPLIFY = F)
+                           SIMPLIFY = F)
+
+      } else {
+        ls.soils <- mapply(FUN = fnc_roots,
+                           ls.soils,
+
+                           # rootsmethod = "betamodel",
+                           # beta = 0.97,
+                           # maxrootdepth = -2,
+                           # # maxrootdepth = c(-1,-1.5,-0.5, -1.5,-2),
+
+                           ...,
+
+                           SIMPLIFY = F)
+      }
+
     }
 
 
@@ -430,129 +461,146 @@ fnc_get_soil <- function(df.ids,
   # GEOLA application ---------------------------------------- ####
   if(incl_GEOLA){
 
-    non.nas <- which(unlist(lapply(ls.soils, is.null))==F)
+    cl <- parallel::makeCluster(parallel::detectCores())
+    doParallel::registerDoParallel(cl)
 
-    if(soil_option == "STOK"){
+    ls.soils <- foreach::foreach(i = 1:length(ls.soils),
+                                 .packages = c("dplyr", "LWFBrook90R")) %dopar% {
 
-      ls.soils[non.nas] <- mapply(FUN = function(x, bodentyp){
-          x$soiltype <- bodentyp
-          if(bodentyp == "Gleye/Auenboeden"){
-            x[c(nrow(x)-1, nrow(x)), "ksat"] <- 0.0001
-          }
-          return(x)
-        },
-        ls.soils[non.nas],
-        bodentypen,
-        SIMPLIFY = F)
+                                   df.out <- ls.soils[[i]]
 
+                                   if(soil_option == "STOK"){
+                                     df.out$soiltype <- bodentypen[i]
+                                     if(bodentypen[i] == "Gleye/Auenboeden"){
+                                       df.out[c(nrow(df.out)-1, nrow(df.out)), "ksat"] <- 0.0001
+                                     }
+                                   }
+
+                                   if(soil_option == "BZE"){
+
+                                     if(bodentypen[i] == "Stauwasserboeden"){
+                                       mvg <- LWFBrook90R::hydpar_hypres(clay = 30, silt = 70, bd = 2, topsoil = F)
+                                       mvg$ksat <- 10 # Aus Sd-Definition in der KA5
+                                       n_rep <- 3 #
+
+                                       lastrow <- subset(df.out, nl == max(nl))
+
+                                       #df.sd erstellen (letzte Zeile von df.soil, um Bodeninfo zu uebernehmen)
+                                       df.sd <- as.data.frame(lapply(lastrow, rep, n_rep))
+
+                                       # Veraenderliche Spalten aendern
+                                       if("rootden" %in% colnames(x)){
+                                         df.sd <- df.sd %>% dplyr::mutate(rootden = 0)
+                                       }
+                                       df.sd <- df.sd %>%
+                                         dplyr::mutate(mat = mat + 1,
+                                                       nl = nl + c(1: n_rep),
+                                                       lower = lastrow$lower + c(-0.1, -0.2, -0.3),
+                                                       upper = lastrow$lower + c(0, -0.1, -0.2),
+                                                       sand = 0,
+                                                       silt = 70,
+                                                       clay = 30,
+                                                       bd = 2,
+
+                                                       #MvG-Parameter Ls2 fuer Stauhorizont
+                                                       ths = mvg$ths,
+                                                       thr = mvg$thr,
+                                                       alpha = mvg$alpha,
+                                                       npar = mvg$npar,
+                                                       mpar = mvg$mpar,
+                                                       tort = mvg$tort,
+                                                       ksat = mvg$ksat) %>%
+                                         dplyr::relocate(names(lastrow))
+
+                                       # df.stau an df.soils anfuegen
+                                       df.out <- rbind(df.out, df.sd)
+                                       df.out$soiltype <- bodentypen[i]
+
+                                     } else if(bodentypen[i] == "Gleye/Auenboeden"){
+                                       # stop water from leaving horizon below 2.60
+                                       df.out$mat[tail(df.out$nl, 2)] <- max(df.out$mat)+1
+                                       df.out$ksat[tail(df.out$nl, 2)] <- 0.0001
+                                       df.out$rootden[tail(df.out$nl, 2)] <- 0
+                                       df.out$soiltype <- bodentypen[i]
+
+                                     }else{
+                                       df.out$soiltype <- bodentypen[i]
+                                     }
+                                   }
+                                   df.out <- df.out
     }
 
-    if(stringr::str_detect(soil_option, "BZE")){
-      if(soil_option == "BZE"){
-
-        ls.soils[non.nas] <- mapply(FUN = function(x, bodentyp){
-          if(bodentyp == "Stauwasserboeden"){
-            mvg <- hydpar_hypres(clay = 30, silt = 70, bd = 2, topsoil = F)
-            mvg$ksat <- 10 # Aus Sd-Definition in der KA5
-            n_rep <- 3 #
-
-            lastrow <- subset(x, nl == max(nl))
-
-            #df.sd erstellen (letzte Zeile von df.soil, um Bodeninfo zu uebernehmen)
-            df.sd <- as.data.frame(lapply(lastrow, rep, n_rep))
-
-            # Veraenderliche Spalten aendern
-            if("rootden" %in% colnames(x)){
-              df.sd <- df.sd %>% mutate(rootden = 0)
-            }
-            df.sd <- df.sd %>%
-              mutate(mat = mat + 1,
-                     nl = nl + c(1: n_rep),
-                     lower = lastrow$lower + c(-0.1, -0.2, -0.3),
-                     upper = lastrow$lower + c(0, -0.1, -0.2),
-                     sand = 0,
-                     silt = 70,
-                     clay = 30,
-                     bd = 2,
-
-                     #MvG-Parameter Ls2 fuer Stauhorizont
-                     ths = mvg$ths,
-                     thr = mvg$thr,
-                     alpha = mvg$alpha,
-                     npar = mvg$npar,
-                     mpar = mvg$mpar,
-                     tort = mvg$tort,
-                     ksat = mvg$ksat) %>%
-              relocate(names(lastrow))
-
-            # df.stau an df.soils anfuegen
-            x <-   rbind(x, df.sd)
-            x$soiltype <- bodentyp
-            return(x)
-          } else if(bodentyp == "Gleye/Auenboeden"){
-            # stop water from leaving horizon below 2.60
-            x$mat[tail(x$nl, 2)] <- max(x$mat)+1
-            x$ksat[tail(x$nl, 2)] <- 0.0001
-            x$rootden[tail(x$nl, 2)] <- 0
-            x$soiltype <- bodentyp
-
-            return(x)
-          }else{
-            x$soiltype <- bodentyp
-            return(x)
-          }
-        },
-        ls.soils[non.nas],
-        bodentyp = bodentypen,
-        SIMPLIFY = F)
-      }
-    }
+    parallel::stopCluster(cl)
   }
 
 
 
   # add dummy soil horizons ---------------------------------- ####
   if(add_dummy){
-    ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)],
-                                                                     FUN = function(x){
-                                                                       lastrow <- x[nrow(x),]
-                                                                       df.dummy <- as.data.frame(lapply(lastrow, rep, 6)) %>%
-                                                                         mutate(mat = mat + 1,
-                                                                                nl = nl + c(1:6),
-                                                                                upper = lastrow$lower + c(0, -0.1, -0.2, -0.4, -0.6, -0.8),
-                                                                                lower = lastrow$lower + c(-0.1, -0.2, -0.4, -0.6, -0.8, -1),
-                                                                                ths = 0.1,
-                                                                                thr = 0,
-                                                                                alpha = 1.3,
-                                                                                ksat = 50,
-                                                                                tort = -0.5)
-                                                                       if("rootden" %in% colnames(x)){
-                                                                         df.dummy <- df.dummy %>% mutate(rootden = 0)
-                                                                       }
-                                                                       df.dummy <- df.dummy %>%
-                                                                         relocate(names(x))
-                                                                       x <- rbind(x, df.dummy)
-                                                                       return(x)
-                                                                     })
+
+    cl <- parallel::makeCluster(parallel::detectCores())
+    doParallel::registerDoParallel(cl)
+
+    ls.soils <- foreach::foreach(i = 1:length(ls.soils),
+                                 .packages = c("dplyr")) %dopar% {
+                                   x <- ls.soils[[i]]
+                                   lastrow <- x[nrow(x),]
+                                   df.dummy <- as.data.frame(lapply(lastrow, rep, 6)) %>%
+                                     dplyr::mutate(mat = mat + 1,
+                                                   nl = nl + c(1:6),
+                                                   upper = lastrow$lower + c(0, -0.1, -0.2, -0.4, -0.6, -0.8),
+                                                   lower = lastrow$lower + c(-0.1, -0.2, -0.4, -0.6, -0.8, -1),
+                                                   ths = 0.1,
+                                                   thr = 0,
+                                                   alpha = 1.3,
+                                                   ksat = 50,
+                                                   tort = -0.5)
+                                   if("rootden" %in% colnames(x)){
+                                     df.dummy <- df.dummy %>% dplyr::mutate(rootden = 0)
+                                   }
+                                   df.dummy <- df.dummy %>%
+                                     dplyr::relocate(names(x))
+                                   x <- rbind(x, df.dummy)
+                                 }
+
+    parallel::stopCluster(cl)
+
   }
 
   # add_BodenInfo: ------------------------------------------- ####
   if(add_BodenInfo){
-    ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)],
-                                                                     fnc_add_nFK)
+
+    cl <- parallel::makeCluster(parallel::detectCores())
+    doParallel::registerDoParallel(cl)
+
+    ls.soils <- foreach::foreach(i = 1:length(ls.soils),
+                                 .packages = c("modLWFB90", "data.table")) %dopar% {
+                                   df.out <- modLWFB90::fnc_add_nFK(ls.soils[[i]])
+                                 }
+
+    parallel::stopCluster(cl)
   }
+
 
   # reduce --------------------------------------------------- ####
   to_2 <- c("sand", "silt","clay", "oc.pct",  "tort")
   to_3 <- c("gravel", "bd", "ths", "thr", "alpha", "npar", "mpar", "rootden" )
-  ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)] <- lapply(ls.soils[which(!unlist(lapply(ls.soils, is.null))==T)],
-                                                                   FUN = function(x){
-                                                                     x <- x %>%
-                                                                       dplyr::mutate(across(any_of(to_2), ~round(.x, 2)),
-                                                                                     across(any_of(to_3), ~round(.x, 3)))
-                                                                   })
 
+  cl <- parallel::makeCluster(parallel::detectCores())
+  doParallel::registerDoParallel(cl)
 
+  ls.soils <- foreach::foreach(i = 1:length(ls.soils),
+                               .packages = c("dplyr")) %dopar% {
+
+                                 df.out <- ls.soils[[i]] %>%
+                                   dplyr::mutate(dplyr::across(dplyr::any_of(to_2), ~round(.x,2)),
+                                                 dplyr::across(dplyr::any_of(to_3), ~round(.x,3)))
+
+                               }
+
+  parallel::stopCluster(cl)
+
+  names(ls.soils) <- unlist(lapply(ls.soils, function(x) unique(x$ID_custom)))
 
   return(ls.soils)
 }

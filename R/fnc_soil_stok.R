@@ -37,6 +37,7 @@ fnc_soil_stok <- function(df,
 
                         dplyr::mutate_at(vars(-all_of(c("ID_custom", "humusform", "horizont"))), as.numeric) %>%
                         dplyr::mutate(horizont = stringr::str_sub(stringr::str_replace_all(horizont, " 1| 2| 3", ""), -3, -1))
+                      df.tmp[df.tmp == -9999] <- NA
 
                       # remove roots from Sd/Gr-Horizons
                       noroots <- which(stringr::str_detect(df.tmp$horizont,"Sd|Srd|Gor|Gr"))
@@ -62,24 +63,27 @@ fnc_soil_stok <- function(df,
                       }
 
                       # Tiefendiskretisierung, limit if wanted
-                      if(is.na(limit_bodtief) == TRUE){
+                      if(!all(is.na(df.tmp[c("mat", "upper", "lower")]))){
+                        if(is.na(limit_bodtief) == TRUE){
 
-                        if(incl_GEOLA){
-                          df.tmp <- modLWFB90::fnc_depth_disc(df = df.tmp,
-                                                              limit_bodtief = ifelse(df$BODENTY[i] == "Gleye/Auenboeden",
-                                                                                     -3,NA))
+                          if(incl_GEOLA){
+                            df.tmp <- modLWFB90::fnc_depth_disc(df = df.tmp,
+                                                                limit_bodtief = ifelse(df$BODENTY[i] == "Gleye/Auenboeden",
+                                                                                       -3,NA))
+                          }else{
+                            df.tmp <- modLWFB90::fnc_depth_disc(df = df.tmp,
+                                                                limit_bodtief = NA)
+                          }
+
+
                         }else{
+
                           df.tmp <- modLWFB90::fnc_depth_disc(df = df.tmp,
-                                                              limit_bodtief = NA)
+                                                              limit_bodtief = limit_bodtief)
+
                         }
-
-
-                      }else{
-
-                        df.tmp <- modLWFB90::fnc_depth_disc(df = df.tmp,
-                                                            limit_bodtief = limit_bodtief)
-
                       }
+
 
                       # translate humusform to humus-cm
                       df.tmp <- df.tmp %>%
@@ -109,22 +113,15 @@ fnc_soil_stok <- function(df,
                        out <- data.frame("ID" = df$ID[i],
                                          "ID_custom" = as.character(df$ID_custom[i]))
                        return(out)
-                       # cond
+
                      })
                    }
 
   parallel::stopCluster(cl)
 
-  # name acc. to ordered IDs
-  names(ls.soil.par) <- unlist(lapply(ls.soil.par, function(x) unique(x$ID)))
-  # sort
-  ls.soil.par = ls.soil.par[stringr::str_sort(names(ls.soil.par), numeric = T)]
-  # rename acc. to ID_custom
   names(ls.soil.par) <- unlist(lapply(ls.soil.par, function(x) unique(x$ID_custom)))
   # set NULL to missing data
   ls.soil.par[which(unlist(lapply(ls.soil.par, function(x) nrow(x))) == 1)] <- NULL
-  ls.soil.par[which(unlist(lapply(ls.soil.par, function(x) unique(x$mat))) == -9999)] <- NULL
-
 
   return(ls.soil.par)
 }
