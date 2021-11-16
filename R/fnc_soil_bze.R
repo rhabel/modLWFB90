@@ -127,14 +127,14 @@ fnc_soil_bze <- function(df.utm,
       cl <- parallel::makeCluster(parallel::detectCores())
       doParallel::registerDoParallel(cl)
 
-      ls.soils.tmp <- foreach::foreach(i = 1:length(ls.soils.tmp)) %dopar% {
+      ls.soils.par <- foreach::foreach(i = length(ls.soils.tmp)) %dopar% {
 
         x <- ls.soils.tmp[[i]]
 
         if(unique(x$BODENTY) == "Gleye/Auenboeden"){
           x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
         }else if(unique(x$BODENTY) == "Stauwasserboeden"){
-          x <- x[i.upper < as.numeric(unique(x$roots_bottom_rnd))]
+          x <- x[x$i.upper < as.numeric(unique(x$roots_bottom_rnd))]
           x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
         }else{
           whichmax <- as.numeric(max(unique(x$GRUND_C), unique(x$roots_bottom_rnd)))
