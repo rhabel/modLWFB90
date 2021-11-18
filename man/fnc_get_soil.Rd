@@ -17,6 +17,7 @@ fnc_get_soil(
   limit_bodtief = NA,
   incl_GEOLA = T,
   add_dummy = T,
+  parallel_processing = F,
   ...,
  
     pth_df.LEIT = "H:/FVA-Projekte/P01540_WHHKW/Daten/Ergebnisse/Modellierung_Testregionen/Leitprofile/Modul1DB.Rdata",
@@ -63,6 +64,8 @@ If the nFK shall be calculated at some point, this will be done for the first 1m
 
 \item{add_dummy}{adds 1m of dummy-soil layer to the bottom of the soil profile. Adding a dummy layer has been observed to improve results. Default is \code{TRUE}}
 
+\item{parallel_processing}{the lists of dataframes are processed several times (adding roots, adding nFK information etc.). Default is \code{F} and runs with normal \code{lapply} statements. If many points are modelled, it is advised to set this to \code{T}, to activate parallel processing on several cores (as many as available). A BZE-based testrun with 32 GB RAM and 8 cores revealed a higher performance of parallel processing starting at the threshold of 250 points.}
+
 \item{...}{further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}. \cr Only exception is the roots functions' parameter \code{maxrootdepth}, which, if desired, has to be specified here as  \code{roots_max}, because maximal root depth setting according to vegetation parameters will be complemented by root limitations from soil conditions. \cr Settings can be either single values, applied to all soil data frames equally, or vector with the same length as \code{df.ids} specifying the roots setting for each modelling point. see example}
 
 \item{pth_df.LEIT}{path to .RData file with soil information from Modul1-DB. Should be the extended version containing a column for humus, currently set to latest location.}
@@ -78,8 +81,6 @@ Returns a list of soil data frames completely processed to be further used by \c
 This function is a wrapper of several functions and chunks of code and the main point of access for the final user. It takes a dataframe of coordinates of the points to be modeled and returns a list of soil data frames as required by \code{LWFBrook90R}. Adjustment options exist for the origin of soil data, the PTF to be used, whether MvG-parameters should be limited to a certain range, as well as all options for roots included in \code{\link[LWFBrook90R]{make_rootden}} and \code{\link{fnc_roots}} that can be passed down from here.
 }
 \examples{
-load("H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Kleinprivatwald/Tranche1/ids_tr1.Rdata")
-
 # STOK based, filled with BZE if STOK unavaioable
 fnc_get_soil(df.ids = test.ids.bds,
              soil_option = "STOK_BZE",
@@ -131,4 +132,42 @@ fnc_get_soil(df.ids = test.ids.bds,
                 df.soils = df.own.test,
                 rootsmethod = "betamodel",
                 beta = 0.95)
+
+
+# perforremance test
+df.ids <- readRDS("H:/FVA-Projekte/P01540_WHHKW/Daten/Ergebnisse/Modellierung_BW/input_data/ids_master_tr_1.rds") \%>\%
+  mutate(id_standard = paste0(easting, northing),
+         tranche = fnc_relateCoords(.)$tranche)
+for(i in c(10,50,250, 1000, 5000, 10000)){
+  tic(paste0(i, " STOK Punkte ohne Parallel:"))
+  test <- fnc_get_soil(df.ids = df.ids[1:i,],
+                       soil_option = "BZE",
+                       PTF_to_use = "HYPRES",
+                       parallel_processing = F)
+  toc(log = T)
+  log.txt <- tic.log(format = TRUE)
+  tic.clearlog()
+
+  write(log.txt[[1]],
+        file = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/paketanwendung/time.txt",
+        append=TRUE)
+  rm(log.txt)
+
+  tic(paste0(i, " STOK Punkte mit Parallel:"))
+  test2 <- fnc_get_soil(df.ids = df.ids[1:i,],
+                       soil_option = "STOK",
+                       PTF_to_use = "HYPRES",
+                       parallel_processing = T)
+  all.equal(test, test2)
+  toc(log = T)
+
+  log.txt <- tic.log(format = TRUE)
+  tic.clearlog()
+
+  write(log.txt[[1]],
+        file = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/paketanwendung/time.txt",
+        append=TRUE)
+  rm(log.txt)
+}
+
 }
