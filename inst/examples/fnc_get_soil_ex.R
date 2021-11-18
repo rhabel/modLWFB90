@@ -1,5 +1,3 @@
-load("H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Kleinprivatwald/Tranche1/ids_tr1.Rdata")
-
 # STOK based, filled with BZE if STOK unavaioable
 fnc_get_soil(df.ids = test.ids.bds,
              soil_option = "STOK_BZE",
@@ -51,3 +49,41 @@ fnc_get_soil(df.ids = test.ids.bds,
                 df.soils = df.own.test,
                 rootsmethod = "betamodel",
                 beta = 0.95)
+
+
+# perforremance test
+df.ids <- readRDS("H:/FVA-Projekte/P01540_WHHKW/Daten/Ergebnisse/Modellierung_BW/input_data/ids_master_tr_1.rds") %>%
+  mutate(id_standard = paste0(easting, northing),
+         tranche = fnc_relateCoords(.)$tranche)
+for(i in c(10,50,250, 1000, 5000, 10000)){
+  tic(paste0(i, " STOK Punkte ohne Parallel:"))
+  test <- fnc_get_soil(df.ids = df.ids[1:i,],
+                       soil_option = "BZE",
+                       PTF_to_use = "HYPRES",
+                       parallel_processing = F)
+  toc(log = T)
+  log.txt <- tic.log(format = TRUE)
+  tic.clearlog()
+
+  write(log.txt[[1]],
+        file = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/paketanwendung/time.txt",
+        append=TRUE)
+  rm(log.txt)
+
+  tic(paste0(i, " STOK Punkte mit Parallel:"))
+  test2 <- fnc_get_soil(df.ids = df.ids[1:i,],
+                       soil_option = "STOK",
+                       PTF_to_use = "HYPRES",
+                       parallel_processing = T)
+  all.equal(test, test2)
+  toc(log = T)
+
+  log.txt <- tic.log(format = TRUE)
+  tic.clearlog()
+
+  write(log.txt[[1]],
+        file = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/paketanwendung/time.txt",
+        append=TRUE)
+  rm(log.txt)
+}
+

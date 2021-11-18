@@ -14,6 +14,7 @@ fnc_check_errors(res, meta)
 \item \code{ID_custom} - unique matching the IDs of df.ids
 \item \code{modelled} - status whether modelled or not. All \code{0} in the beginning. Will be changed to \code{1} if successful
 \item \code{err.code} - potential error codes will be stored here. Recommended to be set to \code{no error}
+\item \code{sim_dur_s} - an empty column of /code{NA_integer_}
 }}
 }
 \value{

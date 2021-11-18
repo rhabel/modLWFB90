@@ -2,24 +2,28 @@
 #'
 #' This function is a wrapper of several smaller functions and chunks of code, all retrieved from "U:\\Brook90_2018\\paul_schmidt_walter_2018\\Dokumentation\\2_Bodenparameter.nb". Combining all this code into one function, it takes a spatialpointsdataframe of coordinates in GK-3 and returns a list of soil data frames. Those are further processed in \code{\link{fnc_get_soil}} by adding soil hydraulic information, humus, and fine roots and can then be read by \code{\link[LWFBrook90]{run_multisite_LWFB90}}.
 #'
-#' @param df.gk A spatialpointsdataframe with the desired points in UTM25832.
-#' @param df.assign a dataframe containing the corresponding ID_custom for the IDs in \code{df.gk}
+#' @param df.ids a dataframe with \code{ID_customs}, \code{IDs}, \code{aspect}, \code{slope}, \code{easting} and \code{northing}, as created one function up by \code{\link{fnc_get_soil}} May contain further columns
 #' @param meta.out a string containing a path passed down from \code{fnc_get_soil}. Saving location of metadata.
 #' @param limit_bodtief max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}. If not \code{NA} soil-dfs are created down to the depth specified here as depth in \code{m}, negative. Might be used to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. In this case, soil depth may be reduced significantly.
 #' @param ... whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur, options are \code{buffering} as \code{TRUE} or \code{FALSE}, and \code{buff_width} in \code{m}
 #'
 #' @return Returns a list of soil data frames.
-#' @import doParallel parallel foreach
+#' @import terra sf dplyr data.table
 #'
 #' @export
 
-fnc_soil_bze <- function(df.utm,
-                         df.assign,
+fnc_soil_bze <- function(df.ids,
 
                          meta.out,
                          limit_bodtief = NA,
                          incl_GEOLA,
-                         ...){
+                         buffering = F,
+                         buff_width = NA){
+
+  xy <- sf::st_as_sf(df.ids,
+                      coords = c("easting", "northing"), crs = 32632) %>%
+    sf::st_transform(25832)
+  xy_spat <- terra::vect(xy)
 
   input_bze <- input_bze
 
@@ -33,33 +37,130 @@ fnc_soil_bze <- function(df.utm,
          "t0", "t1", "t2", "t3", "t4",
          "u0", "u1", "u2", "u3", "u4")
 
-  # raster
-  cl <- parallel::makeCluster(parallel::detectCores())  #Cluster mit verfügbarer Anzahl von Kernen starten
-  doParallel::registerDoParallel(cl)
+  bze_alt <- terra::rast(paste0(input_bze, a, "_strt/hdr.adf"))
+  extr_vals_alt <- terra::extract(bze_alt, xy_spat)
+  colnames(extr_vals_alt) <- c("ID", a)
 
-  ls.text.alt <- foreach::foreach(i = a, .combine = cbind, .packages = "raster") %dopar% {
-    rs.files <- lapply(paste0(input_bze, i, "_strt/hdr.adf"), raster)
+  bze_neu <- terra::rast(paste0(input_bze, b, ".tif"))
+  extr_vals_neu <- terra::extract(bze_neu, xy_spat, factors = F)
+  colnames(extr_vals_neu) <- c("ID", b)
+
+  extr_vals <- dplyr::left_join(as.data.frame(extr_vals_alt),
+                         as.data.frame(extr_vals_neu), by = "ID")
+  extr_vals$lof_cm[is.nan(extr_vals$lof_cm)] <- 0
+  extr_vals$oh_cm[is.nan(extr_vals$oh_cm)] <- 0
+
+  extr_vals[extr_vals ==-9999] <- NA
+  extr_vals[extr_vals == "NaN"] <- NA_integer_
+
+  val_miss <- extr_vals[!complete.cases(extr_vals),]
+
+  #NAs & -9999: ziehe die häufigsten Werte im Umkreis von 50 m
+  if(nrow(val_miss) > 0 & buffering == T ){
+    which_missing <- val_miss$ID
+
+    # creat sf and spatvector of missing points
+    sf_miss <- xy[xy$ID %in% which_missing,]
+    sf_miss_spat <- terra::vect(sf_miss)
+
+    # for terra::extract: buffer with buff_width
+    # buff_width = 1000
+    sf_buffer <- sf::st_buffer(sf_miss, buff_width)
+
+    # buff_data contains values from cells within buffer
+    buff_data <- terra::extract(bze_neu, terra::vect(sf_buffer), factors = F,
+                                weights = T, cells = T)
+    # somehow some are empty - remove!
+    buff_data <- as.data.frame(buff_data[complete.cases(buff_data),])
+    if(nrow(buff_data) >0 ){
+      buff_data$ID <- which_missing[buff_data$ID] # keep ID from above
+
+      # create spatvectors from cellcentres within buffer to perform distance calculation
+      buff_cells <- buff_data[,c("ID", "cell")]
+      buff_cells <- cbind(buff_cells, as.data.frame(terra::xyFromCell(bze_neu[[1]], buff_data$cell)))
+      buff_cells <- split(buff_cells, f = buff_cells$ID)
+      buff_cells <- lapply(buff_cells,
+                           function(x){terra::vect(x, geom = c("x", "y"), crs = "EPSG:25832")})
+
+      # remove those points that have no data within buffer
+      spat_list <- split(sf_miss_spat, seq(nrow(sf_miss_spat)))
+      names(spat_list) <- unlist(lapply(spat_list, function(x){terra::values(x)$ID}))
+
+      spat_list <- spat_list[names(spat_list) %in% names(buff_cells)]
+
+      # perform distance calculation and rank
+      buff_cells <- mapply(FUN = function(buffcells, mod_points){
+        cbind(terra::values(buffcells),
+              "distance" = terra::distance(buffcells, mod_points))},
+        buffcells = buff_cells,
+        mod_points = spat_list,
+        SIMPLIFY = F)
+      buff_cells_final <- unlist(lapply(buff_cells, function(x){
+
+        x <- data.table::as.data.table(x)
+        x <- setorder(x, distance)
+        x <- x[1,]$cell
+      }))
+
+      # filter buffer_data for selected cells
+      buff_data <- buff_data[buff_data$cell %in% buff_cells_final,-c(ncol(buff_data)-1,ncol(buff_data))]
+      names(buff_data) <- c("ID", b)
+      buff_data <- cbind("ID" = buff_data$ID,
+                         lof_cm = rep(0, nrow(buff_data)),
+                         oh_cm = rep(0, nrow(buff_data)),
+                         buff_data[,-1])
+
+      succ_buffered <- buff_data$ID
+      # include buffered data into dataframe of extracted values
+      extr_vals <- extr_vals[-which(extr_vals$ID %in% succ_buffered),]
+      extr_vals <- rbind(extr_vals, buff_data)
+      extr_vals <- extr_vals[order(extr_vals$ID),]
+      rownames(extr_vals) <- NULL
+
+      if(is.na(meta.out) == F){
+
+        buff_cell_meta <- lapply(buff_cells, function(x){
+
+          x <- data.table::as.data.table(x)
+          x <- setorder(x, distance)
+          x[,distance := round(distance,0)]
+          x <- x[1,]
+        })
+        names(buff_cell_meta) <- NULL
+        buff_cell_meta <- as.data.frame(do.call(rbind, buff_cell_meta))
+
+        meta_data <- df.ids[c("ID_custom", "ID","easting", "northing" )] %>%
+          dplyr::mutate(buffered = ifelse(ID %in% which_missing, T, F)) %>%
+          dplyr::left_join(buff_cell_meta, by = "ID") %>%
+          dplyr::mutate(buffer_success = dplyr::case_when(buffered == F ~ NA,
+                                                          buffered == T & is.na(distance) == F ~ T,
+                                                          T ~ F)) %>%
+          dplyr::select(ID_custom, easting, northing, buffered, buffer_success, x, y, distance) %>%
+          setNames(c("ID_custom", "easting", "northing", "buffered", "buffer_success", "x_buffcell","y_buffcell", "distance_m"))
+
+        write_csv(meta_data, file = meta.out)
+      }
+
+    }else{
+
+      if(is.na(meta.out) == F){
+
+        meta_data <- df.ids[c("ID_custom", "ID","easting", "northing" )] %>%
+          dplyr::mutate(buffered = ifelse(ID %in% which_missing, T, F)) %>%
+          dplyr::mutate(buffer_success = dplyr::case_when(buffered == F ~ NA,
+                                                          T ~ F)) %>%
+          dplyr::select(ID_custom, easting, northing, buffered, buffer_success) %>%
+          setNames(c("ID_custom", "easting", "northing", "buffered", "buffer_success"))
+
+        write_csv(meta_data, file = meta.out)
+      }
+    }
+
   }
 
-  ls.text.neu <- foreach::foreach(i = b, .combine = cbind, .packages = "raster") %dopar% {
-    rs.files <- lapply(paste0(input_bze, i, ".tif"), raster)
-  }
-
-  parallel::stopCluster(cl)
-
-  # bind together
-  ls.text <- append(ls.text.alt, ls.text.neu)
-  rm(ls.text.alt, ls.text.neu)
-
-  soilraster <- raster::stack(unlist(ls.text))
-  names(soilraster) <- c(a, b)
-
-
-  # stechen
-  soil <- fnc_extract_points_bze(lay = soilraster,
-                                 xy = df.utm,
-                                 meta.out = meta.out,
-                                 ...)
+  soil <- data.table::as.data.table(cbind(
+    df.ids[,c("ID", "aspect", "slope")], extr_vals[,-1])
+  )
 
   # aufbereiten
   #names(soil) <- c("aspect", "slope", names(soilraster)) # Reihenfolge der Listenelemente entspricht Namen der Layers im Rasterstack
@@ -103,9 +204,9 @@ fnc_soil_bze <- function(df.utm,
   soilsdiscrete1[, "nl" := 1:.N, by = ID]
 
   # join to get ID_custom
-  df.assign <- as.data.table(df.assign[,-which(colnames(df.assign) %in% c("aspect", "slope"))])
-  setkey(df.assign, ID)
-  ls.soils.tmp <- df.assign[soilsdiscrete1]
+  df.ids <- as.data.table(df.ids[,-which(colnames(df.ids) %in% c("aspect", "slope"))])
+  setkey(df.ids, ID)
+  ls.soils.tmp <- df.ids[soilsdiscrete1]
 
   ls.soils.tmp <- split(ls.soils.tmp, by = "ID")
   names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
@@ -114,8 +215,8 @@ fnc_soil_bze <- function(df.utm,
   which.na <- which(unlist(lapply(ls.soils.tmp, function(x) any(is.na(x)))==T))
   which.non.na <- which(unlist(lapply(ls.soils.tmp, function(x) any(is.na(x)))==F))
   if(length(which.na) != 0){
-    ls.soils.tmp[which.na] <- list(NULL)
     message(paste0("ID: ", names(ls.soils.tmp)[which.na], " won't be modelled. There's no BZE_R data at coordinate + set buffer width. \n"))
+    ls.soils.tmp[which.na] <- NULL
   }
 
   # limit to either Dietmar-depth, GEOLA-depth, or limit_bodtief
@@ -124,41 +225,43 @@ fnc_soil_bze <- function(df.utm,
     # incl GEOLA
     if(incl_GEOLA){
 
-      ls.soils.tmp[which.non.na] <- lapply(ls.soils.tmp[which.non.na],
-                               FUN = function(x){
-                                 if(unique(x$BODENTY) == "Gleye/Auenboeden"){
-                                   x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
-                                   return(x)
-                                 }else if(unique(x$BODENTY) == "Stauwasserboeden"){
-                                   x <- x[i.upper < as.numeric(unique(x$roots_bottom_rnd))]
-                                   x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
-                                   return(x)
-                                 }else{
-                                   whichmax <- as.numeric(max(unique(x$GRUND_C), unique(x$roots_bottom_rnd)))
-                                   x <- x[which(x$i.upper < whichmax),]
-                                   x$lower[nrow(x)] <- whichmax/-100
-                                   x$dpth_ini <- whichmax
-                                   return(x)
-                                 }
-                                 }
-                               )
+      # tic()
+      # cl <- parallel::makeCluster(parallel::detectCores())
+      # doParallel::registerDoParallel(cl)
+      #
+      # ls.soils.par <- foreach::foreach(i = 533:540) %dopar% {
+      #   x <- ls.soils.tmp[[i]]
+     ls.soils.tmp <- lapply(ls.soils.tmp, function(x){
+       x <- as.data.frame(x)
+        if(unique(x$BODENTY) == "Gleye/Auenboeden"){
+          x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
+        }else if(unique(x$BODENTY) == "Stauwasserboeden"){
+          x <- x[x$i.upper < as.numeric(unique(x$roots_bottom_rnd)),]
+          x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
+        }else{
+          whichmax <- as.numeric(max(unique(x$GRUND_C), unique(x$roots_bottom_rnd)))
+          x <- x[which(x$i.upper < whichmax),]
+          x$lower[nrow(x)] <- whichmax/-100
+          x$dpth_ini <- whichmax
+        }
+       return(x)
+      })
 
     }else{
 
-      ls.soils.tmp[which.non.na] <- lapply(ls.soils.tmp[which.non.na],
-                             FUN = function(x){
-                               x[which(x$i.upper < as.numeric(unique(x$roots_bottom_rnd))),]
-                               x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
-                               x$BODENTY <- "unknown"
+      ls.soils.tmp <- lapply(ls.soils.tmp, function(x){
 
-                             })
-
+        x[which(x$i.upper < as.numeric(unique(x$roots_bottom_rnd))),]
+        x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
+        x$BODENTY <- "unknown"
+        return(x)
+      })
     }
 
   }else{
 
     # remove all layers below set maxdepth
-    ls.soils.tmp[which.non.na] <- mapply(FUN = function(x,limit){
+    ls.soils.tmp <- mapply(FUN = function(x,limit){
 
       x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
       x$BODENTY <- "unknown"
@@ -166,28 +269,26 @@ fnc_soil_bze <- function(df.utm,
       x$lower[nrow(x)] <- limit
       return(x)
     },
-    ls.soils.tmp[which.non.na],
-    limit = ifelse(length(limit_bodtief) > 1,limit_bodtief[which.non.na] ,limit_bodtief),
+    ls.soils.tmp,
+    limit = ifelse(length(limit_bodtief) > 1,limit_bodtief[which.non.na],limit_bodtief),
     SIMPLIFY = F)
 
 
 
   }
 
-
   # sort and rename
-    ls.soils.tmp[which.non.na] <- lapply(ls.soils.tmp[which.non.na],
-                           FUN = function(x){
-                             x <- as.data.frame(x)
-                             x <- x[c("ID", "ID_custom", "mat", "nl", "upper", "lower",
-                                      "sand", "schluff", "ton", "gba", "trd", "corg",
-                                      "aspect", "slope", "profile_top", "BODENTY", "dpth_ini")]
-                             colnames(x) <- c("ID", "ID_custom", "mat", "nl","upper", "lower",
-                                              "sand", "silt", "clay", "gravel", "bd", "oc.pct",
-                                              "aspect" ,"slope" ,"humus", "BODENTYP", "dpth_ini")
-                             x$ID_custom <- as.character(x$ID_custom)
-                             return(x)})
+  ls.soils.tmp <- lapply(ls.soils.tmp, function(x){
 
+    x <- x[c("ID", "ID_custom", "mat", "nl", "upper", "lower",
+             "sand", "schluff", "ton", "gba", "trd", "corg",
+             "aspect", "slope", "profile_top", "BODENTY", "dpth_ini")]
+    colnames(x) <- c("ID", "ID_custom", "mat", "nl","upper", "lower",
+                     "sand", "silt", "clay", "gravel", "bd", "oc.pct",
+                     "aspect" ,"slope" ,"humus", "BODENTYP", "dpth_ini")
+    x$ID_custom <- as.character(x$ID_custom)
+    return(x)
+  })
 
   return(ls.soils.tmp)
 }

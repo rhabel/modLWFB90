@@ -55,13 +55,12 @@ fnc_write_climdb <- function(df.ids,
   # if more than points_at_once, split --------- ####
   # split into splits of 1000 due to RAM problems:
   if(nrow(df.ids) > points_at_once){
-
     begin_ids <- as.numeric(unlist(lapply(split(df.ids$ID,
-                              ceiling(seq_along(df.ids$ID)/points_at_once)),
-                        function(x) min(x))))
+                                                ceiling(seq_along(df.ids$ID)/points_at_once)),
+                                          function(x) min(x))))
     end_ids <- as.numeric(unlist(lapply(split(df.ids$ID,
-                            ceiling(seq_along(df.ids$ID)/points_at_once)),
-                      function(x) max(x))))
+                                              ceiling(seq_along(df.ids$ID)/points_at_once)),
+                                        function(x) max(x))))
 
     mapply(FUN = function(x, begin_id, end_id){
 
@@ -72,163 +71,10 @@ fnc_write_climdb <- function(df.ids,
       df.clim.ids <- df.clim.ids[c("id_standard", "tranche")]
       df.clim.ids <- unique(df.clim.ids)
 
-      # if only one tranche in df.ids subset, apply parallel processing to number-of-cores batches
-      if(length(unique(df.clim.ids$tranche)) == 1){
-
-        n <- parallel::detectCores()
-        nr <- nrow(df.clim.ids)
-        df.clim.ids$batch <- rep(1:n, each=ceiling(nr/n), length.out=nr)
-
-        cl <- parallel::makeCluster(parallel::detectCores())
-        doParallel::registerDoParallel(cl)
-
-        foreach::foreach(i = sort(unique(df.clim.ids$batch)),
-                         .packages = c("RSQLite", "data.table", "dplyr"),
-                         .export = c("path_climdb", "clim_dir",
-                                     "minyear", "maxyear",
-                                     "mindate", "maxdate",
-                                     "needed_cols")) %dopar% {
-
-                                       # preselection of ids
-                                       ids_in_batch <- as.character(df.clim.ids[which(df.clim.ids$batch == i), "id_standard"])
-
-                                       # make db connection
-                                       con <- RSQLite::dbConnect(RSQLite::SQLite(),
-                                                                 dbname = paste0(path_climdb, "climate_daily_obs_base_tr",
-                                                                                 unique(df.clim.ids$tranche),".sqlite"))
-
-
-                                       # get climate data
-                                       clim.tmp <- dplyr::tbl(con, "climate_daily") %>%
-                                         dplyr::filter(id %in% ids_in_batch) %>%
-                                         dplyr::filter(year >= minyear & year <= maxyear) %>%
-                                         dplyr::select(-grids) %>%
-                                         dplyr::collect()
-
-                                       RSQLite::dbDisconnect(con)
-
-                                       # calculate additional meteorological properties that are needed LWFBrook90 the model run
-                                       dt.clim.tmp <- data.table::as.data.table(clim.tmp)
-                                       dt.clim.tmp <- data.table::setorder(dt.clim.tmp, id, year, month, day)
-                                       dt.clim.tmp[ , (needed_cols) := lapply(.SD, "*", 0.01), .SDcols = needed_cols]
-                                       data.table::setnames(dt.clim.tmp, c("id_standard", "year", "month", "day",
-                                                                           "globrad", "prec", "sddm","tmean", "tmin", "tmax", "windspeed" ))
-
-                                       ### if we get complaints that our files get too large
-                                       dt.clim.tmp[, dates := as.Date(paste0(year, "-", month, "-", day), format = "%Y-%m-%d")]
-                                       dt.clim.tmp <- dt.clim.tmp[dates>= mindate & dates <= maxdate]
-
-                                       # create vappres
-                                       dt.clim.tmp[, ewasser := 6.112*exp(17.62*tmean/(243.12+tmean))]
-                                       dt.clim.tmp[, eeis := 6.112*exp(22.46*tmean/(272.62+tmean))]
-                                       dt.clim.tmp[, vappres :=  round(ifelse(tmean > 0, (ewasser-sddm)*0.1, (eeis-sddm)*0.1), 2)]
-
-                                       # clean up
-                                       dt.clim.tmp[, id_standard :=  as.character(id_standard)]
-                                       dt.clim.tmp <- split(dt.clim.tmp, by = "id_standard")
-
-                                       #### if we get complaints that our files get too large
-                                       # dt.clim.tmp[ , (final_cols) := lapply(.SD, "/", 0.01), .SDcols = final_cols]
-
-
-                                       lapply(dt.clim.tmp,
-                                              function(x) saveRDS(x,
-                                                                  file = paste0(clim_dir,
-                                                                                x$id_standard[1],
-                                                                                ".rds")))
-
-
-
-                                     }
-        parallel::stopCluster(cl)
-      }else{
-        cl <- parallel::makeCluster(parallel::detectCores())
-        doParallel::registerDoParallel(cl)
-
-        foreach::foreach(i = sort(unique(df.clim.ids$tranche)),
-                         .packages = c("RSQLite", "data.table", "dplyr"),
-                         .export = c("path_climdb", "clim_dir",
-                                     "minyear", "maxyear",
-                                     "mindate", "maxdate",
-                                     "needed_cols")) %dopar% {
-
-                                       # preselection of ids
-                                       ids_in_tranche <- as.character(df.clim.ids[which(df.clim.ids$tranche == i), "id_standard"])
-
-                                       # make db connection
-                                       con <- RSQLite::dbConnect(RSQLite::SQLite(),
-                                                                 dbname = paste0(path_climdb, "climate_daily_obs_base_tr",i,".sqlite"))
-
-
-                                       # get climate data
-                                       clim.tmp <- dplyr::tbl(con, "climate_daily") %>%
-                                         dplyr::filter(id %in% ids_in_tranche) %>%
-                                         dplyr::filter(year >= minyear & year <= maxyear) %>%
-                                         dplyr::select(-grids) %>%
-                                         dplyr::collect()
-
-                                       RSQLite::dbDisconnect(con)
-
-                                       # calculate additional meteorological properties that are needed LWFBrook90 the model run
-                                       dt.clim.tmp <- data.table::as.data.table(clim.tmp)
-                                       dt.clim.tmp <- data.table::setorder(dt.clim.tmp, id, year, month, day)
-                                       dt.clim.tmp[ , (needed_cols) := lapply(.SD, "*", 0.01), .SDcols = needed_cols]
-                                       data.table::setnames(dt.clim.tmp, c("id_standard", "year", "month", "day",
-                                                                           "globrad", "prec", "sddm","tmean", "tmin", "tmax", "windspeed" ))
-
-                                       ### if we get complaints that our files get too large
-                                       dt.clim.tmp[, dates := as.Date(paste0(year, "-", month, "-", day), format = "%Y-%m-%d")]
-                                       dt.clim.tmp <- dt.clim.tmp[dates>= mindate & dates <= maxdate]
-
-                                       # create vappres
-                                       dt.clim.tmp[, ewasser := 6.112*exp(17.62*tmean/(243.12+tmean))]
-                                       dt.clim.tmp[, eeis := 6.112*exp(22.46*tmean/(272.62+tmean))]
-                                       dt.clim.tmp[, vappres :=  round(ifelse(tmean > 0, (ewasser-sddm)*0.1, (eeis-sddm)*0.1), 2)]
-
-                                       # clean up
-                                       dt.clim.tmp[, id_standard :=  as.character(id_standard)]
-                                       dt.clim.tmp <- split(dt.clim.tmp, by = "id_standard")
-
-                                       #### if we get complaints that our files get too large
-                                       # dt.clim.tmp[ , (final_cols) := lapply(.SD, "/", 0.01), .SDcols = final_cols]
-
-
-                                       lapply(dt.clim.tmp,
-                                              function(x) saveRDS(x,
-                                                                  file = paste0(clim_dir,
-                                                                                x$id_standard[1],
-                                                                                ".rds")))
-
-
-
-                                     }
-        parallel::stopCluster(cl)
-      }
-
-    },
-           x = list(df.ids),
-           begin_id = begin_ids,
-           end_id = end_ids)
-  }else{
-
-    # check which climate-ids ("id_standard") are needed:
-    df.clim.ids <- fnc_relateCoords(df.ids = df.ids,
-                                    path_std = path_std)
-
-    df.clim.ids <- df.clim.ids[c("id_standard", "tranche")]
-    df.clim.ids <- unique(df.clim.ids)
-
-    # if only one tranche in df.ids subset, apply parallel processing to number-of-cores batches
-    if(length(unique(df.clim.ids$tranche)) == 1){
-
-      n <- parallel::detectCores()
-      nr <- nrow(df.clim.ids)
-      df.clim.ids$batch <- rep(1:n, each=ceiling(nr/n), length.out=nr)
-
       cl <- parallel::makeCluster(parallel::detectCores())
       doParallel::registerDoParallel(cl)
 
-      foreach::foreach(i = sort(unique(df.clim.ids$batch)),
+      foreach::foreach(i = sort(unique(df.clim.ids$tranche)),
                        .packages = c("RSQLite", "data.table", "dplyr"),
                        .export = c("path_climdb", "clim_dir",
                                    "minyear", "maxyear",
@@ -236,17 +82,16 @@ fnc_write_climdb <- function(df.ids,
                                    "needed_cols")) %dopar% {
 
                                      # preselection of ids
-                                     ids_in_batch <- as.character(df.clim.ids[which(df.clim.ids$batch == i), "id_standard"])
+                                     ids_in_tranche <- as.character(df.clim.ids[which(df.clim.ids$tranche == i), "id_standard"])
 
                                      # make db connection
                                      con <- RSQLite::dbConnect(RSQLite::SQLite(),
-                                                               dbname = paste0(path_climdb, "climate_daily_obs_base_tr",
-                                                                               unique(df.clim.ids$tranche),".sqlite"))
+                                                               dbname = paste0(path_climdb, "climate_daily_obs_base_tr",i,".sqlite"))
 
 
                                      # get climate data
                                      clim.tmp <- dplyr::tbl(con, "climate_daily") %>%
-                                       dplyr::filter(id %in% ids_in_batch) %>%
+                                       dplyr::filter(id %in% ids_in_tranche) %>%
                                        dplyr::filter(year >= minyear & year <= maxyear) %>%
                                        dplyr::select(-grids) %>%
                                        dplyr::collect()
@@ -257,7 +102,8 @@ fnc_write_climdb <- function(df.ids,
                                      dt.clim.tmp <- data.table::as.data.table(clim.tmp)
                                      dt.clim.tmp <- data.table::setorder(dt.clim.tmp, id, year, month, day)
                                      dt.clim.tmp[ , (needed_cols) := lapply(.SD, "*", 0.01), .SDcols = needed_cols]
-                                     data.table::setnames(dt.clim.tmp, c("id_standard", "year", "month", "day", "globrad", "prec", "sddm","tmean", "tmin", "tmax", "windspeed" ))
+                                     data.table::setnames(dt.clim.tmp, c("id_standard", "year", "month", "day",
+                                                                         "globrad", "prec", "sddm","tmean", "tmin", "tmax", "windspeed" ))
 
                                      ### if we get complaints that our files get too large
                                      dt.clim.tmp[, dates := as.Date(paste0(year, "-", month, "-", day), format = "%Y-%m-%d")]
@@ -286,7 +132,22 @@ fnc_write_climdb <- function(df.ids,
 
                                    }
       parallel::stopCluster(cl)
-    }else{
+    },
+    x = list(df.ids),
+    begin_id = begin_ids,
+    end_id = end_ids)
+
+
+  }else{
+
+    # check which climate-ids ("id_standard") are needed:
+    df.clim.ids <- fnc_relateCoords(df.ids = df.ids,
+                                    path_std = path_std)
+
+    df.clim.ids <- df.clim.ids[c("id_standard", "tranche")]
+    df.clim.ids <- unique(df.clim.ids)
+
+
       cl <- parallel::makeCluster(parallel::detectCores())
       doParallel::registerDoParallel(cl)
 
@@ -349,7 +210,7 @@ toc()
                                    }
       parallel::stopCluster(cl)
     }
-  }
+
 
 }
 

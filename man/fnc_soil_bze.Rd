@@ -4,18 +4,23 @@
 \alias{fnc_soil_bze}
 \title{Soil-list creation from BZE data}
 \usage{
-fnc_soil_bze(df.utm, df.assign, meta.out, limit_bodtief = NA, incl_GEOLA, ...)
+fnc_soil_bze(
+  df.ids,
+  meta.out,
+  limit_bodtief = NA,
+  incl_GEOLA,
+  buffering = F,
+  buff_width = NA
+)
 }
 \arguments{
-\item{df.assign}{a dataframe containing the corresponding ID_custom for the IDs in \code{df.gk}}
+\item{df.ids}{a dataframe with \code{ID_customs}, \code{IDs}, \code{aspect}, \code{slope}, \code{easting} and \code{northing}, as created one function up by \code{\link{fnc_get_soil}} May contain further columns}
 
 \item{meta.out}{a string containing a path passed down from \code{fnc_get_soil}. Saving location of metadata.}
 
 \item{limit_bodtief}{max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}. If not \code{NA} soil-dfs are created down to the depth specified here as depth in \code{m}, negative. Might be used to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. In this case, soil depth may be reduced significantly.}
 
 \item{...}{whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur, options are \code{buffering} as \code{TRUE} or \code{FALSE}, and \code{buff_width} in \code{m}}
-
-\item{df.gk}{A spatialpointsdataframe with the desired points in UTM25832.}
 }
 \value{
 Returns a list of soil data frames.

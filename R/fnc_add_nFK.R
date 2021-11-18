@@ -9,12 +9,13 @@
 #' @export
 
 fnc_add_nFK <- function(df){
+
   # check if all necessary columns are there:
   missingcol <- c("ths", "thr", "alpha", "npar",
                   "upper", "lower", "gravel")[!c("ths", "thr", "alpha", "npar",
-                                                 "upper", "lower", "gravel") %in% names(df)]
+                                                 "upper", "lower", "gravel") %in% colnames(df)]
   if (length(missingcol) > 0){
-    cat(missingcol, "is missing in colnames(df)", "\n")
+    cat(paste0(missingcol, " is missing in colnames(df)\n"))
     stop()
   }
 
