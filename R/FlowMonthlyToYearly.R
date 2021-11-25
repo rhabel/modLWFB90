@@ -18,19 +18,21 @@ Flow.MonthlyToYearly <- function(dat, bypar) {
 
   if(bypar == 0){
     dat_yr <- dat[,list(FLOW = sum(FLOW),
+                        SLFL = sum(SLFL),
                         BYFL = sum(BYFL),
                         VRFLN = sum(VRFLN),
                         DSFL = sum(DSFL),
-                        SURFRUNOFF = sum(BYFL)
+                        SURFRUNOFF = sum(BYFL + SRFL)
     ),
     by = list(YR)]
 
   }else{
     dat_yr <- dat[,list(FLOW = sum(FLOW),
+                        SLFL = sum(SLFL),
                         BYFL = sum(BYFL),
                         VRFLN = sum(VRFLN),
                         DSFL = sum(DSFL),
-                        SURFRUNOFF = sum(FLOW-DSFL-BYFL-VRFLN)
+                        SURFRUNOFF = sum(SRFL)
     ),
     by = list(YR)]
 

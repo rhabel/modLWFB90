@@ -23,6 +23,7 @@ Evap.DailyToVegper <- function(dat, vp.year, vp.start, vp.end) {
   dat_vp <- dat[which(DOY >= start & DOY <= end),list(
     VPSTARTDOY = start[1],
     VPENDDOY = end[1],
+    EVAPOTR = sum(EVAP),
     TRAN = sum(TRAN),
     INTV = sum(IRVP + ISVP),
     EVAP = sum(SLVP + SNVP),

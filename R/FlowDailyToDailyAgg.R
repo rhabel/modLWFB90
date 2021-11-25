@@ -15,19 +15,23 @@ Flow.DailyToDailyAgg <- function(dat, bypar) {
 
   setDT(dat)
 
-  keepcols <- c("YR", "MO", "DA", "FLOW", "BYFL", "VRFLN", "DSFL")
-
-  dat_day <- dat[, ..keepcols]
-
-
   if(bypar == 0){
-    dat_day[, "SURFRUNOFF" := BYFL]
+
+    dat[, "SURFRUNOFF" := BYFL+SRFL]
+
+    keepcols <- c("FLOW", "SLFL", "VRFLN", "DSFL", "SURFRUNOFF")
+
+    dat <- dat[, ..keepcols]
 
   }else{
-    dat_day[, "SURFRUNOFF" := FLOW-DSFL-BYFL-VRFLN]
+    dat[, "SURFRUNOFF" := SRFL]
+
+    keepcols <- c("FLOW", "SLFL", "BYFL", "VRFLN", "DSFL", "SURFRUNOFF")
+
+    dat <- dat[, ..keepcols]
 
   }
 
-  return(dat_day)
+  return(dat)
 
 }

@@ -26,10 +26,11 @@ Flow.DailyToVegper <- function(dat, vp.year, vp.start, vp.end, bypar) {
                     VPSTARTDOY = start[1],
                     VPENDDOY = end[1],
                     FLOW = sum(FLOW),
+                    SLFL = sum(SLFL),
                     BYFL = sum(BYFL),
                     VRFLN = sum(VRFLN),
                     DSFL = sum(DSFL),
-                    SURFRUNOFF = sum(BYFL)
+                    SURFRUNOFF = sum(BYFL+SRFL)
                   ),
                   by = list(YR)]
   }else{
@@ -38,10 +39,11 @@ Flow.DailyToVegper <- function(dat, vp.year, vp.start, vp.end, bypar) {
                     VPSTARTDOY = start[1],
                     VPENDDOY = end[1],
                     FLOW = sum(FLOW),
+                    SLFL = sum(SLFL),
                     BYFL = sum(BYFL),
                     VRFLN = sum(VRFLN),
                     DSFL = sum(DSFL),
-                    SURFRUNOFF = sum(FLOW-DSFL-BYFL-VRFLN)
+                    SURFRUNOFF = sum(SRFL)
                   ),
                   by = list(YR)]
   }

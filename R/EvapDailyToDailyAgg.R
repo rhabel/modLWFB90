@@ -16,9 +16,10 @@ Evap.DailyToDailyAgg <- function(dat) {
   setDT(dat)
 
   dat_day <- dat[,list(
+    EVAPOTR = EVAP,
     TRAN = TRAN,
     INTV = IRVP + ISVP,
-    EVAP = SLVP + SNVP,
+    SLVP = SLVP + SNVP,
     # FLOW = sum(FLOW),
     # ISVP = sum(ISVP),
     # SLVP = sum(SLVP),

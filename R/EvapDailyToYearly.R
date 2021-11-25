@@ -16,6 +16,7 @@ Evap.DailyToYearly <- function(dat) {
   setkey(dat, YR)
 
   dat_yr <- dat[,list(
+    EVAPOTR = sum(EVAP),
     TRAN = sum(TRAN),
     INTV = sum(IRVP + ISVP),
     EVAP = sum(SLVP + SNVP),
