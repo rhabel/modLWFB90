@@ -19,7 +19,7 @@
 #' # setting for df.output:
 #' df.output <- set_outputLWFB90()
 #' df.output[,] <- 0L
-#' df.output[c("Evap", "Flow", "Swat"), c("Day")] <- 1
+#' df.output[c("Budg", "Evap", "Flow", "Swat"), c("Day")] <- 1
 #' df.output[c("Flow"), c("Mon")] <- 1
 #'
 #' # for full example, see help page of ?fnc_write_to_sql
@@ -36,9 +36,9 @@ fnc_write_agg <- function(x,
                           dir_name = NA){
 
 
-  # soil.df <- ls.soil[[1]]
+  # soil.df <- ls.soil[[2]]
   # colnames(soil.df) <- tolower(colnames(soil.df))
-  # id_run <- ls.soil[[1]]$ID_custom[1]
+  # id_run <- ls.soil[[2]]$ID_custom[1]
   # param_std <- param_b90
 
   # get
@@ -51,12 +51,14 @@ fnc_write_agg <- function(x,
   colnames(x$EVAPDAY.ASC) <- toupper(colnames(x$EVAPDAY.ASC))
   colnames(x$SWATDAY.ASC) <- toupper(colnames(x$SWATDAY.ASC))
   colnames(x$FLOWDAY.ASC) <- toupper(colnames(x$FLOWDAY.ASC))
+  colnames(x$BUDGDAY.ASC) <- toupper(colnames(x$BUDGDAY.ASC))
 
   # Aggregierung: ...
   x$swat.profile <- Aggregate.SWAT.ASC(SWATi = x$SWATDAY.ASC, soil = soil.df)
 
   if(stringr::str_detect(aggr_tp, "daily")){
     output_daily <- data.table(ID_custom = id_run,
+                               x$BUDGDAY.ASC[,list(YR, MO, DA, PREC)],
                                Flow.DailyToDailyAgg(dat = x$FLOWDAY.ASC,
                                                     bypar = param_std$bypar),
                                Evap.DailyToDailyAgg(dat = x$EVAPDAY.ASC),
@@ -66,8 +68,9 @@ fnc_write_agg <- function(x,
 
   if(stringr::str_detect(aggr_tp, "yearly")){
     output_yearly <- data.table(ID_custom = id_run,
+                                Prec.DailyToYearly(dat = x$BUDGDAY.ASC),
                                 Flow.MonthlyToYearly(dat = x$FLOWMON.ASC,
-                                               bypar = param_std$bypar),
+                                               bypar = param_std$bypar)[,-1, with=F],
                                 Evap.DailyToYearly(dat = x$EVAPDAY.ASC)[,-1, with=F],
                                 SWATProfile.DailyToYearly(dat = x$swat.profile)[,-1, with=F])
     setnames(output_yearly, names(output_yearly), tolower(names(output_yearly)))
@@ -75,9 +78,10 @@ fnc_write_agg <- function(x,
 
   if(stringr::str_detect(aggr_tp, "monthly")){
     output_monthly <- data.table(ID_custom = id_run,
-                                 x$FLOWMON.ASC[,list(YR, MO, FLOW,SLFL,BYFL,VRFLN,DSFL,
-                                                     SURFRUNOFF = ifelse(abs(round(FLOW-DSFL-BYFL-VRFLN,1))>0.1,
-                                                                         round(FLOW-DSFL-BYFL-VRFLN,1), 0))],
+                                 Prec.DailyToMonthly(x$BUDGDAY.ASC),
+                                 x$FLOWMON.ASC[,list(FLOW,SLFL,BYFL,VRFLN,DSFL,
+                                                     SURFRUNOFF = ifelse(param_std$bypar == 0,
+                                                                         BYFL+SRFL, SRFL))],
                                  Evap.DailyToMonthly(x$EVAPDAY.ASC)[,-c(1,2), with=FALSE],
                                  SWATProfile.DailyToMonthly(x$swat.profile)[,-c(1,2), with=F])
 
@@ -86,19 +90,23 @@ fnc_write_agg <- function(x,
 
   if(stringr::str_detect(aggr_tp, "vegper")){
     output_vegper <- data.table(ID_custom = id_run,
-                            Flow.DailyToVegper(dat = x$FLOWDAY.ASC,
+                                Prec.DailyToVegper(dat = x$BUDGDAY.ASC,
+                                                   vp.year = min(x$FLOWMON.ASC$YR):max(x$FLOWMON.ASC$YR),
+                                                   vp.start = param_std$budburstdoy,
+                                                   vp.end = param_std$leaffalldoy)[,-c(1:3), with = F],
+                                Flow.DailyToVegper(dat = x$FLOWDAY.ASC,
+                                                   vp.year = min(x$FLOWMON.ASC$YR):max(x$FLOWMON.ASC$YR),
+                                                   vp.start = param_std$budburstdoy,
+                                                   vp.end = param_std$leaffalldoy,
+                                                   bypar = param_std$bypar)[,-c(1:3), with = F],
+                                Evap.DailyToVegper(dat = x$EVAPDAY.ASC,
+                                                   vp.year = min(x$FLOWMON.ASC$YR):max(x$FLOWMON.ASC$YR),
+                                                   vp.start = param_std$budburstdoy,
+                                                   vp.end = param_std$leaffalldoy)[,-c(1:3), with = F],
+                                SWATProfile.DailyToVegper(dat = x$swat.profile,
                                                           vp.year = min(x$FLOWMON.ASC$YR):max(x$FLOWMON.ASC$YR),
                                                           vp.start = param_std$budburstdoy,
-                                                          vp.end = param_std$leaffalldoy,
-                                                          bypar = param_std$bypar),
-                            Evap.DailyToVegper(dat = x$EVAPDAY.ASC,
-                                               vp.year = min(x$FLOWMON.ASC$YR):max(x$FLOWMON.ASC$YR),
-                                               vp.start = param_std$budburstdoy,
-                                               vp.end = param_std$leaffalldoy)[,-c(1:3), with = F],
-                            SWATProfile.DailyToVegper(dat = x$swat.profile,
-                                                      vp.year = min(x$FLOWMON.ASC$YR):max(x$FLOWMON.ASC$YR),
-                                                      vp.start = param_std$budburstdoy,
-                                                      vp.end = param_std$leaffalldoy)[,-1, with=F])
+                                                          vp.end = param_std$leaffalldoy)[,-1, with=F])
     setnames(output_vegper, names(output_vegper), tolower(names(output_vegper)))
   }
 

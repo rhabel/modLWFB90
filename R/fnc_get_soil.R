@@ -450,7 +450,7 @@ fnc_get_soil <- function(df.ids,
 
                            # rootsmethod = "betamodel",
                            # beta = 0.97,
-                           maxrootdepth = roots_max,
+                           roots_max_adj = roots_max,
                            # # maxrootdepth = c(-1,-1.5,-0.5, -1.5,-2),
 
                            ...,

@@ -23,7 +23,9 @@ fnc_write_to_sql <- function(dir_tmp,
     RSQLite::dbWriteTable(con,
                           i,
                           filename,
-                          append=T, overwrite = F, row.names=F)
+                          append = T,
+                          overwrite = F,
+                          row.names = F)
   }
 
   # which tables exist?

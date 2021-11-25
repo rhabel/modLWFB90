@@ -44,7 +44,7 @@ For a complete list of possible output types plus description, see \code{"U:/db_
 # setting for df.output:
 df.output <- set_outputLWFB90()
 df.output[,] <- 0L
-df.output[c("Evap", "Flow", "Swat"), c("Day")] <- 1
+df.output[c("Budg", "Evap", "Flow", "Swat"), c("Day")] <- 1
 df.output[c("Flow"), c("Mon")] <- 1
 
 # for full example, see help page of ?fnc_write_to_sql
