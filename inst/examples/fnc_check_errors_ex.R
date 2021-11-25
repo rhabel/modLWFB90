@@ -2,7 +2,8 @@ df.ids <- test_ids_bze
 
 meta <- data.frame("ID_custom" = df.ids$ID_custom,
                    modelled = 0,
-                   err.code = "no error")
+                   err.code = "no error",
+                   sim_dur_s = NA_integer_)
 
 ls.soil <- fnc_get_soil(df.ids,
                         soil_option = "BZE",

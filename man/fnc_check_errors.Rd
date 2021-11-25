@@ -4,7 +4,7 @@
 \alias{fnc_check_errors}
 \title{Save error messages and simulation time}
 \usage{
-fnc_check_errors(res, meta)
+fnc_check_errors(res, meta = NA)
 }
 \arguments{
 \item{res}{results of a \code{run_multisite_LWFB90} execution, saved by an assignment operator, see example}
@@ -15,7 +15,8 @@ fnc_check_errors(res, meta)
 \item \code{modelled} - status whether modelled or not. All \code{0} in the beginning. Will be changed to \code{1} if successful
 \item \code{err.code} - potential error codes will be stored here. Recommended to be set to \code{no error}
 \item \code{sim_dur_s} - an empty column of /code{NA_integer_}
-}}
+}
+Will be created if not provided.}
 }
 \value{
 returns a the meta-dataframe with error messages and simulation times added
@@ -28,7 +29,8 @@ df.ids <- test_ids_bze
 
 meta <- data.frame("ID_custom" = df.ids$ID_custom,
                    modelled = 0,
-                   err.code = "no error")
+                   err.code = "no error",
+                   sim_dur_s = NA_integer_)
 
 ls.soil <- fnc_get_soil(df.ids,
                         soil_option = "BZE",

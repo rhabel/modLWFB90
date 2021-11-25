@@ -10,6 +10,7 @@
 #' \item \code{err.code} - potential error codes will be stored here. Recommended to be set to \code{no error}
 #' \item \code{sim_dur_s} - an empty column of /code{NA_integer_}
 #' }
+#' Will be created if not provided.
 #'
 #' @return returns a the meta-dataframe with error messages and simulation times added
 #'
@@ -19,7 +20,17 @@
 #' @export
 
 fnc_check_errors <- function(res,
-                             meta){
+                             meta = NA){
+
+  if(is.na(meta)){
+    ids_modelled <- unlist(lapply(stringr::str_split(names(res), " "), `[[`, 1))
+
+    meta <- data.frame("ID_custom" = ids_modelled,
+                       modelled = 0,
+                       err.code = "no error",
+                       sim_dur_s = NA_integer_)
+
+  }
 
   # which worked, which didn't
   suc.mod <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(lapply(res, function(x) names(x)), "simulation_duration")],
