@@ -363,8 +363,10 @@ fnc_get_soil <- function(df.ids,
             if(is.na(x[1,i])){x[1,i] <- x[2,i]}
           }
           x <- x[,-which(colnames(x) == "humus")]
-        }
+          x$nl <- 1:nrow(x)
 
+        }
+        return(x)
       })
     }
 
