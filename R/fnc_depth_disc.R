@@ -25,7 +25,7 @@ fnc_depth_disc <- function(df,
 
 
   # limit to STOK-Profile max or 2.50m
-  if(is.na(limit_bodtief) == F){
+  if(is.na(limit_bodtief) == F & df$lower[nrow(df)] < limit_bodtief*-100){
     df$lower[nrow(df)] <- limit_bodtief*-100
   }
 
