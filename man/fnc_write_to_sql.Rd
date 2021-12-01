@@ -23,7 +23,7 @@ Parallel writing is not supported for SQLite. To end with a SQLite-DB \code{\lin
 # set df.output
 df.output <- set_outputLWFB90()
 df.output[,] <- 0L
-df.output[c("Evap", "Swat", "Flow"), c("Day")] <- 1
+df.output[c("Budg","Evap", "Swat", "Flow"), c("Day")] <- 1
 df.output[c("Flow"), c("Mon")] <- 1
 
 # set soil-list

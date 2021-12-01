@@ -36,9 +36,9 @@ fnc_write_agg <- function(x,
                           dir_name = NA){
 
 
-  # soil.df <- ls.soil[[2]]
+  # soil.df <- soil
   # colnames(soil.df) <- tolower(colnames(soil.df))
-  # id_run <- ls.soil[[2]]$ID_custom[1]
+  # id_run <- soil$ID_custom[1]
   # param_std <- param_b90
 
   # get

@@ -137,7 +137,7 @@ fnc_get_soil <- function(df.ids,
         sf::st_join(sf.geola) %>%
         dplyr::mutate(GRUND_C = as.numeric(GRUND_C))
 
-      sf.ids <- sf.ids[!duplicated(sf.ids), ]
+      sf.ids <- sf.ids[!duplicated(sf.ids$ID_custom), ]
     }
 
     #spatial join sf.ids with sf.gebiet
@@ -145,7 +145,7 @@ fnc_get_soil <- function(df.ids,
                   sf::st_join(sf.gebiet) %>%
                   sf::st_drop_geometry() %>%
                   dplyr::select(-c(HOE, RST_Z1, MOR_Strat1, HU, WHH, WAS, area_ha, WugebNr))
-    sf.ids <- sf.ids[!duplicated(sf.ids), ]
+    sf.ids <- sf.ids[!duplicated(sf.ids$ID_custom), ]
 
     # Identify missing and non-forest RST_F
     #no forest
