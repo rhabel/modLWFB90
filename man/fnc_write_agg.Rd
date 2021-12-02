@@ -17,7 +17,7 @@ fnc_write_agg(
 \arguments{
 \item{x}{one of the intermediate producs of \code{\link[LWFBrook90R]{run_LWFB90}} or  \code{\link[LWFBrook90R]{run_multisite_LWFB90}}, which is further processed internally. Can't be adjusted.}
 
-\item{aggr_tp}{a string containing the desired aggregation time period. Can be \code{monthly},  \code{vegper}, or  \code{monthly_vegper}. The latter does both.}
+\item{aggr_tp}{a string containing the desired aggregation time period. Can be \code{daily},  \code{monthly}, \code{vegper}, \code{yearly}, or any combination of the four (i.e. \code{monthly_vegper}). The latter does all terms that are detectable within the string.}
 
 \item{col_select_day}{a string containing the desired columns from the daily-aggregation (see details)}
 
@@ -37,6 +37,7 @@ LWFBrook90 creates a lot of output files. In order to keep data storage to a min
 }
 \section{Output column selection}{
 
+IT IS HIGHLY RECOMMENDED TO MAKE A SUBSELECTION, OR THERE WILL BE A LOT (>100) OF COLUMNS.
 For a complete list of possible output types plus description, see \code{"U:/db_brook90_output/whh_db_documentation"}
 }
 

@@ -26,7 +26,7 @@ Evap.DailyToVegper <- function(dat, vp.year, vp.start, vp.end) {
     EVAPOTR = sum(EVAP),
     TRAN = sum(TRAN),
     INTV = sum(IRVP + ISVP),
-    EVAP = sum(SLVP + SNVP),
+    SLVP = sum(SLVP + SNVP),
     # FLOW = sum(FLOW),
     # ISVP = sum(ISVP),
     # SLVP = sum(SLVP),

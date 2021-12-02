@@ -137,7 +137,7 @@ fnc_get_soil <- function(df.ids,
         sf::st_join(sf.geola) %>%
         dplyr::mutate(GRUND_C = as.numeric(GRUND_C))
 
-      sf.ids <- sf.ids[!duplicated(sf.ids), ]
+      sf.ids <- sf.ids[!duplicated(sf.ids$ID_custom), ]
     }
 
     #spatial join sf.ids with sf.gebiet
@@ -145,7 +145,7 @@ fnc_get_soil <- function(df.ids,
                   sf::st_join(sf.gebiet) %>%
                   sf::st_drop_geometry() %>%
                   dplyr::select(-c(HOE, RST_Z1, MOR_Strat1, HU, WHH, WAS, area_ha, WugebNr))
-    sf.ids <- sf.ids[!duplicated(sf.ids), ]
+    sf.ids <- sf.ids[!duplicated(sf.ids$ID_custom), ]
 
     # Identify missing and non-forest RST_F
     #no forest
@@ -322,7 +322,7 @@ fnc_get_soil <- function(df.ids,
         dplyr::arrange(ID, mat, -upper) %>%
         dplyr::select(ID, ID_custom, everything()) %>%
         dplyr::group_split(ID)
-      ls.soils <- lapply(ls.soils, FUN = fnc_depth_disc)
+      ls.soils <- lapply(ls.soils, FUN = fnc_depth_disc, limit_bodtief = limit_bodtief)
       if(!all(c("slope", "aspect") %in% colnames(df.ids))){
         ls.soils <- lapply(ls.soils, FUN = dplyr::left_join, y = df.dgm, by = "ID")
       }
@@ -363,8 +363,10 @@ fnc_get_soil <- function(df.ids,
             if(is.na(x[1,i])){x[1,i] <- x[2,i]}
           }
           x <- x[,-which(colnames(x) == "humus")]
-        }
+          x$nl <- 1:nrow(x)
 
+        }
+        return(x)
       })
     }
 
@@ -421,7 +423,11 @@ fnc_get_soil <- function(df.ids,
         if(length(roots_max) == 1){
           dpth_lim_veg <- rep(roots_max_cm, length(ls.soils))
         }else{
-          dpth_lim_veg <- roots_max_cm[!all.nas]
+          if(length(all.nas) != 0){
+            dpth_lim_veg <- roots_max_cm[!all.nas]
+          }else{
+            dpth_lim_veg <- roots_max_cm
+          }
         }
 
         maxdepth <- pmin(dpth_lim_soil, dpth_lim_veg, na.rm = T)/-100
@@ -452,7 +458,7 @@ fnc_get_soil <- function(df.ids,
                            # beta = 0.97,
                            roots_max_adj = roots_max,
                            # # maxrootdepth = c(-1,-1.5,-0.5, -1.5,-2),
-
+                           # beta = vec.beta,
                            ...,
 
                            SIMPLIFY = F)
