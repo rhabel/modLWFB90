@@ -162,41 +162,41 @@ fnc_write_agg <- function(x,
     # write to tmp
     if(stringr::str_detect(aggr_tp, "yearly")){
 
-      if(!dir.exists(paste0(dir_name, "/yearly/"))){
-        dir.create(paste0(dir_name, "/yearly/"), recursive = T)}
+      if(!dir.exists(paste0(dir_name, "yearly/"))){
+        dir.create(paste0(dir_name, "yearly/"), recursive = T)}
 
       saveRDS(output_yearly,
-              file = paste0(dir_name, "/yearly/", id_run, ".rds"))
+              file = paste0(dir_name, "yearly/", id_run, ".rds"))
 
     }
 
     if(stringr::str_detect(aggr_tp, "yearly")){
 
-      if(!dir.exists(paste0(dir_name, "/yearly/"))){
-        dir.create(paste0(dir_name, "/yearly/"), recursive = T)}
+      if(!dir.exists(paste0(dir_name, "yearly/"))){
+        dir.create(paste0(dir_name, "yearly/"), recursive = T)}
 
       saveRDS(output_yearly,
-              file = paste0(dir_name, "/yearly/", id_run, ".rds"))
+              file = paste0(dir_name, "yearly/", id_run, ".rds"))
 
     }
 
     if(stringr::str_detect(aggr_tp, "monthly")){
 
-      if(!dir.exists(paste0(dir_name, "/monthly/"))){
-        dir.create(paste0(dir_name, "/monthly/"), recursive = T)}
+      if(!dir.exists(paste0(dir_name, "monthly/"))){
+        dir.create(paste0(dir_name, "monthly/"), recursive = T)}
 
       saveRDS(output_monthly,
-              file = paste0(dir_name, "/monthly/", id_run, ".rds"))
+              file = paste0(dir_name, "monthly/", id_run, ".rds"))
 
     }
 
     if(stringr::str_detect(aggr_tp, "vegper")){
 
-      if(!dir.exists(paste0(dir_name, "/vegper/"))){
-        dir.create(paste0(dir_name, "/vegper/"), recursive = T)}
+      if(!dir.exists(paste0(dir_name, "vegper/"))){
+        dir.create(paste0(dir_name, "vegper/"), recursive = T)}
 
       saveRDS(output_vegper,
-              file = paste0(dir_name, "/vegper/", id_run, ".rds"))
+              file = paste0(dir_name, "vegper/", id_run, ".rds"))
 
     }
   }
