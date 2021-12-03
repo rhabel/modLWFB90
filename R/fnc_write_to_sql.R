@@ -50,6 +50,7 @@ fnc_write_to_sql <- function(dir_tmp,
   RSQLite::dbDisconnect(con)
 
   if(del_tmp){
-    unlink(dir_tmp, recursive = T)
+    unlink(paste0(dir_tmp, "*"), recursive = T, force = T)
+    unlink(dir_tmp, recursive = T, force = T)
   }
 }
