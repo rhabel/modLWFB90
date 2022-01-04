@@ -195,3 +195,5 @@ params_default <- LWFBrook90R::set_paramLWFB90()
 # save(params_beech, params_oak, params_pine, params_spruce, params_douglasfir, params_default,
 #      file = "./data/params_species.rda")
 # load("H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90/data/params_species.rda")
+# save(input_bze, input_clim, input_gis, input_paul, input_stok,
+#      file = "./data/paths.rda")

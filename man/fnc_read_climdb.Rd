@@ -11,7 +11,7 @@ fnc_read_climdb(IDs, clim_dir, id_standard, mindate = NA, maxdate = NA)
 
 \item{id_standard}{climate-cell where point is located, use \code{\link{fnc_relateCoords}} to create this information, see example}
 
-\item{mindate}{R-date-object, optional, if only a selection of the data in the climate-database shall be retrieved, can be used to improve computing time}
+\item{mindate}{R-date-object, optional. Set if only a selection of the data (1961-2018) in the climate-database shall be retrieved.}
 
 \item{maxdate}{R-date-object, optional, same as mindate. Must be provided with mindate if sub-selection on date is desired.}
 
@@ -21,45 +21,59 @@ fnc_read_climdb(IDs, clim_dir, id_standard, mindate = NA, maxdate = NA)
 returns climate data in correct format
 }
 \description{
-This function reads in the Project Climate Data files written by \code{\link{fnc_write_climdb}} and processes the data correctly, so that it can be used via the function parameters \code{climate} and \code{climate_args} in \code{\link[LWFBrook90R]{run_multisite_LWFB90}}. Function arguments must be passed to \code{\link[LWFBrook90R]{run_multisite_LWFB90}} as list of lists. Upper level containing the ID_custom names of the points to be modelled, the lower level containing the respective ID_custom name as well as the path to the project climate data base
+This function reads in the Project Climate Data files in \code{"R:/klima/whh/brook90_input/rds/"} plus the respective tranche, and processes the data correctly, so that it can be used via the function parameters \code{climate} and \code{climate_args} in \code{\link[LWFBrook90R]{run_multisite_LWFB90}}. Function arguments must be passed to \code{\link[LWFBrook90R]{run_multisite_LWFB90}} as a list of lists, which is created here. See example on how to do this.
 }
 \examples{
-fnc_write_climdb(df.ids = test.ids.bds,
-                 clim_dir = "./tmp/clim_files/",
-                 mindate = as.Date("2000-01-01"),
-                 maxdate = as.Date("2010-12-31"))
+# set options
+options.b90 <- set_optionsLWFB90(startdate = as.Date("2009-01-01"),
+                                 enddate = as.Date("2010-12-31"),
+                                 root_method = "soilvar")
 
 # set clim_args
-test.ids.bds <- left_join(test_ids_bds, fnc_relateCoords(test.ids.bds)[c("ID_custom", "id_standard")])
+df.ids <- left_join(test_ids_bze, fnc_relateCoords(test_ids_bze)[c("ID_custom", "id_standard", "tranche")])
+
+# climate arguments for on-the-fly-processing
+climlist <- split(df.ids, seq(nrow(df.ids)))
+names(climlist) <- as.character(df.ids$ID_custom)
+
 clim_args <-
-  lapply(split(test.ids.bds, seq(nrow(test.ids.bds))),
+  lapply(climlist,
          function(x) list(IDs = as.character(x$ID_custom),
                           id_standard = x$id_standard,
-                          clim_dir = "./tmp/clim_files/"))
-names(clim_args) <- as.character(test.ids.bds$ID_custom)
+                          clim_dir = paste0(input_clim, "tr", x$tranche, "/"),
+                          mindate = options.b90$startdate,
+                          maxdate = options.b90$enddate))
 
-soil.test <- fnc_get_soil(df.ids = test.ids.bds,
+# create soil
+soil.test <- fnc_get_soil(df.ids = test_ids_bze,
                           soil_option = "BZE",
                           PTF_to_use = "WESSOLEK")
-
-parms.test <- fnc_get_params(df.ids = test.ids.bds,
+# create parameters
+parms.test <- fnc_get_params(df.ids = test_ids_bze,
                              tree_species = "spruce")
 
-res <- run_multisite_LWFB90(options_b90 = set_optionsLWFB90(startdate = as.Date("2009-01-01"),
-                                                            enddate = as.Date("2010-12-31"),
-                                                            root_method = "soilvar"),
-                            param_b90 = fnc_get_params(tree_species = "spruce",
-                                                       df.ids = test.ids.bds),
+# remove poins without soil information
+with_soil_data <- which(df.ids$ID_custom \%in\% names(soil.test))
+parms.test <- parms.test[with_soil_data]
+clim_args <- clim_args[with_soil_data]
+
+res <- run_multisite_LWFB90(options_b90 = options.b90,
+                            param_b90 = parms.test,
                             soil = soil.test,
 
                             climate = fnc_read_climdb,
                             climate_args = clim_args,
 
+                            rtrn_input = F,
+
                             cores = parallel::detectCores())
 
 # single df
-fnc_read_climdb(IDs = test.ids.bds[1, "ID_custom"],
-                id_standard = test.ids.bds[1, "id_standard"],
-                clim_dir = "./tmp/clim_files/")
+clim_args[[1]]
+test <- fnc_read_climdb(IDs = clim_args[[1]]$IDs,
+                        id_standard = clim_args[[1]]$id_standard,
+                        clim_dir = clim_args[[1]]$clim_dir,
+                        mindate = clim_args[[1]]$mindate,
+                        maxdate = clim_args[[1]]$maxdate)
 
 }
