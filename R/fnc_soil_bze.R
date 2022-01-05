@@ -50,7 +50,7 @@ fnc_soil_bze <- function(df.ids,
   extr_vals$lof_cm[is.nan(extr_vals$lof_cm)] <- 0
   extr_vals$oh_cm[is.nan(extr_vals$oh_cm)] <- 0
 
-  extr_vals[extr_vals ==-9999] <- NA
+  extr_vals[extr_vals == -9999] <- NA_integer_
   extr_vals[extr_vals == "NaN"] <- NA_integer_
 
   val_miss <- extr_vals[!complete.cases(extr_vals),]
@@ -80,13 +80,18 @@ fnc_soil_bze <- function(df.ids,
       buff_cells <- cbind(buff_cells, as.data.frame(terra::xyFromCell(bze_neu[[1]], buff_data$cell)))
       buff_cells <- split(buff_cells, f = buff_cells$ID)
       buff_cells <- lapply(buff_cells,
-                           function(x){terra::vect(x, geom = c("x", "y"), crs = "EPSG:25832")})
+                           function(x){terra::vect(x, geom = c("x", "y"), crs = "EPSG:25832")})  # creates a list of all buffercells from missing points
 
       # remove those points that have no data within buffer
-      spat_list <- split(sf_miss_spat, seq(nrow(sf_miss_spat)))
-      names(spat_list) <- unlist(lapply(spat_list, function(x){terra::values(x)$ID}))
-
+      if(nrow(sf_miss_spat) > 1){
+        spat_list <- split(sf_miss_spat, seq(nrow(sf_miss_spat)))    # creates a list of spatvectors from missing points for distance calculation with mapply
+        names(spat_list) <- unlist(lapply(spat_list, function(x){terra::values(x)$ID}))
+      }else{
+        spat_list <- list(sf_miss_spat)
+        names(spat_list) <- terra::values(sf_miss_spat)$ID
+      }
       spat_list <- spat_list[names(spat_list) %in% names(buff_cells)]
+
 
       # perform distance calculation and rank
       buff_cells <- mapply(FUN = function(buffcells, mod_points){
@@ -98,12 +103,20 @@ fnc_soil_bze <- function(df.ids,
       buff_cells_final <- unlist(lapply(buff_cells, function(x){
 
         x <- data.table::as.data.table(x)
-        x <- setorder(x, distance)
+        x <- data.table::setorder(x, distance)
         x <- x[1,]$cell
       }))
 
+      buff_cells_final <- data.frame("ID" = as.numeric(names(buff_cells_final)),
+                                     "cell" = buff_cells_final,
+                                     row.names = NULL)
+      buff_data <- setNames(buff_data,
+               c("ID", paste0("category_", 1:((ncol(buff_data))-3)), "cell", "weight" ))
+      buff_data <- inner_join(buff_data, buff_cells_final, by = c("ID", "cell"))
+      buff_data <- buff_data[,-which(colnames(buff_data) %in% c( "cell", "weight"))]
+
       # filter buffer_data for selected cells
-      buff_data <- buff_data[buff_data$cell %in% buff_cells_final,-c(ncol(buff_data)-1,ncol(buff_data))]
+      #buff_data <- buff_data[buff_data$cell %in% buff_cells_final,-c(ncol(buff_data)-1,ncol(buff_data))]
       names(buff_data) <- c("ID", b)
       buff_data <- cbind("ID" = buff_data$ID,
                          lof_cm = rep(0, nrow(buff_data)),
@@ -212,8 +225,8 @@ fnc_soil_bze <- function(df.ids,
   names(ls.soils.tmp) <- unlist(lapply(ls.soils.tmp, function(x) unique(x$ID_custom)))
 
   # remove NA-dfs
-  which.na <- which(unlist(lapply(ls.soils.tmp, function(x) any(is.na(x)))==T))
-  which.non.na <- which(unlist(lapply(ls.soils.tmp, function(x) any(is.na(x)))==F))
+  which.na <- which(unlist(lapply(ls.soils.tmp, function(x) any(is.na(x[,.SD,.SDcols = !which(colnames(x) %in% c("GRUND_C", "BODENTY"))] )==T))))
+  which.non.na <- which(!df.ids$ID_custom %in% names(which.na))
   if(length(which.na) != 0){
     message(paste0("ID: ", names(ls.soils.tmp)[which.na], " won't be modelled. There's no BZE_R data at coordinate + set buffer width. \n"))
     ls.soils.tmp[which.na] <- NULL
@@ -225,21 +238,15 @@ fnc_soil_bze <- function(df.ids,
     # incl GEOLA
     if(incl_GEOLA){
 
-      # tic()
-      # cl <- parallel::makeCluster(parallel::detectCores())
-      # doParallel::registerDoParallel(cl)
-      #
-      # ls.soils.par <- foreach::foreach(i = 533:540) %dopar% {
-      #   x <- ls.soils.tmp[[i]]
      ls.soils.tmp <- lapply(ls.soils.tmp, function(x){
        x <- as.data.frame(x)
-        if(unique(x$BODENTY) == "Gleye/Auenboeden"){
+        if(!is.na(unique(x$BODENTY)) & unique(x$BODENTY) == "Gleye/Auenboeden"){
           x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
-        }else if(unique(x$BODENTY) == "Stauwasserboeden"){
+        }else if(!is.na(unique(x$BODENTY)) & unique(x$BODENTY) == "Stauwasserboeden"){
           x <- x[x$i.upper < as.numeric(unique(x$roots_bottom_rnd)),]
           x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
         }else{
-          whichmax <- as.numeric(max(unique(x$GRUND_C), unique(x$roots_bottom_rnd)))
+          whichmax <- as.numeric(max(unique(x$GRUND_C), unique(x$roots_bottom_rnd), na.rm = T))
           x <- x[which(x$i.upper < whichmax),]
           x$lower[nrow(x)] <- whichmax/-100
           x$dpth_ini <- whichmax

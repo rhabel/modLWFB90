@@ -4,7 +4,7 @@
 \alias{fnc_soil_stok}
 \title{Soil-list creation from STOKA data}
 \usage{
-fnc_soil_stok(df, df.LEIT, PTF_to_use, dgm, limit_bodtief, incl_GEOLA)
+fnc_soil_stok(df, df.LEIT, PTF_to_use, limit_bodtief, incl_GEOLA)
 }
 \arguments{
 \item{df}{A data frame containing the columns \code{ID} and \code{ID_custom} as distinct assignment from the initial \code{df.ids} dataframe and the column \code{RST_F}, which is created in \code{\link{fnc_get_soil}} through a spatial join of the coordinates with the STOK-BW shapefile (or, at this stage, the shapefile of test areas).}
@@ -12,8 +12,6 @@ fnc_soil_stok(df, df.LEIT, PTF_to_use, dgm, limit_bodtief, incl_GEOLA)
 \item{df.LEIT}{a data frame containing LEITPROFILE. At this stage of development, the comprehensive BW-wide database is not complete yet, so the test area needs to be assigned here. However, this is done automatically in  \code{\link{fnc_get_soil}}.}
 
 \item{PTF_to_use}{which PTF will later be used in \code{\link{fnc_get_soil}} has an impact on the setting of oc.pct, so this information is passed down from \code{\link{fnc_get_soil}} here.}
-
-\item{dgm}{df.dgm gets created in \code{\link{fnc_get_soil}} and is passed here to avoid complications with potential df.dgms in the global environment.}
 
 \item{limit_bodtief}{max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}. If not \code{NA} soil-dfs are created down to the depth specified here as depth in \code{m}, negative. Might be used to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. In this case, soil depth may be reduced significantly.}
 }

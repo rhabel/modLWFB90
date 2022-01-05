@@ -44,16 +44,18 @@ fnc_get_soil <- function(df.ids,
                          soil_option,
                          PTF_to_use,
 
-                         bze_buffer = NA,
-                         limit_MvG = T,
                          df.soils = NULL,
-                         meta.out = NA,
+
+                         limit_MvG = T,
                          add_BodenInfo = T,
                          create_roots = T,
-                         limit_bodtief = NA,
-                         incl_GEOLA = T,
                          add_dummy = T,
+                         incl_GEOLA = T,
                          parallel_processing= F,
+
+                         bze_buffer = NA,
+                         meta.out = NA,
+                         limit_bodtief = NA,
 
                          ...,
 
@@ -67,28 +69,30 @@ fnc_get_soil <- function(df.ids,
 
   # sort dfs according to IDs
   df.ids$ID <- 1:nrow(df.ids)
-  df.ids.25832 <- fnc_transf_crs(df = df.ids,
-                                   to_crs = "UTM_25832")
-  df.ids.25832 <- df.ids.25832@data
 
-  # df.ids.dgm <- sf::st_as_sf(df.ids,
-  #                              coords = c("easting", "northing"), crs = 32632) %>%
-  #   sf::st_transform(31467)
-  # df.ids.dgm <- terra::vect(df.ids.dgm)
-  # dgm_spat <- terra::rast(list.files(input_paul, pattern = "aspect.sdat|slope.sdat", full.names=T))
-  # terra::extract
+  df.ids.25832 <- sf::st_as_sf(df.ids,
+                               coords = c("easting", "northing"), crs = 32632) %>%
+    sf::st_transform(25832) %>%
+    cbind(., sf::st_coordinates(.)) %>%
+    dplyr::rename(easting = X, northing = Y) %>%
+    sf::st_drop_geometry()
 
   # transformation of ids to GK3 for slope & aspect ---------- ####
-  xy_gk <- fnc_transf_crs(df = df.ids)
+  df.dgm <- sf::st_as_sf(df.ids,
+                         coords = c("easting", "northing"), crs = 32632) %>%
+    sf::st_transform(31467)
+  df.dgm <- terra::vect(df.dgm)
+  dgm_spat <- terra::rast(list.files(input_paul, pattern = "aspect.sdat|slope.sdat", full.names=T))
+  df.dgm <- round(terra::extract(dgm_spat, df.dgm), 0)
 
-  dgm.stack <- raster::stack(list.files(input_paul, pattern = "aspect.sdat|slope.sdat", full.names=T))
-  df.dgm <- cbind("ID" = df.ids$ID,
-                  as.data.frame(fnc_extract_points_dgm(lay = dgm.stack,
-                                                       xy = xy_gk)))
 
   # choice of data origin:  ---------------------------------- ####
 
   if(stringr::str_detect(soil_option, "STOK")){
+
+    # append dgm
+    df.ids.25832 <- df.ids.25832 %>%
+      dplyr::left_join(df.dgm, by = "ID")
 
     # load df.LEIT
     load(file = pth_df.LEIT)
@@ -179,7 +183,6 @@ fnc_get_soil <- function(df.ids,
       ls.soils <- fnc_soil_stok(df = sf.ids,
                                 df.LEIT = df.LEIT.BW,
                                 PTF_to_use = PTF_to_use,
-                                dgm = df.dgm,
                                 limit_bodtief = limit_bodtief,
                                 incl_GEOLA = incl_GEOLA)
       if(length(ls.soils) == 0){
@@ -201,7 +204,6 @@ fnc_get_soil <- function(df.ids,
         ls.soils <- fnc_soil_stok(df = sf.ids,
                                       df.LEIT = df.LEIT.BW,
                                       PTF_to_use = PTF_to_use,
-                                      dgm = df.dgm,
                                       limit_bodtief = limit_bodtief,
                                       incl_GEOLA = incl_GEOLA)
         if(length(ls.soils) == 0){
@@ -233,7 +235,6 @@ fnc_get_soil <- function(df.ids,
                                             df.LEIT = df.LEIT.BW,
 
                                             PTF_to_use = PTF_to_use,
-                                            dgm = df.dgm,
                                             limit_bodtief = limit_bodtiefSTOK,
                                             incl_GEOLA = incl_GEOLA)
         df.ids <- df.ids %>%
@@ -498,14 +499,14 @@ fnc_get_soil <- function(df.ids,
 
                                      if(soil_option == "STOK"){
                                        x$soiltype <- bodentypen[i]
-                                       if(bodentypen[i] == "Gleye/Auenboeden"){
+                                       if(!is.na(bodentypen[i]) & bodentypen[i] == "Gleye/Auenboeden"){
                                          x[c(nrow(x)-1, nrow(x)), "ksat"] <- 0.0001
                                        }
                                      }
 
                                      if(soil_option == "BZE"){
 
-                                       if(bodentypen[i] == "Stauwasserboeden"){
+                                       if(!is.na(bodentypen[i]) & bodentypen[i] == "Stauwasserboeden"){
                                          mvg <- LWFBrook90R::hydpar_hypres(clay = 30, silt = 70, bd = 2, topsoil = F)
                                          mvg$ksat <- 10 # Aus Sd-Definition in der KA5
                                          n_rep <- 3 #
@@ -543,7 +544,7 @@ fnc_get_soil <- function(df.ids,
                                          x <- rbind(x, df.sd)
                                          x$soiltype <- bodentypen[i]
 
-                                       } else if(bodentypen[i] == "Gleye/Auenboeden"){
+                                       } else if(!is.na(bodentypen[i]) & bodentypen[i] == "Gleye/Auenboeden"){
                                          # stop water from leaving horizon below 2.60
                                          x$mat[tail(x$nl, 2)] <- max(x$mat)+1
                                          x$ksat[tail(x$nl, 2)] <- 0.0001
@@ -563,7 +564,7 @@ fnc_get_soil <- function(df.ids,
 
         ls.soils <- mapply(FUN = function(x, bodentyp){
           x$soiltype <- bodentyp
-          if(bodentyp == "Gleye/Auenboeden"){
+          if(!is.na(bodentyp) & bodentyp == "Gleye/Auenboeden"){
             x[c(nrow(x)-1, nrow(x)), "ksat"] <- 0.0001
           }
           return(x)
@@ -576,7 +577,7 @@ fnc_get_soil <- function(df.ids,
       if(soil_option == "BZE"){
 
         ls.soils <- mapply(FUN = function(x, bodentyp){
-          if(bodentyp == "Stauwasserboeden"){
+          if(!is.na(bodentyp) & bodentyp == "Stauwasserboeden"){
             mvg <- hydpar_hypres(clay = 30, silt = 70, bd = 2, topsoil = F)
             mvg$ksat <- 10 # Aus Sd-Definition in der KA5
             n_rep <- 3 #
@@ -614,7 +615,7 @@ fnc_get_soil <- function(df.ids,
             x <-   rbind(x, df.sd)
             x$soiltype <- bodentyp
             return(x)
-          } else if(bodentyp == "Gleye/Auenboeden"){
+          } else if(!is.na(bodentyp) & bodentyp == "Gleye/Auenboeden"){
             # stop water from leaving horizon below 2.60
             x$mat[tail(x$nl, 2)] <- max(x$mat)+1
             x$ksat[tail(x$nl, 2)] <- 0.0001
