@@ -5,7 +5,6 @@
 #' @param df A data frame containing the columns \code{ID} and \code{ID_custom} as distinct assignment from the initial \code{df.ids} dataframe and the column \code{RST_F}, which is created in \code{\link{fnc_get_soil}} through a spatial join of the coordinates with the STOK-BW shapefile (or, at this stage, the shapefile of test areas).
 #' @param df.LEIT a data frame containing LEITPROFILE. At this stage of development, the comprehensive BW-wide database is not complete yet, so the test area needs to be assigned here. However, this is done automatically in  \code{\link{fnc_get_soil}}.
 #' @param PTF_to_use which PTF will later be used in \code{\link{fnc_get_soil}} has an impact on the setting of oc.pct, so this information is passed down from \code{\link{fnc_get_soil}} here.
-#' @param dgm df.dgm gets created in \code{\link{fnc_get_soil}} and is passed here to avoid complications with potential df.dgms in the global environment.
 #' @param limit_bodtief max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}. If not \code{NA} soil-dfs are created down to the depth specified here as depth in \code{m}, negative. Might be used to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. In this case, soil depth may be reduced significantly.
 #'
 #' @return Returns a list of soil data frames.
@@ -13,7 +12,6 @@
 fnc_soil_stok <- function(df,
                           df.LEIT,
                           PTF_to_use,
-                          dgm,
                           limit_bodtief,
                           incl_GEOLA){
 
@@ -103,7 +101,7 @@ fnc_soil_stok <- function(df,
                       # add and prepare
                       df.tmp <- df.tmp %>%
                         dplyr::mutate(nl = 1:nrow(df.tmp)) %>%
-                        dplyr::left_join(dgm, by = "ID") %>%
+                        dplyr::left_join(df[i,c("ID", "aspect", "slope")]) %>%
                         dplyr::select(-humusform, -horizont) %>%
                         dplyr::select(ID, ID_custom, mat, nl, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, everything()) %>%
                         dplyr::mutate(ID_custom = as.character(ID_custom))
