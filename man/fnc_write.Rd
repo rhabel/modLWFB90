@@ -4,18 +4,18 @@
 \alias{fnc_write}
 \title{Function to reduce data output from automated LWFB90-Runs}
 \usage{
-fnc_write(x, dailycols = NA, layercols = NA, dir_name = NA)
+fnc_write(x, layercols = NA, dailycols = NA, dir_name = NA)
 
-fnc_write(x, dailycols = NA, layercols = NA, dir_name = NA)
+fnc_write(x, layercols = NA, dailycols = NA, dir_name = NA)
 }
 \arguments{
 \item{x}{one of the intermediate producs of \code{\link[LWFBrook90R]{run_LWFB90}} or  \code{\link[LWFBrook90R]{run_multisite_LWFB90}}, which is further processed internally. Can't be adjusted.}
 
-\item{dailycols}{same as layercols but for daily output. For possible options see \code{\link[LWFBrook90R]{run_LWFB90}}}
-
 \item{layercols}{a sting containing the desired output products. Full list of possible output columns can be find on the help page of \code{\link[LWFBrook90R]{run_LWFB90}} under \code{Layer outputs}}
 
-\item{dir_name}{directory for tmp files}
+\item{dailycols}{same as layercols but for daily output. For possible options see \code{\link[LWFBrook90R]{run_LWFB90}}}
+
+\item{dir_name}{directory for tmp files, if \code{NA} (default), output will be returned to console}
 
 \item{db_name}{name and file path of the SQL-database}
 }
