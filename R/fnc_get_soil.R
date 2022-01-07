@@ -65,7 +65,9 @@ fnc_get_soil <- function(df.ids,
                          pth_GEOLA_pieces = "H:/FVA-Projekte/P01717_DynWHH/Daten/Urdaten/Geola/"
 
                          ){
+
   argg <- c(as.list(environment()), list(...))
+  `%dopar%` <- foreach::`%dopar%`
 
   # sort dfs according to IDs
   df.ids$ID <- 1:nrow(df.ids)

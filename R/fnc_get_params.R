@@ -39,12 +39,19 @@ fnc_get_params <- function(df.ids,
 
   # SLOPE & ASPECT ------ ####
   if(!all(c("slope", "aspect") %in% colnames(df.ids))){
-    xy_gk <- fnc_transf_crs(df = df.ids)
+    # transform to GK3-terra object
+    df.dgm <- sf::st_as_sf(df.ids,
+                           coords = c("easting", "northing"), crs = 32632) %>%
+      sf::st_transform(31467)
+    df.dgm <- terra::vect(df.dgm)
 
-    dgm.stack <- raster::stack(list.files(input_paul, pattern = "aspect.sdat|slope.sdat", full.names=T))
-    df.dgm <- cbind("ID" = df.ids$ID,
-                    as.data.frame(fnc_extract_points_dgm(lay = dgm.stack, xy = xy_gk)))
+    # extract
+    dgm_spat <- terra::rast(list.files(input_paul, pattern = "aspect.sdat|slope.sdat", full.names=T))
+    df.dgm <- round(terra::extract(dgm_spat, df.dgm), 0)
+
+    # append dgm
     df.ids <- dplyr::left_join(df.ids, df.dgm, by = "ID")
+
   }
 
   # LAT & LON ------------ ####

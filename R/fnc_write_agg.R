@@ -59,6 +59,8 @@ fnc_write_agg <- function(x,
 
   if(stringr::str_detect(aggr_tp, "daily")){
     output_daily <- data.table(ID_custom = id_run,
+                               coords_x = param_std$coords_x,
+                               coords_y = param_std$coords_y,
                                x$BUDGDAY.ASC[,list(YR, MO, DA, PREC)],
                                Flow.DailyToDailyAgg(dat = x$FLOWDAY.ASC,
                                                     bypar = param_std$bypar),
@@ -69,6 +71,8 @@ fnc_write_agg <- function(x,
 
   if(stringr::str_detect(aggr_tp, "yearly")){
     output_yearly <- data.table(ID_custom = id_run,
+                                coords_x = param_std$coords_x,
+                                coords_y = param_std$coords_y,
                                 Prec.DailyToYearly(dat = x$BUDGDAY.ASC),
                                 Flow.MonthlyToYearly(dat = x$FLOWMON.ASC,
                                                bypar = param_std$bypar)[,-1, with=F],
@@ -79,6 +83,8 @@ fnc_write_agg <- function(x,
 
   if(stringr::str_detect(aggr_tp, "monthly")){
     output_monthly <- data.table(ID_custom = id_run,
+                                 coords_x = param_std$coords_x,
+                                 coords_y = param_std$coords_y,
                                  Prec.DailyToMonthly(x$BUDGDAY.ASC),
                                  x$FLOWMON.ASC[,list(FLOW,SLFL,BYFL,VRFLN,DSFL,
                                                      SURFRUNOFF = ifelse(param_std$bypar == 0,
@@ -91,10 +97,12 @@ fnc_write_agg <- function(x,
 
   if(stringr::str_detect(aggr_tp, "vegper")){
     output_vegper <- data.table(ID_custom = id_run,
+                                coords_x = param_std$coords_x,
+                                coords_y = param_std$coords_y,
                                 Prec.DailyToVegper(dat = x$BUDGDAY.ASC,
                                                    vp.year = min(x$FLOWMON.ASC$YR):max(x$FLOWMON.ASC$YR),
                                                    vp.start = param_std$budburstdoy,
-                                                   vp.end = param_std$leaffalldoy)[,-c(1:3), with = F],
+                                                   vp.end = param_std$leaffalldoy),
                                 Flow.DailyToVegper(dat = x$FLOWDAY.ASC,
                                                    vp.year = min(x$FLOWMON.ASC$YR):max(x$FLOWMON.ASC$YR),
                                                    vp.start = param_std$budburstdoy,
@@ -115,25 +123,25 @@ fnc_write_agg <- function(x,
   # Output-Selection ...
 
   if(!any(is.na(col_select_vp))){
-    keep <- c("id_custom", "yr", "vpstartdoy", "vpenddoy",
+    keep <- c("id_custom", "coords_x", "coords_y", "yr", "vpstartdoy", "vpenddoy",
               col_select_vp)
     output_vegper <- output_vegper[, keep, with = FALSE]
   }
 
   if(!any(is.na(col_select_mon))){
-    keep <- c("id_custom", "yr", "mo",
+    keep <- c("id_custom", "coords_x", "coords_y", "yr", "mo",
               col_select_mon)
     output_monthly <- output_monthly[, keep, with = FALSE]
   }
 
   if(!any(is.na(col_select_yr))){
-    keep <- c("id_custom", "yr",
+    keep <- c("id_custom", "coords_x", "coords_y", "yr",
               col_select_yr)
     output_yearly <- output_yearly[, keep, with = FALSE]
   }
 
   if(!any(is.na(col_select_day))){
-    keep <- c("id_custom", "yr", "mo", "da",
+    keep <- c("id_custom", "coords_x", "coords_y", "yr", "mo", "da",
               col_select_day)
     output_daily <- output_daily[, keep, with = FALSE]
   }
