@@ -11,8 +11,7 @@ fnc_get_soil(
   df.soils = NULL,
   limit_MvG = T,
   add_BodenInfo = T,
-  create_roots = T,
-  add_dummy = T,
+  create_roots = F,
   incl_GEOLA = T,
   parallel_processing = F,
   bze_buffer = NA,
@@ -55,8 +54,6 @@ If the nFK shall be calculated at some point, this will be done for the first 1m
 \item{add_BodenInfo}{shall further soil info (nFK, PWP, FK, texture ...) be added to the soil-df, default is \code{TRUE}}
 
 \item{create_roots}{decides whether roots should be created manually (if set to \code{TRUE})}
-
-\item{add_dummy}{adds 1m of dummy-soil layer to the bottom of the soil profile. Adding a dummy layer has been observed to improve results. Default is \code{TRUE}}
 
 \item{incl_GEOLA}{information from the \emph{Geowissenschaftliche Landesaufnahme} will be used to get additional data on soil depth and max root depth, as well as identifying soil types that will be modelled differently to include the effect of groundwater (Gleye / Auenboeden) or alternating Saturation (Stauwasserboeden). Default is \code{TRUE}}
 

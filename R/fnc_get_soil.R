@@ -11,7 +11,6 @@
 #' @param soil_option whether BZE or STOK data should be used for modelling. While option \code{BZE} with a buffer of 50 shouldn't create many NAs, option \code{STOK} builds on the data of the Standortskartierung Baden-Wuerttemberg that is not available everywhere (i.e. in private forests). \cr Option \code{STOK_BZE} will complete the missing STOK-points with BZE-data. \cr The final option is \code{OWN}, in which case users can enter their own soil data (i.e. from lab or field experiments). If the option \code{OWN} is selected, the dataframes must be passed at \code{df.soils}. \cr \cr at the moment the combination \code{STOK_BZE} does not work yet with \code{incl_GEOLA}
 #' @param create_roots decides whether roots should be created manually (if set to \code{TRUE})
 #' @param add_BodenInfo shall further soil info (nFK, PWP, FK, texture ...) be added to the soil-df, default is \code{TRUE}
-#' @param add_dummy adds 1m of dummy-soil layer to the bottom of the soil profile. Adding a dummy layer has been observed to improve results. Default is \code{TRUE}
 #' @param incl_GEOLA information from the \emph{Geowissenschaftliche Landesaufnahme} will be used to get additional data on soil depth and max root depth, as well as identifying soil types that will be modelled differently to include the effect of groundwater (Gleye / Auenboeden) or alternating Saturation (Stauwasserboeden). Default is \code{TRUE}
 #' @param parallel_processing the lists of dataframes are processed several times (adding roots, adding nFK information etc.). Default is \code{F} and runs with normal \code{lapply} statements. If many points are modelled, it is advised to set this to \code{T}, to activate parallel processing on several cores (as many as available). A BZE-based testrun with 32 GB RAM and 8 cores revealed a higher performance of parallel processing starting at the threshold of 250 points.
 #' @param pth_df.LEIT path to .RData file with soil information from Modul1-DB. Should be the extended version containing a column for humus, currently set to latest location.
@@ -48,8 +47,7 @@ fnc_get_soil <- function(df.ids,
 
                          limit_MvG = T,
                          add_BodenInfo = T,
-                         create_roots = T,
-                         add_dummy = T,
+                         create_roots = F,
                          incl_GEOLA = T,
                          parallel_processing= F,
 
@@ -638,62 +636,6 @@ fnc_get_soil <- function(df.ids,
   }
 
 
-
-  # add dummy soil horizons ---------------------------------- ####
-  if(add_dummy){
-
-    if(parallel_processing){
-      cl <- parallel::makeCluster(parallel::detectCores())
-      doParallel::registerDoParallel(cl)
-
-      ls.soils <- foreach::foreach(i = 1:length(ls.soils),
-                                   .packages = c("dplyr")) %dopar% {
-                                     x <- ls.soils[[i]]
-                                     lastrow <- x[nrow(x),]
-                                     df.dummy <- as.data.frame(lapply(lastrow, rep, 6)) %>%
-                                       dplyr::mutate(mat = mat + 1,
-                                                     nl = nl + c(1:6),
-                                                     upper = lastrow$lower + c(0, -0.1, -0.2, -0.4, -0.6, -0.8),
-                                                     lower = lastrow$lower + c(-0.1, -0.2, -0.4, -0.6, -0.8, -1),
-                                                     ths = 0.1,
-                                                     thr = 0,
-                                                     alpha = 1.3,
-                                                     ksat = 50,
-                                                     tort = -0.5)
-                                     if("rootden" %in% colnames(x)){
-                                       df.dummy <- df.dummy %>% dplyr::mutate(rootden = 0)
-                                     }
-                                     df.dummy <- df.dummy %>%
-                                       dplyr::relocate(names(x))
-                                     x <- rbind(x, df.dummy)
-                                   }
-
-      parallel::stopCluster(cl)
-    }else{
-      ls.soils <- lapply(ls.soils,
-                         FUN = function(x){
-                           lastrow <- x[nrow(x),]
-                           df.dummy <- as.data.frame(lapply(lastrow, rep, 6)) %>%
-                             mutate(mat = mat + 1,
-                                    nl = nl + c(1:6),
-                                    upper = lastrow$lower + c(0, -0.1, -0.2, -0.4, -0.6, -0.8),
-                                    lower = lastrow$lower + c(-0.1, -0.2, -0.4, -0.6, -0.8, -1),
-                                    ths = 0.1,
-                                    thr = 0,
-                                    alpha = 1.3,
-                                    ksat = 50,
-                                    tort = -0.5)
-                           if("rootden" %in% colnames(x)){
-                             df.dummy <- df.dummy %>% mutate(rootden = 0)
-                           }
-                           df.dummy <- df.dummy %>%
-                             relocate(names(x))
-                           x <- rbind(x, df.dummy)
-                           return(x)
-                         })
-    }
-
-  }
 
   # add_BodenInfo: ------------------------------------------- ####
   if(add_BodenInfo){

@@ -26,27 +26,22 @@ LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 Imports:
-    dplyr, 
-    data.table (>= 1.10.4),
-    doParallel,
-    foreach (>= 1.5.0),   
     methods,
-    parallel,
     raster,
-    readr,
     readxl,
-    rgdal,
-    rgeos,
     RSQLite,
     sirad,
-    sf, 
     soiltexture,
-    sp,
-    stringr,
-    tidyr,
-    vegperiod (>= 0.3.0)
+    tidyr
 Depends:
-    LWFBrook90R (>= 0.4.0)
+    LWFBrook90R (>= 0.4.0),
+    tidyverse, 
+    data.table,
+    parallel,
+    doParallel,
+    foreach (>= 1.5.0),   
+    vegperiod (>= 0.3.0), 
+    sf
 Suggests: 
     knitr,
     rmarkdown
