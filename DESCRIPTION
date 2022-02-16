@@ -27,10 +27,8 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 Imports:
     methods,
-    raster,
     readxl,
     RSQLite,
-    sirad,
     soiltexture,
     tidyr
 Depends:
