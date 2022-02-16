@@ -194,11 +194,39 @@ params_douglasfir <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                                   betaroot = 0.976)
 
 
-params_default <- LWFBrook90R::set_paramLWFB90()
 
+# save ####
+params_default <- LWFBrook90R::set_paramLWFB90()
 
 save(params_beech, params_oak, params_pine, params_spruce, params_douglasfir, params_default,
      file = "./data/params_species.rda")
 # load("H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90/data/params_species.rda")
-# save(input_bze, input_clim, input_gis, input_paul, input_stok,
-#      file = "./data/paths.rda")
+
+# paths ####
+
+path_WGB_diss_shp = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/WUGEB/"
+path_STOK_pieces = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/STOKA/"
+path_GEOLA_pieces = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/GEOLA/"
+path_DGM = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/DGM/"
+path_BZEreg = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/BZE_REG/"
+
+save(path_WGB_diss_shp, path_STOK_pieces, path_GEOLA_pieces, path_DGM, path_BZEreg,
+     file = "./data/paths.rda")
+
+# bonitaet
+df.boni <- data.frame("tree_species" = rep(c("beech", "oak", "spruce", "pine"),each = 3),
+                      "boni" = rep(1:3, 4),
+                      "maxlai" = c(6,5,4,
+                                   5.4, 5.0, 4.5,
+                                   7,6,5,
+                                   3.5, 3, 2.5),
+                      "sai" = c(1,0.9,0.8,
+                                0.9, 0.8, 0.7,
+                                2,1.5,1,
+                                0.8,0.7,0.6),
+                      "height" = c(34, 25, 20,
+                                   26, 20, 15,
+                                   36, 25, 20,
+                                   30, 20, 15))
+save(df.boni,
+     file = "./data/boni.rda")
