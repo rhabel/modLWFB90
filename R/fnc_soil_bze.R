@@ -25,7 +25,7 @@ fnc_soil_bze <- function(df.ids,
     sf::st_transform(25832)
   xy_spat <- terra::vect(xy)
 
-  input_bze <- input_bze
+  path_BZEreg <- path_BZEreg
 
   # einlesen aller BZEraster:
   a <- c("lof_cm", "oh_cm")
@@ -37,11 +37,11 @@ fnc_soil_bze <- function(df.ids,
          "t0", "t1", "t2", "t3", "t4",
          "u0", "u1", "u2", "u3", "u4")
 
-  bze_alt <- terra::rast(paste0(input_bze, a, "_strt/hdr.adf"))
+  bze_alt <- terra::rast(paste0(path_BZEreg, a, "_strt/hdr.adf"))
   extr_vals_alt <- terra::extract(bze_alt, xy_spat)
   colnames(extr_vals_alt) <- c("ID", a)
 
-  bze_neu <- terra::rast(paste0(input_bze, b, ".tif"))
+  bze_neu <- terra::rast(paste0(path_BZEreg, b, ".tif"))
   extr_vals_neu <- terra::extract(bze_neu, xy_spat, factors = F)
   colnames(extr_vals_neu) <- c("ID", b)
 
@@ -287,7 +287,7 @@ fnc_soil_bze <- function(df.ids,
   # sort and rename
   ls.soils.tmp <- lapply(ls.soils.tmp, function(x){
 
-    x <- x[c("ID", "ID_custom", "mat", "nl", "upper", "lower",
+    x <- x[,c("ID", "ID_custom", "mat", "nl", "upper", "lower",
              "sand", "schluff", "ton", "gba", "trd", "corg",
              "aspect", "slope", "profile_top", "BODENTY", "dpth_ini")]
     colnames(x) <- c("ID", "ID_custom", "mat", "nl","upper", "lower",
