@@ -209,8 +209,10 @@ path_STOK_pieces = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modL
 path_GEOLA_pieces = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/GEOLA/"
 path_DGM = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/DGM/"
 path_BZEreg = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/BZE_REG/"
+path_pdur = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/PDUR/"
+path_wald = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/WALD_LY/"
 
-save(path_WGB_diss_shp, path_STOK_pieces, path_GEOLA_pieces, path_DGM, path_BZEreg,
+save(path_WGB_diss_shp, path_STOK_pieces, path_GEOLA_pieces, path_DGM, path_BZEreg, path_pdur, path_wald,
      file = "./data/paths.rda")
 
 # bonitaet
