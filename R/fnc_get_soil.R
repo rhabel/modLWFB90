@@ -56,6 +56,7 @@ fnc_get_soil <- function(df.ids,
 
   argg <- c(as.list(environment()), list(...))
   `%dopar%` <- foreach::`%dopar%`
+  data(paths)
 
   # sort dfs according to IDs
   df.ids$ID <- 1:nrow(df.ids)
@@ -70,7 +71,7 @@ fnc_get_soil <- function(df.ids,
 
 
   # choice of data origin:  ---------------------------------- ####
-
+  cat("Gathering soil data...\n")
   if (soil_option == "BZE") {
 
     df.ids <- df.ids %>%
@@ -98,14 +99,16 @@ fnc_get_soil <- function(df.ids,
 
       sf.geola <- foreach::foreach(i = wugeb,
                                    .packages = "sf",
-                                   .combine = rbind) %dopar% {
+                                   .combine = rbind,
+                                   .export = "path_GEOLA_pieces") %dopar% {
                                      sf::st_read(paste0(path_GEOLA_pieces, i),
                                                  quiet = T)
                                    }
 
       sf.stoka <- foreach::foreach(i = wugeb,
                                    .packages = "sf",
-                                   .combine = rbind ) %dopar% {
+                                   .combine = rbind,
+                                   .export = "path_STOK_pieces" ) %dopar% {
                                      sf::st_read(paste0(path_STOK_pieces, i),
                                                  quiet = T)
                                    }
@@ -115,19 +118,22 @@ fnc_get_soil <- function(df.ids,
       sf.ids <-  sf.ids %>%
         sf::st_join(sf.geola) %>%
         sf::st_join(sf.stoka) %>%
-        sf::st_drop_geometry()%>%
+        sf::st_drop_geometry() %>%
+        dplyr::distinct() %>%
         dplyr::mutate(GRUND_C = as.numeric(GRUND_C),
                       BODENTY = case_when(str_detect(WHH_broad, "G") ~ "Gleye/Auenboeden",
                                           str_detect(WHH_broad, "S") ~ "Stauwasserboeden",
+                                          str_detect(BODENTY, "Gleye/Auenboeden") & !str_detect(WHH, "G") ~ "sonstige",
+                                          str_detect(BODENTY, "Stauwasserboeden") & !str_detect(WHH, "S") ~ "sonstige",
                                           T ~ BODENTY)) %>%
         dplyr::select(-c(OA_ID, RST_F, HU, WugebNr, WHH, WHH_broad))
 
       df.ids <- df.ids %>%
-        dplyr::left_join(sf.ids) %>%
-        distinct(.)
+        dplyr::left_join(sf.ids)
 
     }
 
+    cat("starting BZE extraction.../n")
     ls.soils <- fnc_soil_bze(df.ids = df.ids,
                              buffering = (!is.na(bze_buffer)),
                              buff_width = bze_buffer,
@@ -168,6 +174,7 @@ fnc_get_soil <- function(df.ids,
 
 
   # PTF-application: ----------------------------------------- ####
+  cat("Applying PTFs / own MvG parameters...\n")
   if(PTF_to_use == "OWN_PARMS"){
 
     # check if all necessary columns are there:
@@ -239,6 +246,8 @@ fnc_get_soil <- function(df.ids,
   }
 
   # Roots: --------------------------------------------------- ####
+  cat("Calculating roots...\n")
+
   if(soil_option != "OWN"){
 
     # roots limited by soil conditions and/or vegetation parameters
@@ -308,6 +317,7 @@ fnc_get_soil <- function(df.ids,
 
   # GEOLA application ---------------------------------------- ####
   if(incl_GEOLA){
+    cat("Applying STOK and GEOLA...\n")
 
     if(parallel_processing){
       cl <- parallel::makeCluster(parallel::detectCores())
@@ -459,7 +469,9 @@ fnc_get_soil <- function(df.ids,
 
 
   # add_BodenInfo: ------------------------------------------- ####
+
   if(add_BodenInfo){
+    cat("Adding soil info...\n")
 
     if(parallel_processing){
       cl <- parallel::makeCluster(parallel::detectCores())
@@ -481,6 +493,7 @@ fnc_get_soil <- function(df.ids,
   # reduce --------------------------------------------------- ####
   to_2 <- c("sand", "silt","clay", "oc.pct",  "tort")
   to_3 <- c("gravel", "bd", "ths", "thr", "alpha", "npar", "mpar", "rootden" )
+  cat("almost done...\n")
 
   if(parallel_processing){
     cl <- parallel::makeCluster(parallel::detectCores())
