@@ -148,6 +148,32 @@ fnc_get_params <- function(df.ids,
     }, df.site.infos = df.site.infos)
   }
 
+  # add pdur ------------------------------------------------- ####
+  if(!"pdur" %in% colnames(df.ids)){
+
+    # transform points to spatvect
+    sf.ids <- sf::st_as_sf(df.ids, coords = c("easting", "northing"), crs = 32632) %>%
+      sf::st_transform(25832)
+    spat.ids <- terra::vect(sf.ids)
+
+    # load pdur-rasters.
+    out <- terra::rast(paste0(path_pdur, "pdur.tif"))
+
+    extr_vals <- terra::extract(out, spat.ids)
+    extr_vals[is.na(extr_vals)] <- 4
+    extr_vals <- split(extr_vals[,2:13], seq(nrow(extr_vals)))
+    extr_vals <- lapply(extr_vals, function(x) as.numeric(x))
+
+    rm(out); gc()
+
+    ls.param <- mapply(FUN = function(liste, vals){
+                         liste$pdur <- vals
+                         return(liste)
+                       },
+                       liste = ls.param,
+                       vals = extr_vals,
+                       SIMPLIFY = F)
+  }
 
   names(ls.param) <- df.ids$ID_custom
 
