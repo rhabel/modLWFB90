@@ -15,17 +15,75 @@
 fnc_soil_bze <- function(df.ids,
 
                          meta.out,
+                         reduce_to_forest = F,
                          limit_bodtief = NA,
                          incl_GEOLA,
                          buffering = F,
                          buff_width = NA){
 
+  data(paths)
+
+  if(reduce_to_forest){
+    # transform to spatVector
+
+    xy <- sf::st_as_sf(df.ids,
+                       coords = c("easting", "northing"), crs = 32632) %>%
+      sf::st_transform(25832)
+
+    xy_spat <- terra::vect(xy)
+
+    # filter whether wald or not
+    rast_wald <- terra::rast(paste0(path_wald, "wald_yn.tif"))
+    extr_vals_direkt <- terra::extract(rast_wald, xy_spat) %>% dplyr::filter(wald_yn == 1) %>% dplyr::pull(ID)
+
+    # tolerance of 12m - half a cell
+    xy_spat2 <- xy %>% dplyr::filter(!ID %in% extr_vals_direkt) %>%
+      sf::st_buffer(., 12) %>%
+      terra::vect(.)
+    extr_vals_buff <- terra::extract(rast_wald, xy_spat2, touches = T)
+    extr_vals_buff$ID <- xy_spat2$ID[extr_vals_buff$ID]
+    extr_vals_buff <- extr_vals_buff %>%
+      dplyr::filter(wald_yn == 1) %>% dplyr::distinct(ID) %>%  dplyr::pull(ID)
+
+    # forest or non-forest?
+    im_wald <- sort(c(extr_vals_direkt, extr_vals_buff))
+    nicht_im_wald <- df.ids$ID[!df.ids$ID %in% im_wald]
+
+    message(paste0("ID: ", df.ids$ID_custom[nicht_im_wald], " are not located in the forest. They will not be modelled... \n"))
+
+    # filter on those which are in the forest:
+    df.ids <- df.ids %>%
+      dplyr::filter(ID %in% im_wald)
+
+    xy <- sf::st_as_sf(df.ids,
+                       coords = c("easting", "northing"), crs = 32632) %>%
+      sf::st_transform(25832)
+
+    xy_spat <- terra::vect(xy)
+  }
+
+  # transform to spatVector
   xy <- sf::st_as_sf(df.ids,
-                      coords = c("easting", "northing"), crs = 32632) %>%
+                     coords = c("easting", "northing"), crs = 32632) %>%
     sf::st_transform(25832)
+
   xy_spat <- terra::vect(xy)
 
-  input_bze <- input_bze
+  # exclude peat areas:
+  moore <- df.ids$ID[df.ids$BODENTY == "Moor"][!is.na(df.ids$ID[df.ids$BODENTY == "Moor"])]
+  if(length(moore) > 0){
+    message(paste0("ID: ", df.ids$ID_custom[moore], " lie within peatlands (Moore). They will not be modelled... \n"))
+  }
+
+  # filter on those which are in the forest:
+  df.ids <- df.ids %>%
+    dplyr::filter(!ID %in% moore)
+
+  xy <- sf::st_as_sf(df.ids,
+                     coords = c("easting", "northing"), crs = 32632) %>%
+    sf::st_transform(25832)
+
+  xy_spat <- terra::vect(xy)
 
   # einlesen aller BZEraster:
   a <- c("lof_cm", "oh_cm")
@@ -37,18 +95,18 @@ fnc_soil_bze <- function(df.ids,
          "t0", "t1", "t2", "t3", "t4",
          "u0", "u1", "u2", "u3", "u4")
 
-  bze_alt <- terra::rast(paste0(input_bze, a, "_strt/hdr.adf"))
-  extr_vals_alt <- terra::extract(bze_alt, xy_spat)
-  colnames(extr_vals_alt) <- c("ID", a)
+  bze_alt <- terra::rast(paste0(path_BZEreg, a, "_strt/hdr.adf"))
+  #extr_vals_alt <- terra::extract(bze_alt, xy_spat)
+  #colnames(extr_vals_alt) <- c("ID", a)
 
-  bze_neu <- terra::rast(paste0(input_bze, b, ".tif"))
-  extr_vals_neu <- terra::extract(bze_neu, xy_spat, factors = F)
-  colnames(extr_vals_neu) <- c("ID", b)
+  bze_neu <- terra::rast(paste0(path_BZEreg, b, ".tif"))
+  #extr_vals_neu <- terra::extract(bze_neu, xy_spat, factors = F)
+  #colnames(extr_vals_neu) <- c("ID", b)
 
-  extr_vals <- dplyr::left_join(as.data.frame(extr_vals_alt),
-                         as.data.frame(extr_vals_neu), by = "ID")
-  extr_vals$lof_cm[is.nan(extr_vals$lof_cm)] <- 0
-  extr_vals$oh_cm[is.nan(extr_vals$oh_cm)] <- 0
+  bze_complete <- c(bze_alt, bze_neu)
+  names(bze_complete)[1:2] <- a
+  extr_vals <- as.data.frame(terra::extract(bze_complete, xy_spat, factors = F))
+  extr_vals$ID <- xy_spat$ID[extr_vals$ID]
 
   extr_vals[extr_vals == -9999] <- NA_integer_
   extr_vals[extr_vals == "NaN"] <- NA_integer_
@@ -68,10 +126,23 @@ fnc_soil_bze <- function(df.ids,
     sf_buffer <- sf::st_buffer(sf_miss, buff_width)
 
     # buff_data contains values from cells within buffer
-    buff_data <- terra::extract(bze_neu, terra::vect(sf_buffer), factors = F,
+    buff_data <- terra::extract(bze_complete, terra::vect(sf_buffer), factors = F,
                                 weights = T, cells = T)
-    # somehow some are empty - remove!
+
+    # all data complete through buffering
+    buff_data_complete <- as.data.frame(buff_data[complete.cases(buff_data),])
+    buff_data_complete$complete <- "yes"
+
+    # missing organic layer only shall not exclude otherwise successfull buffer process
+    buff_data[,c(2,3)][is.nan(buff_data[,c(2,3)])] <- 0
     buff_data <- as.data.frame(buff_data[complete.cases(buff_data),])
+
+    buff_data_incomplete <- left_join(buff_data, buff_data_complete) %>%
+      group_by(ID) %>%
+      filter(all(is.na(complete)))
+
+    buff_data <- rbind(buff_data_complete, buff_data_incomplete) %>% dplyr::arrange(ID) %>% dplyr::select(-complete)
+
     if(nrow(buff_data) >0 ){
       buff_data$ID <- which_missing[buff_data$ID] # keep ID from above
 
@@ -110,20 +181,21 @@ fnc_soil_bze <- function(df.ids,
       buff_cells_final <- data.frame("ID" = as.numeric(names(buff_cells_final)),
                                      "cell" = buff_cells_final,
                                      row.names = NULL)
-      buff_data <- setNames(buff_data,
-               c("ID", paste0("category_", 1:((ncol(buff_data))-3)), "cell", "weight" ))
+      # buff_data <- setNames(buff_data,
+      #          c("ID", paste0("category_", 1:((ncol(buff_data))-3)), "cell", "weight" ))
       buff_data <- inner_join(buff_data, buff_cells_final, by = c("ID", "cell"))
       buff_data <- buff_data[,-which(colnames(buff_data) %in% c( "cell", "weight"))]
 
       # filter buffer_data for selected cells
       #buff_data <- buff_data[buff_data$cell %in% buff_cells_final,-c(ncol(buff_data)-1,ncol(buff_data))]
-      names(buff_data) <- c("ID", b)
-      buff_data <- cbind("ID" = buff_data$ID,
-                         lof_cm = rep(0, nrow(buff_data)),
-                         oh_cm = rep(0, nrow(buff_data)),
-                         buff_data[,-1])
+      #names(buff_data) <- c("ID", b)
+      # buff_data <- cbind("ID" = buff_data$ID,
+      #                    lof_cm = rep(0, nrow(buff_data)),
+      #                    oh_cm = rep(0, nrow(buff_data)),
+      #                    buff_data[,-1])
 
       succ_buffered <- buff_data$ID
+
       # include buffered data into dataframe of extracted values
       extr_vals <- extr_vals[-which(extr_vals$ID %in% succ_buffered),]
       extr_vals <- rbind(extr_vals, buff_data)
@@ -171,9 +243,11 @@ fnc_soil_bze <- function(df.ids,
 
   }
 
-  soil <- data.table::as.data.table(cbind(
-    df.ids[,c("ID", "aspect", "slope")], extr_vals[,-1])
+  soil <- data.table::as.data.table(dplyr::left_join(
+    df.ids[,c("ID", "aspect", "slope")], extr_vals, by = "ID")
   )
+
+
 
   # aufbereiten
   #names(soil) <- c("aspect", "slope", names(soilraster)) # Reihenfolge der Listenelemente entspricht Namen der Layers im Rasterstack
@@ -228,7 +302,7 @@ fnc_soil_bze <- function(df.ids,
   which.na <- which(unlist(lapply(ls.soils.tmp, function(x) any(is.na(x[,.SD,.SDcols = !which(colnames(x) %in% c("GRUND_C", "BODENTY"))] )==T))))
   which.non.na <- which(!df.ids$ID_custom %in% names(which.na))
   if(length(which.na) != 0){
-    message(paste0("ID: ", names(ls.soils.tmp)[which.na], " won't be modelled. There's no BZE_R data at coordinate + set buffer width. \n"))
+    message(paste0("ID: ", names(ls.soils.tmp)[which.na], " won't be modelled. There's no complete BZE_reg data at coordinate + set buffer width. \n"))
     ls.soils.tmp[which.na] <- NULL
   }
 
@@ -287,7 +361,7 @@ fnc_soil_bze <- function(df.ids,
   # sort and rename
   ls.soils.tmp <- lapply(ls.soils.tmp, function(x){
 
-    x <- x[c("ID", "ID_custom", "mat", "nl", "upper", "lower",
+    x <- x[,c("ID", "ID_custom", "mat", "nl", "upper", "lower",
              "sand", "schluff", "ton", "gba", "trd", "corg",
              "aspect", "slope", "profile_top", "BODENTY", "dpth_ini")]
     colnames(x) <- c("ID", "ID_custom", "mat", "nl","upper", "lower",

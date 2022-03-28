@@ -6,11 +6,11 @@
 \usage{
 fnc_create_IDs(
   poly,
-  res = 250,
+  res = 50,
   ID_pre = "ID_",
   out_dir = NA,
   out_name = "IDs",
-  add_tranches = F
+  tranches = NA
 )
 }
 \arguments{
@@ -20,15 +20,31 @@ fnc_create_IDs(
 
 \item{ID_pre}{optional, prefix for ID_custom-name as character. Default is \code{ID_}}
 
-\item{out_dir}{directory where df.ids shall be stored as \code{.rds}, if set to \code{NA}, a data frame will be returned to the console}
+\item{out_dir}{directory where df.ids shall be stored as \code{.rds}, if set to \code{NA}, data frame(s) will be returned to the console}
 
 \item{out_name}{optional, name for ID-files, default is \code{IDs.rds}}
 
-\item{add_tranches}{when large areas are modelled with a high resolution, it can be useful to model your area as tranches. In this case the IDs are assigned to 9 Tranches, similar to a SUDOKU-field. This way you can calculate the results tranche by tranche and in a 9th of the total computing time you get a result covering the whole modelling area. If \code{TRUE}, df.ids are stored as 9 tranches named \code{out_name _ trX.rds} in \code{out_dir}.}
+\item{add_tranches}{when large areas are modelled with a high resolution, it can be useful to model your area as tranches similar to a SUDOKU-field. This way you can calculate the results tranche by tranche and in a 9th of the total computing time you get a result covering the whole modelling area. In this case the IDs are assigned to a number of tranches set by \code{tranches}. Tranches must be square number, such as 4, 9, 16, or 25. Default is \code{NA} without tranches, otherwise several df.ids are stored as tranches named \code{out_name_trX.rds} in \code{out_dir}.}
 }
 \value{
 returns a list of points with ID_custom (optional), x- and y- coordinates
 }
 \description{
 This function creates a regular pattern of modelling points for a given test area and a given resolution.
+}
+\examples{
+df.ids <- fnc_create_IDs(poly = "H:/FVA-Projekte/P01540_WHHKW/Daten/Urdaten/GIS/metadaten/Freiburg_Wald.shp",
+                         res = 100,
+                         ID_pre = "ID_",
+                         out_dir = NA,
+                         out_name = "IDs",
+                         tranches = 16)
+
+sf.ids <- sf::st_as_sf(df.ids,
+                       coords = c("easting", "northing"),
+                       crs = 32632)
+
+ggplot(sf.ids)+
+   geom_sf(aes(color = factor(Tranche)))
+
 }

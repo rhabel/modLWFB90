@@ -16,16 +16,18 @@
 #'
 #' @param tree_species name of the tree species to be modelled with. Either a single species name that is then used for all points in \code{df.ids}, or a vector of the same length as \code{df.ids$ID} if the main tree species of each point is known and differs. Must be one of \code{beech}, \code{oak}, \code{spruce}, \code{pine}, \code{larch}, \code{douglasfir}. \cr It is  recommended (findings of project WHH-KW) to use the settings of spruce for fir and the settings of pine for larch. If certain tree specific parameters should be changed permanently, the corresponding object \code{params_...} should be overwritten manually before running the function.
 #' @param df.ind.info a data frame containing individual site information for each ID or if parameters are presumed to be different than the default settings of \code{\link[LWFBrook90R]{set_paramLWFB90}}. They need to be given here in the form of a data frame containing the column \code{ID}, which should be identical to the \code{ID}-column of\code{df.ids}, and additional columns that are named exactly like the parameters in \code{\link[LWFBrook90R]{set_paramLWFB90}}.
+#' @param wuchsmaechtigkeit function in progress. provides an approximation for the mean growth of an area in BW. Adjusts LAI, SAI and max height of the vegetation. Default is \code{F}, as still in progress.
 #'
 #' @return Returns a list of parameter settings that can be read and further processed by \code{\link[LWFBrook90R]{run_multisite_LWFB90}} or \code{\link[LWFBrook90R]{run_LWFB90}}
 #' @example inst/examples/fnc_get_params_ex.R
 #' @export
 
 fnc_get_params <- function(df.ids,
-                          tree_species = "default",
-                          df.ind.info = NULL){
+                          tree_species = "spruce",
+                          df.ind.info = NULL,
+                          wuchsmaechtigkeit = F){
 
-  # IDs okay? ---------- ####
+  # IDs okay? ------------------------------------------------- ####
   # sort dfs according to IDs
   df.ids$ID <- 1:nrow(df.ids)
 
@@ -37,7 +39,7 @@ fnc_get_params <- function(df.ids,
 
 
 
-  # SLOPE & ASPECT ------ ####
+  # SLOPE & ASPECT -------------------------------------------- ####
   if(!all(c("slope", "aspect") %in% colnames(df.ids))){
     # transform to GK3-terra object
     df.dgm <- sf::st_as_sf(df.ids,
@@ -46,7 +48,7 @@ fnc_get_params <- function(df.ids,
     df.dgm <- terra::vect(df.dgm)
 
     # extract
-    dgm_spat <- terra::rast(list.files(input_paul, pattern = "aspect.sdat|slope.sdat", full.names=T))
+    dgm_spat <- terra::rast(list.files(path_DGM, pattern = "aspect.sdat|slope.sdat", full.names=T))
     df.dgm <- round(terra::extract(dgm_spat, df.dgm), 0)
 
     # append dgm
@@ -54,9 +56,9 @@ fnc_get_params <- function(df.ids,
 
   }
 
-  # LAT & LON ------------ ####
+  # LAT & LON ------------------------------------------------- ####
   if(!all(c("coords_x", "coords_y") %in% colnames(df.ids))){
-    sf.ids <- st_as_sf(df.ids, coords = c("easting", "northing"), crs = 32632)
+    sf.ids <- sf::st_as_sf(df.ids, coords = c("easting", "northing"), crs = 32632)
     df.latlon <- cbind("ID" = df.ids$ID,
                        setNames(as.data.frame(sf::st_coordinates(sf::st_transform(sf.ids, crs = 4326))),
                                 c("coords_x", "coords_y")))
@@ -64,35 +66,114 @@ fnc_get_params <- function(df.ids,
 
   }
 
-  # join ---------------- ####
-  df.site.infos <- df.ids %>%
-    dplyr::rename(eslope = slope) %>%
-    dplyr::mutate(dslope = eslope,
-                  tree_species = tree_species,
-                  budburst_species = case_when(tree_species == "beech" ~ "Fagus sylvatica",
-                                               tree_species == "spruce" ~ "Picea abies (spaet)",
-                                               tree_species == "oak" ~ "Quercus robur",
-                                               tree_species == "pine" ~ "Pinus sylvestris",
-                                               tree_species == "larch" ~ "Larix decidua",
-                                               tree_species == "douglasfir" ~ "Picea abies (spaet)",
-                                               T ~ NA_character_))
+  # prepare tree type ----------------------------------------- ####
 
-  # if additional data present
-  if(!is.null(df.ind.info)){
-    df.site.infos <- df.site.infos %>%
-      dplyr::left_join(df.ind.info, by = "ID_custom")
-    # solving double issue if aspect or slope are already privided:
-    df.site.infos <- df.site.infos[!str_detect(colnames(df.site.infos), pattern = "\\.x")]
-    colnames(df.site.infos)[which(str_detect(colnames(df.site.infos), pattern = "\\.y") == T)] <- stringr::str_sub(colnames(df.site.infos[str_detect(colnames(df.site.infos), pattern = "\\.y")]),1,-3)
+  if(!wuchsmaechtigkeit){
+
+    df.site.infos <- df.ids %>%
+      dplyr::rename(eslope = slope) %>%
+      dplyr::mutate(dslope = eslope,
+                    tree_species = tree_species,
+                    budburst_species = case_when(tree_species == "beech" ~ "Fagus sylvatica",
+                                                 tree_species == "spruce" ~ "Picea abies (spaet)",
+                                                 tree_species == "oak" ~ "Quercus robur",
+                                                 tree_species == "pine" ~ "Pinus sylvestris",
+                                                 tree_species == "larch" ~ "Larix decidua",
+                                                 tree_species == "douglasfir" ~ "Picea abies (spaet)",
+                                                 T ~ NA_character_))
+
+    # add additional data if present ---------------------------- ####
+    if(!is.null(df.ind.info)){
+      df.site.infos <- df.site.infos %>%
+        dplyr::left_join(df.ind.info, by = "ID_custom")
+    }
+
+    # ls.param list creation with respective tree parameters
+    ls.param <- lapply(df.ids$ID, function(x, df.site.infos) {
+      parms <- get(paste0("params_",  df.site.infos[df.site.infos$ID == x, "tree_species"]))
+      parms[match(names(df.site.infos),names(parms), nomatch = 0)] <-
+        df.site.infos[df.site.infos$ID == x, which(names(df.site.infos) %in% names(parms))]
+      return(parms)
+    }, df.site.infos = df.site.infos)
+
+  }else{
+
+    # join with bonitaetskarte ---------------------------------- ####
+    # create sf
+    sf.ids <- sf::st_as_sf(df.ids,
+                           coords = c("easting", "northing"), crs = 32632)
+    # load bonitaetskarte
+    sf.boni <- sf::st_read(paste0(path_WGB_diss_shp, "wugebs.shp"), quiet = T)
+
+    # spatial join
+    sf.ids <-  sf.ids %>%
+      sf::st_join(sf.boni) %>%
+      sf::st_drop_geometry()# %>%
+      # mutate(WugebNr = case_when(WugebNr == 5~1,
+      #                            WugebNr == 7~2, T~3)) %>%
+      # rename(boni = WugebNr)
+
+    # join with df.ids
+    df.ids <- df.ids %>%
+      dplyr::left_join(sf.ids)
+
+    #
+    df.site.infos <- df.ids %>%
+      dplyr::rename(eslope = slope) %>%
+      dplyr::mutate(dslope = eslope,
+                    tree_species = tree_species,
+                    budburst_species = case_when(tree_species == "beech" ~ "Fagus sylvatica",
+                                                 tree_species == "spruce" ~ "Picea abies (spaet)",
+                                                 tree_species == "oak" ~ "Quercus robur",
+                                                 tree_species == "pine" ~ "Pinus sylvestris",
+                                                 tree_species == "larch" ~ "Larix decidua",
+                                                 tree_species == "douglasfir" ~ "Picea abies (spaet)",
+                                                 T ~ NA_character_))
+
+    # add additional data if present ---------------------------- ####
+    if(!is.null(df.ind.info)){
+      df.site.infos <- df.site.infos %>%
+        dplyr::left_join(df.ind.info, by = "ID_custom")
+    }
+
+    df.site.infos <- dplyr::left_join(df.site.infos, df.boni,
+                                      by = c("tree_species", "boni"))
+
+    # ls.param list creation with respective tree parameters
+    ls.param <- lapply(df.ids$ID, function(x, df.site.infos) {
+      parms <- get(paste0("params_",  df.site.infos[df.site.infos$ID == x, "tree_species"]))
+      parms[match(names(df.site.infos),names(parms), nomatch = 0)] <-
+        df.site.infos[df.site.infos$ID == x, which(names(df.site.infos) %in% names(parms))]
+      return(parms)
+    }, df.site.infos = df.site.infos)
   }
 
-  # ls.param list creation ---- ####
-  ls.param <- lapply(df.ids$ID, function(x, df.site.infos) {
-    parms <- get(paste0("params_",  df.site.infos[df.site.infos$ID == x, "tree_species"]))
-    parms[match(names(df.site.infos),names(parms), nomatch = 0)] <-
-      df.site.infos[df.site.infos$ID == x, which(names(df.site.infos) %in% names(parms))]
-    return(parms)
-  }, df.site.infos = df.site.infos)
+  # add pdur ------------------------------------------------- ####
+  if(!"pdur" %in% colnames(df.ids)){
+
+    # transform points to spatvect
+    sf.ids <- sf::st_as_sf(df.ids, coords = c("easting", "northing"), crs = 32632) %>%
+      sf::st_transform(25832)
+    spat.ids <- terra::vect(sf.ids)
+
+    # load pdur-rasters.
+    out <- terra::rast(paste0(path_pdur, "pdur.tif"))
+
+    extr_vals <- terra::extract(out, spat.ids)
+    extr_vals[is.na(extr_vals)] <- 4
+    extr_vals <- split(extr_vals[,2:13], seq(nrow(extr_vals)))
+    extr_vals <- lapply(extr_vals, function(x) as.numeric(x))
+
+    rm(out); gc()
+
+    ls.param <- mapply(FUN = function(liste, vals){
+                         liste$pdur <- vals
+                         return(liste)
+                       },
+                       liste = ls.param,
+                       vals = extr_vals,
+                       SIMPLIFY = F)
+  }
 
   names(ls.param) <- df.ids$ID_custom
 
