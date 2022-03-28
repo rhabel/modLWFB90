@@ -205,14 +205,15 @@ save(params_beech, params_oak, params_pine, params_spruce, params_douglasfir, pa
 # paths ####
 
 path_WGB_diss_shp = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/WUGEB/"
-path_STOK_pieces = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/STOKA/"
+path_STOK_pieces = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/STOK/"
 path_GEOLA_pieces = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/GEOLA/"
 path_DGM = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/DGM/"
 path_BZEreg = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/BZE_REG/"
 path_pdur = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/PDUR/"
 path_wald = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/WALD_LY/"
+#path_hang = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/HANG/"
 
-save(path_WGB_diss_shp, path_STOK_pieces, path_GEOLA_pieces, path_DGM, path_BZEreg, path_pdur, path_wald,
+save(path_WGB_diss_shp, path_STOK_pieces, path_GEOLA_pieces, path_DGM, path_BZEreg, path_pdur, path_wald, #path_hang,
      file = "./data/paths.rda")
 
 # bonitaet
