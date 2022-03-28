@@ -23,14 +23,15 @@ fnc_soil_bze <- function(df.ids,
 
   data(paths)
 
-  # transform to spatVector
-  xy <- sf::st_as_sf(df.ids,
-                      coords = c("easting", "northing"), crs = 32632) %>%
-    sf::st_transform(25832)
-
-  xy_spat <- terra::vect(xy)
-
   if(reduce_to_forest){
+    # transform to spatVector
+
+    xy <- sf::st_as_sf(df.ids,
+                       coords = c("easting", "northing"), crs = 32632) %>%
+      sf::st_transform(25832)
+
+    xy_spat <- terra::vect(xy)
+
     # filter whether wald or not
     rast_wald <- terra::rast(paste0(path_wald, "wald_yn.tif"))
     extr_vals_direkt <- terra::extract(rast_wald, xy_spat) %>% dplyr::filter(wald_yn == 1) %>% dplyr::pull(ID)
@@ -48,7 +49,7 @@ fnc_soil_bze <- function(df.ids,
     im_wald <- sort(c(extr_vals_direkt, extr_vals_buff))
     nicht_im_wald <- df.ids$ID[!df.ids$ID %in% im_wald]
 
-    message(paste0("ID: ", df.ids$ID_custom[nicht_im_wald], " are not located in the forest. \n"))
+    message(paste0("ID: ", df.ids$ID_custom[nicht_im_wald], " are not located in the forest. They will not be modelled... \n"))
 
     # filter on those which are in the forest:
     df.ids <- df.ids %>%
@@ -60,6 +61,29 @@ fnc_soil_bze <- function(df.ids,
 
     xy_spat <- terra::vect(xy)
   }
+
+  # transform to spatVector
+  xy <- sf::st_as_sf(df.ids,
+                     coords = c("easting", "northing"), crs = 32632) %>%
+    sf::st_transform(25832)
+
+  xy_spat <- terra::vect(xy)
+
+  # exclude peat areas:
+  moore <- df.ids$ID[df.ids$BODENTY == "Moor"][!is.na(df.ids$ID[df.ids$BODENTY == "Moor"])]
+  if(length(moore) > 0){
+    message(paste0("ID: ", df.ids$ID_custom[moore], " lie within peatlands (Moore). They will not be modelled... \n"))
+  }
+
+  # filter on those which are in the forest:
+  df.ids <- df.ids %>%
+    dplyr::filter(!ID %in% moore)
+
+  xy <- sf::st_as_sf(df.ids,
+                     coords = c("easting", "northing"), crs = 32632) %>%
+    sf::st_transform(25832)
+
+  xy_spat <- terra::vect(xy)
 
   # einlesen aller BZEraster:
   a <- c("lof_cm", "oh_cm")
@@ -219,8 +243,8 @@ fnc_soil_bze <- function(df.ids,
 
   }
 
-  soil <- data.table::as.data.table(cbind(
-    df.ids[,c("ID", "aspect", "slope")], extr_vals[,-1])
+  soil <- data.table::as.data.table(dplyr::left_join(
+    df.ids[,c("ID", "aspect", "slope")], extr_vals, by = "ID")
   )
 
 
@@ -278,7 +302,7 @@ fnc_soil_bze <- function(df.ids,
   which.na <- which(unlist(lapply(ls.soils.tmp, function(x) any(is.na(x[,.SD,.SDcols = !which(colnames(x) %in% c("GRUND_C", "BODENTY"))] )==T))))
   which.non.na <- which(!df.ids$ID_custom %in% names(which.na))
   if(length(which.na) != 0){
-    message(paste0("ID: ", names(ls.soils.tmp)[which.na], " won't be modelled. There's no BZE_R data at coordinate + set buffer width. \n"))
+    message(paste0("ID: ", names(ls.soils.tmp)[which.na], " won't be modelled. There's no complete BZE_reg data at coordinate + set buffer width. \n"))
     ls.soils.tmp[which.na] <- NULL
   }
 
