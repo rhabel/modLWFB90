@@ -7,6 +7,7 @@
 fnc_soil_bze(
   df.ids,
   meta.out,
+  reduce_to_forest = F,
   limit_bodtief = NA,
   incl_GEOLA,
   buffering = F,
