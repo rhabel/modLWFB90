@@ -99,16 +99,14 @@ fnc_get_soil <- function(df.ids,
 
       sf.geola <- foreach::foreach(i = wugeb,
                                    .packages = "sf",
-                                   .combine = rbind,
-                                   .export = "path_GEOLA_pieces") %dopar% {
+                                   .combine = rbind) %dopar% {
                                      sf::st_read(paste0(path_GEOLA_pieces, i),
                                                  quiet = T)
                                    }
 
       sf.stoka <- foreach::foreach(i = wugeb,
                                    .packages = "sf",
-                                   .combine = rbind,
-                                   .export = "path_STOK_pieces" ) %dopar% {
+                                   .combine = rbind) %dopar% {
                                      sf::st_read(paste0(path_STOK_pieces, i),
                                                  quiet = T)
                                    }
@@ -121,12 +119,16 @@ fnc_get_soil <- function(df.ids,
         sf::st_drop_geometry() %>%
         dplyr::distinct() %>%
         dplyr::mutate(GRUND_C = as.numeric(GRUND_C),
-                      BODENTY = case_when(str_detect(WHH_broad, "G") ~ "Gleye/Auenboeden",
+                      BODENTY = case_when(str_detect(BODENTY, "Moor") & !str_detect(FMO_KU, "vermoort") ~ "sonstige",
+                                          str_detect(FMO_KU, "vermoort") ~ "Moor",
+                                          str_detect(WHH_broad, "G") ~ "Gleye/Auenboeden",
                                           str_detect(WHH_broad, "S") ~ "Stauwasserboeden",
                                           str_detect(BODENTY, "Gleye/Auenboeden") & !str_detect(WHH, "G") ~ "sonstige",
                                           str_detect(BODENTY, "Stauwasserboeden") & !str_detect(WHH, "S") ~ "sonstige",
                                           T ~ BODENTY)) %>%
-        dplyr::select(-c(OA_ID, RST_F, HU, WugebNr, WHH, WHH_broad))
+        dplyr::select(-c(WHH, FMO_KU, WHH_broad))
+
+
 
       df.ids <- df.ids %>%
         dplyr::left_join(sf.ids)
@@ -381,6 +383,12 @@ fnc_get_soil <- function(df.ids,
                                          x$ksat[tail(x$nl, 2)] <- 0.0001
                                          x$rootden[tail(x$nl, 2)] <- 0
                                          x$soiltype <- bodentypen[i]
+
+                                         if(any(x$npar < 1.1)){
+                                           x$npar <- dplyr::case_when(x$npar < 1.1 ~ 1.1,
+                                                                      T~x$npar)
+                                           x$mpar <- 1-1/x$npar
+                                         }
 
                                        }else{
                                          x$soiltype <- bodentypen[i]
