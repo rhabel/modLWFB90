@@ -243,9 +243,12 @@ fnc_soil_bze <- function(df.ids,
 
   }
 
-  soil <- dplyr::left_join(df.ids[,c("ID", "aspect", "slope")], extr_vals, by = "ID") %>%
-    sf::st_drop_geometry() %>%
-    data.table::as.data.table(.)
+  soil <- dplyr::left_join(df.ids[,c("ID", "aspect", "slope")], extr_vals, by = "ID")
+
+  if( "sf" %in% class(xy)){
+    soil <- soil %>% sf::st_drop_geometry()
+  }
+  soil <- data.table::as.data.table(soil)
 
 
 
