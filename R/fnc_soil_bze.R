@@ -245,7 +245,7 @@ fnc_soil_bze <- function(df.ids,
 
   soil <- dplyr::left_join(df.ids[,c("ID", "aspect", "slope")], extr_vals, by = "ID")
 
-  if( "sf" %in% class(xy)){
+  if( "sf" %in% class(soil)){
     soil <- soil %>% sf::st_drop_geometry()
   }
   soil <- data.table::as.data.table(soil)
