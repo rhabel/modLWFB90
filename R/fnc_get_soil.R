@@ -385,9 +385,10 @@ fnc_get_soil <- function(df.ids,
                                          x$soiltype <- bodentypen[i]
 
                                          if(any(x$npar < 1.1)){
-                                           x$npar <- dplyr::case_when(x$npar < 1.1 ~ 1.1,
-                                                                      T~x$npar)
-                                           x$mpar <- 1-1/x$npar
+                                           x <- x %>%
+                                             mutate(npar = dplyr::case_when(npar < 1.1 ~ 1.1,
+                                                                            T~npar),
+                                                    mpar = 1-1/npar)
                                          }
 
                                        }else{
