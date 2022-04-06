@@ -16,6 +16,8 @@ fnc_get_soil(
   bze_buffer = NA,
   meta.out = NA,
   limit_bodtief = NA,
+ 
+    pth_df.LEIT = "H:/FVA-Projekte/P01540_WHHKW/Daten/Ergebnisse/Modellierung_Testregionen/Leitprofile/Modul1DB.Rdata",
   ...
 )
 }
@@ -26,7 +28,7 @@ fnc_get_soil(
 \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
 }}
 
-\item{soil_option}{whether regionalised BZE or own data should be used for modelling. While option \code{BZE} with a buffer of 50 shouldn't create many NAs. \cr With option \code{OWN}, inusers can enter their own soil data (i.e. from lab or field experiments). If the option \code{OWN} is selected, the dataframes must be passed at \code{df.soils}.}
+\item{soil_option}{whether regionalised BZE, STOK Leitprofil data (\code{BZE}), or own data should be used for modelling. While option \code{BZE} with a buffer of 50 shouldn't create many NAs. \cr With option \code{OWN}, inusers can enter their own soil data (i.e. from lab or field experiments). If the option \code{OWN} is selected, the dataframes must be passed at \code{df.soils}.}
 
 \item{PTF_to_use}{the PTF to be used in the modeling process. Options are \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}. Alternatively, if MvG parameters have been retrieved elsewhere (i.e. by lab analyses), \code{OWN_PARMS} can be selected to skip this.}
 
