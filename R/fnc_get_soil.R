@@ -240,6 +240,7 @@ fnc_get_soil <- function(df.ids,
 
       sf.ids <-  sf.ids %>%
         sf::st_join(sf.geola) %>%
+        sf::st_join(sf.wugeb) %>%
         sf::st_join(sf.stoka) %>%
         sf::st_drop_geometry() %>%
         dplyr::distinct() %>%
@@ -466,7 +467,10 @@ fnc_get_soil <- function(df.ids,
 
                                        if(!is.na(bodentypen[i]) & bodentypen[i] == "Stauwasserboeden"){
                                          mvg <- LWFBrook90R::hydpar_hypres(clay = 30, silt = 70, bd = 2, topsoil = F)
-                                         mvg$ksat <- 1 # Aus Sd-Definition in der KA5
+                                         mvg$ksat <- dplyr::case_when(x$WugebNr[1] %in% c(1,7)~1,
+                                                               x$WugebNr[1] %in% c(4,6)~5,
+                                                               x$WugebNr[1] %in% c(2,3)~16,
+                                                               T~10) # Aus Sd-Definition in der KA5
                                          n_rep <- 3 #
 
                                          lastrow <- subset(x, nl == max(nl))
@@ -544,7 +548,10 @@ fnc_get_soil <- function(df.ids,
         ls.soils <- mapply(FUN = function(x, bodentyp){
           if(!is.na(bodentyp) & bodentyp == "Stauwasserboeden"){
             mvg <- hydpar_hypres(clay = 30, silt = 70, bd = 2, topsoil = F)
-            mvg$ksat <- 10 # Aus Sd-Definition in der KA5
+            mvg$ksat <- dplyr::case_when(x$WugebNr[1] %in% c(1,7)~1,
+                                        x$WugebNr[1] %in% c(4,6)~5,
+                                        x$WugebNr[1] %in% c(2,3)~16,
+                                        T~10)# Aus Sd-Definition in der KA5
             n_rep <- 3 #
 
             lastrow <- subset(x, nl == max(nl))

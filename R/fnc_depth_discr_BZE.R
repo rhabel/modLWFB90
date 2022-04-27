@@ -10,8 +10,8 @@
 
 fnc_MakeSoil_BZE <- function(soil, skltn){
 
-  limits <- soil[,list(ID, lof_cm, oh_cm, bodtief, slope, aspect)]
-  layers <- soil[,-which(names(soil) %in% c("lof_cm", "oh_cm", "bodtief", "slope", "aspect")), with=F]
+  limits <- soil[,list(ID, lof_cm, oh_cm, bodtief, slope, aspect, WugebNr)]
+  layers <- soil[,-which(names(soil) %in% c("lof_cm", "oh_cm", "bodtief", "slope", "aspect", "WugebNr")), with=F]
 
   #Layers umformen nach lang
   layers_m <- melt(data.table(layers), id.vars = "ID")
@@ -36,7 +36,7 @@ fnc_MakeSoil_BZE <- function(soil, skltn){
   limits[,roots_bottom_rnd := ifelse(roots_bottom<10, 10,5*ceiling(roots_bottom/5))] # auf 5 cm aufrunden, mindestens 10 cm
 
   #merge limits/info back in
-  lay_lim <- layers_wide[limits[,.(ID, profile_top, roots_bottom, roots_bottom_rnd, slope, aspect)]]
+  lay_lim <- layers_wide[limits[,.(ID, profile_top, roots_bottom, roots_bottom_rnd, slope, aspect, WugebNr)]]
   lay_lim[, upper := c(0,lower[1:4]), by= ID]
 
 
