@@ -34,7 +34,8 @@ fnc_create_IDs <- function(poly,
                            out_name = "IDs",
                            tranches = NA){
 
-  shptmp <- sf::st_read(poly)
+  shptmp <- sf::st_read(poly) %>%
+    sf::st_transform(32632)
 
 
   # boundaries

@@ -243,7 +243,7 @@ fnc_soil_bze <- function(df.ids,
 
   }
 
-  soil <- dplyr::left_join(df.ids[,c("ID", "aspect", "slope")], extr_vals, by = "ID")
+  soil <- dplyr::left_join(df.ids[,c("ID", "aspect", "slope", "WugebNr")], extr_vals, by = "ID")
 
   if( "sf" %in% class(soil)){
     soil <- soil %>% sf::st_drop_geometry()
@@ -294,7 +294,7 @@ fnc_soil_bze <- function(df.ids,
   soilsdiscrete1[, "nl" := 1:.N, by = ID]
 
   # join to get ID_custom
-  df.ids <- as.data.table(df.ids[,-which(colnames(df.ids) %in% c("aspect", "slope"))])
+  df.ids <- as.data.table(df.ids[,-which(colnames(df.ids) %in% c("aspect", "slope", "WugebNr"))])
   setkey(df.ids, ID)
   ls.soils.tmp <- df.ids[soilsdiscrete1]
 
@@ -364,10 +364,10 @@ fnc_soil_bze <- function(df.ids,
   # sort and rename
   ls.soils.tmp <- lapply(ls.soils.tmp, function(x){
 
-    x <- x[,c("ID", "ID_custom", "mat", "nl", "upper", "lower",
+    x <- x[,c("ID", "ID_custom", "WugebNr", "mat", "nl", "upper", "lower",
              "sand", "schluff", "ton", "gba", "trd", "corg",
              "aspect", "slope", "profile_top", "BODENTY", "dpth_ini")]
-    colnames(x) <- c("ID", "ID_custom", "mat", "nl","upper", "lower",
+    colnames(x) <- c("ID", "ID_custom", "WugebNr", "mat", "nl","upper", "lower",
                      "sand", "silt", "clay", "gravel", "bd", "oc.pct",
                      "aspect" ,"slope" ,"humus", "BODENTYP", "dpth_ini")
     x$ID_custom <- as.character(x$ID_custom)
