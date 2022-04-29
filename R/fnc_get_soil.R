@@ -252,7 +252,7 @@ fnc_get_soil <- function(df.ids,
                                           str_detect(BODENTY, "Gleye/Auenboeden") & !str_detect(WHH_broad, "G") ~ "sonstige",
                                           str_detect(BODENTY, "Stauwasserboeden") & !str_detect(WHH_broad, "S") ~ "sonstige",
                                           T ~ BODENTY)) %>%
-        dplyr::select(-c(WHH, FMO_KU, WHH_broad))
+        dplyr::select(-c(WHH, FMO_KU, WHH_broad, RST_F, OA_ID))
 
 
 
@@ -404,7 +404,7 @@ fnc_get_soil <- function(df.ids,
                        ls.soils,
 
                        roots_max_adj = maxdepth,
-                       # beta = 0.97,
+                       # beta = 0.976,
                        # rootsmethod = "betamodel",
                        # # maxrootdepth = c(-1,-1.5,-0.5, -1.5,-2),
 
