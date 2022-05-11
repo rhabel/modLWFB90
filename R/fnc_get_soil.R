@@ -550,10 +550,12 @@ fnc_get_soil <- function(df.ids,
         ls.soils <- mapply(FUN = function(x, bodentyp){
           if(!is.na(bodentyp) & bodentyp == "Stauwasserboeden"){
             mvg <- hydpar_hypres(clay = 30, silt = 70, bd = 2, topsoil = F)
-            mvg$ksat <- dplyr::case_when(x$WugebNr[1] %in% c(1,7)~1,
-                                        x$WugebNr[1] %in% c(4,6)~5,
-                                        x$WugebNr[1] %in% c(2,3)~16,
-                                        T~10)# Aus Sd-Definition in der KA5
+            mvg$ksat <- dplyr::case_when(x$WugebNr[1] %in% c(5) ~ 90,
+                                         x$WugebNr[1] %in% c(1,2) ~ 2,
+                                         x$WugebNr[1] %in% c(3,4,6) ~ 5,
+                                         #x$WugebNr[1] %in% c(6) ~ 20,
+                                         x$WugebNr[1] %in% c(7) ~ 7,
+                                         T~10)# Aus Sd-Definition in der KA5
             n_rep <- 3 #
 
             lastrow <- subset(x, nl == max(nl))
