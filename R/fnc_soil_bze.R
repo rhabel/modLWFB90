@@ -131,17 +131,23 @@ fnc_soil_bze <- function(df.ids,
 
     # all data complete through buffering
     buff_data_complete <- as.data.frame(buff_data[complete.cases(buff_data),])
-    buff_data_complete$complete <- "yes"
+    if(nrow(buff_data_complete) > 0){
+      buff_data_complete$complete <- "yes"
+    }
 
     # missing organic layer only shall not exclude otherwise successfull buffer process
     buff_data[,c(2,3)][is.nan(buff_data[,c(2,3)])] <- 0
     buff_data <- as.data.frame(buff_data[complete.cases(buff_data),])
 
-    buff_data_incomplete <- left_join(buff_data, buff_data_complete) %>%
-      group_by(ID) %>%
-      filter(all(is.na(complete)))
+    if(nrow(buff_data_complete) > 0){
+      buff_data_incomplete <- left_join(buff_data, buff_data_complete) %>%
+        group_by(ID) %>%
+        filter(all(is.na(complete)))
 
-    buff_data <- rbind(buff_data_complete, buff_data_incomplete) %>% dplyr::arrange(ID) %>% dplyr::select(-complete)
+      buff_data <- rbind(buff_data_complete, buff_data_incomplete) %>% dplyr::arrange(ID) %>% dplyr::select(-complete)
+    }else{
+      buff_data <- buff_data %>% dplyr::arrange(ID)
+    }
 
     if(nrow(buff_data) >0 ){
       buff_data$ID <- which_missing[buff_data$ID] # keep ID from above
