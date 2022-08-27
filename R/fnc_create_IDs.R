@@ -41,8 +41,13 @@ fnc_create_IDs <- function(poly,
   # boundaries
   bbox <- sf::st_bbox(shptmp)
 
+
   # Easting
   start <- trunc(bbox[1])
+
+  # reduktion auf gitternetz der Dietmardaten:
+  start <- start - (start - 387980)%%25
+
   stop <- ceiling(bbox[3])
   step <- res
   x <- start
@@ -55,6 +60,9 @@ fnc_create_IDs <- function(poly,
 
   # Northing
   start <- trunc(bbox[2])
+  # reduktion auf gitternetz der Dietmardaten:
+  start <- start - (start - 5264343)%%25
+
   stop <- ceiling(bbox[4])
   step <- res
   y <- start
