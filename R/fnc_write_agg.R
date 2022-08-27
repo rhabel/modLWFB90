@@ -67,6 +67,7 @@ fnc_write_agg <- function(x,
                                Evap.DailyToDailyAgg(dat = x$EVAPDAY.ASC),
                                x$swat.profile[,-c(1:4), with=F])
     setnames(output_daily, names(output_daily), tolower(names(output_daily)))
+    colnames(output_daily)[1] <- "ID_custom"
   }
 
   if(stringr::str_detect(aggr_tp, "yearly")){
@@ -79,6 +80,8 @@ fnc_write_agg <- function(x,
                                 Evap.DailyToYearly(dat = x$EVAPDAY.ASC)[,-1, with=F],
                                 SWATProfile.DailyToYearly(dat = x$swat.profile)[,-1, with=F])
     setnames(output_yearly, names(output_yearly), tolower(names(output_yearly)))
+    colnames(output_yearly)[1] <- "ID_custom"
+
   }
 
   if(stringr::str_detect(aggr_tp, "monthly")){
@@ -93,6 +96,7 @@ fnc_write_agg <- function(x,
                                  SWATProfile.DailyToMonthly(x$swat.profile)[,-c(1,2), with=F])
 
     setnames(output_monthly, names(output_monthly), tolower(names(output_monthly)))
+    colnames(output_monthly)[1] <- "ID_custom"
   }
 
   if(stringr::str_detect(aggr_tp, "vegper")){
@@ -117,31 +121,33 @@ fnc_write_agg <- function(x,
                                                           vp.start = param_std$budburstdoy,
                                                           vp.end = param_std$leaffalldoy)[,-1, with=F])
     setnames(output_vegper, names(output_vegper), tolower(names(output_vegper)))
+    colnames(output_vegper)[1] <- "ID_custom"
+
   }
 
 
   # Output-Selection ...
 
   if(!any(is.na(col_select_vp))){
-    keep <- c("id_custom", "coords_x", "coords_y", "yr", "vpstartdoy", "vpenddoy",
+    keep <- c("ID_custom", "coords_x", "coords_y", "yr", "vpstartdoy", "vpenddoy",
               col_select_vp)
     output_vegper <- output_vegper[, keep, with = FALSE]
   }
 
   if(!any(is.na(col_select_mon))){
-    keep <- c("id_custom", "coords_x", "coords_y", "yr", "mo",
+    keep <- c("ID_custom", "coords_x", "coords_y", "yr", "mo",
               col_select_mon)
     output_monthly <- output_monthly[, keep, with = FALSE]
   }
 
   if(!any(is.na(col_select_yr))){
-    keep <- c("id_custom", "coords_x", "coords_y", "yr",
+    keep <- c("ID_custom", "coords_x", "coords_y", "yr",
               col_select_yr)
     output_yearly <- output_yearly[, keep, with = FALSE]
   }
 
   if(!any(is.na(col_select_day))){
-    keep <- c("id_custom", "coords_x", "coords_y", "yr", "mo", "da",
+    keep <- c("ID_custom", "coords_x", "coords_y", "yr", "mo", "da",
               col_select_day)
     output_daily <- output_daily[, keep, with = FALSE]
   }
