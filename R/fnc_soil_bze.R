@@ -128,9 +128,14 @@ fnc_soil_bze <- function(df.ids,
     # buff_data contains values from cells within buffer
     buff_data <- terra::extract(bze_complete, terra::vect(sf_buffer), factors = F,
                                 weights = T, cells = T)
-
     # all data complete through buffering
-    buff_data_complete <- as.data.frame(buff_data[complete.cases(buff_data),])
+    if(length(which(complete.cases(buff_data) == T)) == 1){
+      buff_data_complete <- as.data.frame(as.list(buff_data[complete.cases(buff_data),]))
+
+    }else{
+      buff_data_complete <- as.data.frame(buff_data[complete.cases(buff_data),])
+    }
+
     if(nrow(buff_data_complete) > 0){
       buff_data_complete$complete <- "yes"
     }

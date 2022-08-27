@@ -468,9 +468,9 @@ fnc_get_soil <- function(df.ids,
                                        if(!is.na(bodentypen[i]) & bodentypen[i] == "Stauwasserboeden"){
                                          mvg <- LWFBrook90R::hydpar_hypres(clay = 30, silt = 70, bd = 2, topsoil = F)
                                          mvg$ksat <- dplyr::case_when(x$WugebNr[1] %in% c(5) ~ 90,
-                                                               x$WugebNr[1] %in% c(1,2) ~ 2,
+                                                               x$WugebNr[1] %in% c(2) ~ 2,
                                                                x$WugebNr[1] %in% c(3,4,6) ~ 5,
-                                                               #x$WugebNr[1] %in% c(6) ~ 20,
+                                                               x$WugebNr[1] %in% c(1) ~ 1,
                                                                x$WugebNr[1] %in% c(7) ~ 7,
                                                                T~10) # Aus Sd-Definition in der KA5
                                          n_rep <- 3 #
@@ -551,9 +551,9 @@ fnc_get_soil <- function(df.ids,
           if(!is.na(bodentyp) & bodentyp == "Stauwasserboeden"){
             mvg <- hydpar_hypres(clay = 30, silt = 70, bd = 2, topsoil = F)
             mvg$ksat <- dplyr::case_when(x$WugebNr[1] %in% c(5) ~ 90,
-                                         x$WugebNr[1] %in% c(1,2) ~ 2,
+                                         x$WugebNr[1] %in% c(2) ~ 2,
                                          x$WugebNr[1] %in% c(3,4,6) ~ 5,
-                                         #x$WugebNr[1] %in% c(6) ~ 20,
+                                         x$WugebNr[1] %in% c(1) ~ 1,
                                          x$WugebNr[1] %in% c(7) ~ 7,
                                          T~10)# Aus Sd-Definition in der KA5
             n_rep <- 3 #
@@ -638,7 +638,7 @@ fnc_get_soil <- function(df.ids,
   # reduce --------------------------------------------------- ####
   to_2 <- c("sand", "silt","clay", "oc.pct",  "tort")
   to_3 <- c("gravel", "bd", "ths", "thr", "alpha", "npar", "mpar", "rootden" )
-  cat("almost done...\n")
+  cat("almost done...\n\n")
 
   if(parallel_processing){
     cl <- parallel::makeCluster(parallel::detectCores())
