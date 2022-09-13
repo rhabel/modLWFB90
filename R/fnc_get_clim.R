@@ -1,16 +1,16 @@
 #' Creation of Climate Data
 #'
-#' This function creates Climate Data in the format required by \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}}.
+#' This function creates Climate Data in the format required by \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}}. Output is a list for direct use as input, not via \code{clim_args} and \code{args_function}.
 #'
 #' @param df.ids a data frame containing the following columns:
 #' \itemize{
 #' \item \code{ID_custom} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to.
 #' \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
 #' }
-#' @param mindate first day of modelling time period as \code{Date}- object
-#' @param maxdate last day of modelling time period as \code{Date}- object
+#' @param mindate first day of modelling time period as \code{Date}- object. Optional, default is "1961-01-01"
+#' @param maxdate last day of modelling time period as \code{Date}- object. Optional, default is "2020-12-31"
 #' @param path_std path to standard locations directory
-#' @param path_climdb path to climate-db directory
+#' @param path_climdb path to climate-rds files
 #'
 #' @import data.table
 #' @return Returns a named list (names from \code{df.ids$ID_custom}) of climate data
@@ -20,80 +20,67 @@
 #' @export
 
 fnc_get_clim <- function(df.ids,
-                         mindate = as.Date("2010-01-01"),
-                         maxdate = as.Date("2011-12-31"),
+                         mindate = as.Date("1961-01-01"),
+                         maxdate = as.Date("2020-12-31"),
                          path_std = "R:/klima/whh/brook90_input/locations",
-                         path_climdb = "R:/klima/whh/brook90_input/db/") {
+                         clim_dir = "R:/klima/whh/brook90_input/rds/") {
 
   # IDs okay? ---------- ####
   # sort dfs according to IDs
-  df.ids$ID <- 1:nrow(df.ids)
-
-  minyear <- format(mindate, "%Y")
-  maxyear <- format(maxdate, "%Y")
-  needed_cols <- c("grhds", "rrds", "sddm", "tadm", "tadn", "tadx", "wsdm")
+  if(!"ID" %in% colnames(df.ids)){
+    df.ids$ID <- 1:nrow(df.ids)
+  }
 
   df.clim.ids <- fnc_relateCoords(df.ids = df.ids,
                                   path_std = path_std)
 
-  # initialise list
-  ls.clim <- vector("list", length = nrow(df.ids))
-  names(ls.clim) <- df.ids$ID_custom
 
+  dt.out <- data.table()
   for(tranche in sort(unique(df.clim.ids$tranche))){
 
+    clim_dir_tmp <- paste0(clim_dir, "tr", tranche, "/")
     # preselection of ids
     ids_in_tranche <- as.character(df.clim.ids[which(df.clim.ids$tranche == tranche), "id_standard"])
 
-    # make db connection
-    con <- RSQLite::dbConnect(RSQLite::SQLite(),
-                              dbname = paste0(path_climdb, "climate_daily_obs_base_tr",tranche,".sqlite"))
+    for(id_standard in ids_in_tranche){
 
-    # get climate data
-    clim.tmp <- RSQLite::dbGetQuery(con, paste0("SELECT * FROM climate_daily WHERE ( year >= ", minyear,
-                                               " AND year <=", maxyear,
-                                               ") AND (id = ", paste(ids_in_tranche, collapse = " OR id = "), ")"))
+      ind <- which(df.clim.ids$id_standard == id_standard)
+      ID_custom = df.clim.ids[ind, "ID_custom"]
+      ID = df.clim.ids[ind, "ID"]
 
-    RSQLite::dbDisconnect(con)
+      # load and convert to data.table
+      dt.clim.tmp <- readRDS(paste0(clim_dir_tmp, id_standard, ".rds"))
+      dt.clim.tmp <- as.data.table(dt.clim.tmp)
 
-    ls.clim.tmp <- data.table::as.data.table(clim.tmp)
-    ls.clim.tmp <- data.table::setorder(ls.clim.tmp, id, year, month, day)
-    ls.clim.tmp[ , (needed_cols) := lapply(.SD, "*", 0.01), .SDcols = needed_cols]
-    data.table::setnames(ls.clim.tmp, c("id_standard", "year", "month", "day", "globrad", "grids", "prec", "sddm","tmean", "tmin", "tmax", "windspeed" )) # constr_corg umbenennen
-    ls.clim.tmp[, dates := as.Date(paste0(year, "-", month, "-", day), format = "%Y-%m-%d")]
-    ls.clim.tmp[, ewasser := 6.112*exp(17.62*tmean/(243.12+tmean))]
-    ls.clim.tmp[, eeis := 6.112*exp(22.46*tmean/(272.62+tmean))]
-    ls.clim.tmp[, vappres :=  ifelse(tmean > 0, (ewasser-sddm)*0.1, (eeis-sddm)*0.1)]
-    ls.clim.tmp[, id_standard :=  as.character(id_standard)]
+      # add ID_custom and dates, remove sddm
+      dt.clim.tmp[,"ID_custom" := ID_custom]
+      dt.clim.tmp[,"ID" := ID]
+      dt.clim.tmp[,"id_standard" := id_standard]
+      dt.clim.tmp[,"dates" := as.Date(paste(year, month, day, sep = "-"))]
+      setorder(dt.clim.tmp, dates)
+      dt.clim.tmp[,c("sddm", "year", "month", "day") := NULL]
 
-    # join
-    df.clim.ids.j <- data.table::as.data.table(df.clim.ids[c("ID", "ID_custom", "id_standard")])
-    data.table::setkey(df.clim.ids.j, id_standard)
-    data.table::setkey(ls.clim.tmp, id_standard)
+      # filter dates
+        dt.clim.tmp <- dt.clim.tmp[dates>= mindate & dates <= maxdate]
 
-    ls.clim.tmp <- merge(x = ls.clim.tmp, y = df.clim.ids.j, by = "id_standard", all.x = TRUE, allow.cartesian = T)
-    # ls.clim.tmp <- ls.clim.tmp[df.clim.ids.j]
+      # names and units
+      cols_0_1 <- c("globrad", "prec", "tmean", "tmax", "tmin", "windspeed")
+      setnames(dt.clim.tmp,
+               old = c("grhds", "rrds", "tadx", "tadm", "tadn", "wsdm"),
+               new = c("globrad", "prec", "tmax", "tmean", "tmin", "windspeed"))
+      dt.clim.tmp[ , (cols_0_1) := lapply(.SD, "*", 0.1), .SDcols = cols_0_1]
+      dt.clim.tmp[ , vappres := vappres * 0.01]
 
-    data.table::setorder(ls.clim.tmp, ID_custom, year, month, day)
-    #
-    ls.clim.tmp[, ID_custom := factor(ID_custom, levels = unique(ID_custom))]
-
-    ls.clim.tmp <- ls.clim.tmp[,.(ID, ID_custom, id_standard, dates, year, month, day, globrad, prec, tmean, tmin, tmax, windspeed, vappres)]
-    ls.clim.tmp <- ls.clim.tmp[dates>= mindate & dates <= maxdate]
-
-    ls.clim.tmp <- split(ls.clim.tmp, ls.clim.tmp$ID_custom)
-
-    # is.data.table(ls.clim.tmp)
-
-    # names ang assigning correct...
-    names(ls.clim.tmp) <- unlist(lapply(ls.clim.tmp, function(x) unique(x$ID_custom)))
-
-    ls.clim[match(names(ls.clim.tmp), df.ids$ID_custom)] <- ls.clim.tmp
-
-
+      dt.clim.tmp <- dt.clim.tmp[,.(ID, ID_custom, id_standard, dates, globrad, prec, tmean, tmin, tmax, windspeed, vappres)]
+      dt.out <- rbind(dt.out, dt.clim.tmp)
+    }
   }
 
+  setorder(dt.out, ID,dates)
+  ls.clim <- split(dt.out, by = "ID")
+  names(ls.clim) <- df.clim.ids$ID_custom
   ls.clim <- lapply(ls.clim, as.data.frame, stringsAsFactors = F)
+
   # return resulting list
   return(ls.clim)
 }

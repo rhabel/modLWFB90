@@ -6,10 +6,10 @@
 \usage{
 fnc_get_clim(
   df.ids,
-  mindate = as.Date("2010-01-01"),
-  maxdate = as.Date("2011-12-31"),
+  mindate = as.Date("1961-01-01"),
+  maxdate = as.Date("2020-12-31"),
   path_std = "R:/klima/whh/brook90_input/locations",
-  path_climdb = "R:/klima/whh/brook90_input/db/"
+  clim_dir = "R:/klima/whh/brook90_input/rds/"
 )
 }
 \arguments{
@@ -19,19 +19,19 @@ fnc_get_clim(
 \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
 }}
 
-\item{mindate}{first day of modelling time period as \code{Date}- object}
+\item{mindate}{first day of modelling time period as \code{Date}- object. Optional, default is "1961-01-01"}
 
-\item{maxdate}{last day of modelling time period as \code{Date}- object}
+\item{maxdate}{last day of modelling time period as \code{Date}- object. Optional, default is "2020-12-31"}
 
 \item{path_std}{path to standard locations directory}
 
-\item{path_climdb}{path to climate-db directory}
+\item{path_climdb}{path to climate-rds files}
 }
 \value{
 Returns a named list (names from \code{df.ids$ID_custom}) of climate data
 }
 \description{
-This function creates Climate Data in the format required by \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}}.
+This function creates Climate Data in the format required by \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}}. Output is a list for direct use as input, not via \code{clim_args} and \code{args_function}.
 }
 \examples{
 fnc_get_clim(df.ids = test.ids.bds, mindate = as.Date("2010-01-01"), maxdate = as.Date("2011-12-31"))
