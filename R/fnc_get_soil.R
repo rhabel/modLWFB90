@@ -16,7 +16,7 @@
 #' @param limit_MvG should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit}}. Default is \code{FALSE}.
 #' @param limit_bodtief max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}, \code{BZE} or the GEOLA-dataset. If not \code{NA}, soil-dfs are created down to the depth specified here as depth in \code{m}, negative
 #' @param ... further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}. \cr Only exception is the roots functions' parameter \code{maxrootdepth}, which, if desired, has to be specified here as  \code{roots_max}, because maximal root depth setting according to vegetation parameters will be complemented by root limitations from soil conditions. \cr Settings can be either single values, applied to all soil data frames equally, or vector with the same length as \code{df.ids} specifying the roots setting for each modelling point. see example. If roots are counted and provided in \code{df.soils} as column \code{rootden}, set to \code{table}.
-#' @param bze_buffer whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur in {m}, default is \code{NA}
+#' @param bze_buffer whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur in {m}, default is \code{12}, because that way only the closest of the 25m raster cells gets found and we don't get multiple points from the same cell
 #' @param df.soils if \code{OWN} is selected at soil_option, a data frame must be given here that contains the following columns
 #' \itemize{
 #' \item \code{ID} - a unique ID matching the IDs of df.ids
@@ -46,7 +46,7 @@ fnc_get_soil <- function(df.ids,
                          incl_GEOLA = T,
                          parallel_processing= F,
 
-                         bze_buffer = NA,
+                         bze_buffer = 12,
                          meta.out = NA,
                          limit_bodtief = NA,
                          pth_df.LEIT = "H:/FVA-Projekte/P01540_WHHKW/Daten/Ergebnisse/Modellierung_Testregionen/Leitprofile/Modul1DB.Rdata",
@@ -291,6 +291,11 @@ fnc_get_soil <- function(df.ids,
       }
       ls.soils <- lapply(ls.soils, FUN = dplyr::mutate, upper = upper/-100)
       ls.soils <- lapply(ls.soils, FUN = dplyr::mutate, lower = lower/-100)
+
+      if("gravel" %in% colnames(df.soils)){
+        ls.soils <- lapply(ls.soils, FUN = dplyr::mutate, gravel = gravel/100)
+      }
+
       ls.soils <- lapply(ls.soils, function(x){cbind(x[,1:3], "nl" = 1:nrow(x), x[4:ncol(x)])})
 
       names(ls.soils) <- df.ids$ID_custom

@@ -13,7 +13,7 @@ fnc_get_soil(
   add_BodenInfo = T,
   incl_GEOLA = T,
   parallel_processing = F,
-  bze_buffer = NA,
+  bze_buffer = 12,
   meta.out = NA,
   limit_bodtief = NA,
  
@@ -52,7 +52,7 @@ If the nFK shall be calculated at some point, this will be done for the first 1m
 
 \item{parallel_processing}{the lists of dataframes are processed several times (adding roots, adding nFK information etc.). Default is \code{F} and runs with normal \code{lapply} statements. If many points are modelled, it is advised to set this to \code{T}, to activate parallel processing on several cores (as many as available). A BZE-based testrun with 32 GB RAM and 8 cores revealed a higher performance of parallel processing starting at the threshold of 250 points.}
 
-\item{bze_buffer}{whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur in {m}, default is \code{NA}}
+\item{bze_buffer}{whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur in {m}, default is \code{12}, because that way only the closest of the 25m raster cells gets found and we don't get multiple points from the same cell}
 
 \item{limit_bodtief}{max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}, \code{BZE} or the GEOLA-dataset. If not \code{NA}, soil-dfs are created down to the depth specified here as depth in \code{m}, negative}
 
