@@ -96,40 +96,28 @@ fnc_PTF <- function(df, PTF_used){
   } else {
     stop("PTF not in possible PTF-choices")
   }
-
-  # same order
-  df <- df %>%
-    dplyr::select(ID, ID_custom, WugebNr, mat, nl, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, ths, thr, alpha, npar, mpar, ksat, tort)
-
   # Humus:
   humus <- df$humus[1]
 
+
   if (humus != 0){
     # rbind humus-values
-    df <- rbind(data.frame("ID" = df$ID[1],
-                           "ID_custom" = as.character(df$ID_custom[1]),
-                           "WugebNr" = df$WugebNr[1],
-                           "mat" = 0,
-                           "nl" = 0,
-                           "upper" = humus,
-                           "lower" = 0,
-                           "sand" = 0,
-                           "silt" = 0,
-                           "clay" = 0,
-                           "gravel" = 0,
-                           "bd" = 0,
-                           "oc.pct" = 0,
-                           "aspect" = df$aspect[1],
-                           "slope" = df$slope[1],
-                           "humus" = 0,
-                           "ths" = 0.848,
-                           "thr" = 0,
-                           "alpha" = 98,
-                           "npar" = 1.191,
-                           "mpar" = 0.160,
-                           "ksat" = 98000,
-                           "tort" = 0.5),
-                df)
+    rowtobind <- data.frame("ID" = df$ID[1],
+                            "ID_custom" = as.character(df$ID_custom[1]),
+                            "mat" = 0,
+                            "upper" = humus,
+                            "lower" = 0,
+                            "ths" = 0.848,
+                            "thr" = 0,
+                            "alpha" = 98,
+                            "npar" = 1.191,
+                            "mpar" = 0.160,
+                            "ksat" = 98000,
+                            "tort" = 0.5)
+
+    df <- df %>% dplyr::bind_rows(., rowtobind )
+    df <- df[c(nrow(df), 1:(nrow(df)-1)),]
+    df[1,which(is.na(df[1,]))] <- df[2,which(is.na(df[1,]))]
 
   }
 
