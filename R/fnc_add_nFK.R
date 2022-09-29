@@ -51,7 +51,9 @@ fnc_add_nFK <- function(df){
     sscdata <- sscdata[rowSums(sscdata)!=0, ]
     sscdata$nl <- as.numeric(rownames(sscdata))
 
-    texture <- soiltexture::TT.points.in.classes(tri.data = as.data.frame(sscdata), class.sys = "DE.BK94.TT", text.tol = 0.01)
+    texture <- soiltexture::TT.points.in.classes(tri.data = as.data.frame(sscdata),
+                                                 class.sys = "DE.BK94.TT",
+                                                 text.tol = 0.01)
     sscdata$texture <- colnames(texture)[apply(texture,1,which.max)]
 
     soil <- dplyr::left_join(soil, sscdata[c("nl", "texture")], by = "nl")

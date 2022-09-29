@@ -23,45 +23,6 @@ fnc_soil_bze <- function(df.ids,
 
   data(paths)
 
-  if(reduce_to_forest){
-    # transform to spatVector
-
-    xy <- sf::st_as_sf(df.ids,
-                       coords = c("easting", "northing"), crs = 32632) %>%
-      sf::st_transform(25832)
-
-    xy_spat <- terra::vect(xy)
-
-    # filter whether wald or not
-    rast_wald <- terra::rast(paste0(path_wald, "wald_yn.tif"))
-    extr_vals_direkt <- terra::extract(rast_wald, xy_spat) %>% dplyr::filter(wald_yn == 1) %>% dplyr::pull(ID)
-
-    # tolerance of 12m - half a cell
-    xy_spat2 <- xy %>% dplyr::filter(!ID %in% extr_vals_direkt) %>%
-      sf::st_buffer(., 12) %>%
-      terra::vect(.)
-    extr_vals_buff <- terra::extract(rast_wald, xy_spat2, touches = T)
-    extr_vals_buff$ID <- xy_spat2$ID[extr_vals_buff$ID]
-    extr_vals_buff <- extr_vals_buff %>%
-      dplyr::filter(wald_yn == 1) %>% dplyr::distinct(ID) %>%  dplyr::pull(ID)
-
-    # forest or non-forest?
-    im_wald <- sort(c(extr_vals_direkt, extr_vals_buff))
-    nicht_im_wald <- df.ids$ID[!df.ids$ID %in% im_wald]
-
-    message(paste0("ID: ", df.ids$ID_custom[nicht_im_wald], " are not located in the forest. They will not be modelled... \n"))
-
-    # filter on those which are in the forest:
-    df.ids <- df.ids %>%
-      dplyr::filter(ID %in% im_wald)
-
-    xy <- sf::st_as_sf(df.ids,
-                       coords = c("easting", "northing"), crs = 32632) %>%
-      sf::st_transform(25832)
-
-    xy_spat <- terra::vect(xy)
-  }
-
   # transform to spatVector
   xy <- sf::st_as_sf(df.ids,
                      coords = c("easting", "northing"), crs = 32632) %>%
@@ -86,8 +47,7 @@ fnc_soil_bze <- function(df.ids,
   xy_spat <- terra::vect(xy)
 
   # einlesen aller BZEraster:
-  a <- c("lof_cm", "oh_cm")
-  b <- c("bodtief",
+  a <- c("lof_cm", "oh_cm", "bodtief",
          "corg0", "corg1", "corg2", "corg3", "corg4",
          "trdfb0", "trdfb1", "trdfb2", "trdfb3", "trdfb4",
          "grobv0", "grobv1", "grobv2", "grobv3", "grobv4",
@@ -95,16 +55,8 @@ fnc_soil_bze <- function(df.ids,
          "t0", "t1", "t2", "t3", "t4",
          "u0", "u1", "u2", "u3", "u4")
 
-  bze_alt <- terra::rast(paste0(path_BZEreg, a, "_strt/hdr.adf"))
-  #extr_vals_alt <- terra::extract(bze_alt, xy_spat)
-  #colnames(extr_vals_alt) <- c("ID", a)
+  bze_complete <- terra::rast(paste0(path_BZEreg, a, ".tif"))
 
-  bze_neu <- terra::rast(paste0(path_BZEreg, b, ".tif"))
-  #extr_vals_neu <- terra::extract(bze_neu, xy_spat, factors = F)
-  #colnames(extr_vals_neu) <- c("ID", b)
-
-  bze_complete <- c(bze_alt, bze_neu)
-  names(bze_complete)[1:2] <- a
   extr_vals <- as.data.frame(terra::extract(bze_complete, xy_spat, factors = F))
   extr_vals$ID <- xy_spat$ID[extr_vals$ID]
 
@@ -159,7 +111,7 @@ fnc_soil_bze <- function(df.ids,
 
       # create spatvectors from cellcentres within buffer to perform distance calculation
       buff_cells <- buff_data[,c("ID", "cell")]
-      buff_cells <- cbind(buff_cells, as.data.frame(terra::xyFromCell(bze_neu[[1]], buff_data$cell)))
+      buff_cells <- cbind(buff_cells, as.data.frame(terra::xyFromCell(bze_complete[[1]], buff_data$cell)))
       buff_cells <- split(buff_cells, f = buff_cells$ID)
       buff_cells <- lapply(buff_cells,
                            function(x){terra::vect(x, geom = c("x", "y"), crs = "EPSG:25832")})  # creates a list of all buffercells from missing points

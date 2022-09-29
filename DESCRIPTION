@@ -38,6 +38,7 @@ Depends:
     readxl,
     DBI,
     RSQLite,
+    fasterize,
     soiltexture
 Suggests: 
     knitr,

@@ -40,21 +40,21 @@ fnc_get_clim <- function(df.ids,
 
     clim_dir_tmp <- paste0(clim_dir, "tr", tranche, "/")
     # preselection of ids
-    ids_in_tranche <- as.character(df.clim.ids[which(df.clim.ids$tranche == tranche), "id_standard"])
+    ids_in_tranche <- unique(as.character(df.clim.ids[which(df.clim.ids$tranche == tranche), "id_standard"]))
 
     for(id_standard in ids_in_tranche){
 
-      ind <- which(df.clim.ids$id_standard == id_standard)
-      ID_custom = df.clim.ids[ind, "ID_custom"]
-      ID = df.clim.ids[ind, "ID"]
+      # ind <- which(df.clim.ids$id_standard == id_standard)
+      # ID_custom = df.clim.ids[ind, "ID_custom"]
+      # ID = df.clim.ids[ind, "ID"]
 
       # load and convert to data.table
       dt.clim.tmp <- readRDS(paste0(clim_dir_tmp, id_standard, ".rds"))
       dt.clim.tmp <- as.data.table(dt.clim.tmp)
 
       # add ID_custom and dates, remove sddm
-      dt.clim.tmp[,"ID_custom" := ID_custom]
-      dt.clim.tmp[,"ID" := ID]
+      # dt.clim.tmp[,"ID_custom" := rep(ID_custom, nrow(dt.clim.tmp))]
+      # dt.clim.tmp[,"ID" := rep(ID, nrow(dt.clim.tmp))]
       dt.clim.tmp[,"id_standard" := id_standard]
       dt.clim.tmp[,"dates" := as.Date(paste(year, month, day, sep = "-"))]
       setorder(dt.clim.tmp, dates)
@@ -71,15 +71,16 @@ fnc_get_clim <- function(df.ids,
       dt.clim.tmp[ , (cols_0_1) := lapply(.SD, "*", 0.1), .SDcols = cols_0_1]
       dt.clim.tmp[ , vappres := vappres * 0.01]
 
-      dt.clim.tmp <- dt.clim.tmp[,.(ID, ID_custom, id_standard, dates, globrad, prec, tmean, tmin, tmax, windspeed, vappres)]
+      dt.clim.tmp <- dt.clim.tmp[,.(id_standard, dates, globrad, prec, tmean, tmin, tmax, windspeed, vappres)]
       dt.out <- rbind(dt.out, dt.clim.tmp)
     }
   }
 
-  setorder(dt.out, ID,dates)
-  ls.clim <- split(dt.out, by = "ID")
-  names(ls.clim) <- df.clim.ids$ID_custom
-  ls.clim <- lapply(ls.clim, as.data.frame, stringsAsFactors = F)
+  ls.clim <- left_join(df.clim.ids[c("ID", "ID_custom", "id_standard")], dt.out, by = "id_standard") %>%
+    arrange(ID, dates) %>%
+    group_split(ID)
+
+  names(ls.clim) <- unlist(lapply(ls.clim, function(x){x$ID_custom[[1]]}))
 
   # return resulting list
   return(ls.clim)

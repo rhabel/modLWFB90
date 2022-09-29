@@ -45,8 +45,8 @@ fnc_write_agg <- function(x,
   # get
   soil.df <- get("soil", envir = parent.frame(3))
   param_std <- get("param_b90", envir = parent.frame(3))
-  id_run <- get("soil", envir = parent.frame(3))$id_custom[1]
-
+  id_name <- get("soil", envir = parent.frame(3))$id_custom[1]
+  id_num <- get("soil", envir = parent.frame(3))$id[1]
 
   colnames(x$FLOWMON.ASC) <- toupper(colnames(x$FLOWMON.ASC))
   colnames(x$EVAPDAY.ASC) <- toupper(colnames(x$EVAPDAY.ASC))
@@ -55,10 +55,11 @@ fnc_write_agg <- function(x,
   colnames(x$BUDGDAY.ASC) <- toupper(colnames(x$BUDGDAY.ASC))
 
   # Aggregierung: ...
-  x$swat.profile <- Aggregate.SWAT.ASC(SWATi = x$SWATDAY.ASC, soil = soil.df)
+  x$swat.profile <- modLWFB90:::Aggregate.SWAT.ASC(SWATi = x$SWATDAY.ASC, soil = soil.df)
 
   if(stringr::str_detect(aggr_tp, "daily")){
-    output_daily <- data.table(ID_custom = id_run,
+    output_daily <- data.table(ID = id_num,
+                               ID_custom = id_name,
                                coords_x = param_std$coords_x,
                                coords_y = param_std$coords_y,
                                x$BUDGDAY.ASC[,list(YR, MO, DA, PREC)],
@@ -67,11 +68,12 @@ fnc_write_agg <- function(x,
                                Evap.DailyToDailyAgg(dat = x$EVAPDAY.ASC),
                                x$swat.profile[,-c(1:4), with=F])
     setnames(output_daily, names(output_daily), tolower(names(output_daily)))
-    colnames(output_daily)[1] <- "ID_custom"
+    colnames(output_daily)[c(1, 2)] <- c("ID","ID_custom")
   }
 
   if(stringr::str_detect(aggr_tp, "yearly")){
-    output_yearly <- data.table(ID_custom = id_run,
+    output_yearly <- data.table(ID = id_num,
+                                ID_custom = id_name,
                                 coords_x = param_std$coords_x,
                                 coords_y = param_std$coords_y,
                                 Prec.DailyToYearly(dat = x$BUDGDAY.ASC),
@@ -80,12 +82,13 @@ fnc_write_agg <- function(x,
                                 Evap.DailyToYearly(dat = x$EVAPDAY.ASC)[,-1, with=F],
                                 SWATProfile.DailyToYearly(dat = x$swat.profile)[,-1, with=F])
     setnames(output_yearly, names(output_yearly), tolower(names(output_yearly)))
-    colnames(output_yearly)[1] <- "ID_custom"
+    colnames(output_yearly)[c(1, 2)] <- c("ID","ID_custom")
 
   }
 
   if(stringr::str_detect(aggr_tp, "monthly")){
-    output_monthly <- data.table(ID_custom = id_run,
+    output_monthly <- data.table(ID = id_num,
+                                 ID_custom = id_name,
                                  coords_x = param_std$coords_x,
                                  coords_y = param_std$coords_y,
                                  Prec.DailyToMonthly(x$BUDGDAY.ASC),
@@ -96,11 +99,12 @@ fnc_write_agg <- function(x,
                                  SWATProfile.DailyToMonthly(x$swat.profile)[,-c(1,2), with=F])
 
     setnames(output_monthly, names(output_monthly), tolower(names(output_monthly)))
-    colnames(output_monthly)[1] <- "ID_custom"
+    colnames(output_monthly)[c(1, 2)] <- c("ID","ID_custom")
   }
 
   if(stringr::str_detect(aggr_tp, "vegper")){
-    output_vegper <- data.table(ID_custom = id_run,
+    output_vegper <- data.table(ID = id_num,
+                                ID_custom = id_name,
                                 coords_x = param_std$coords_x,
                                 coords_y = param_std$coords_y,
                                 Prec.DailyToVegper(dat = x$BUDGDAY.ASC,
@@ -121,7 +125,7 @@ fnc_write_agg <- function(x,
                                                           vp.start = param_std$budburstdoy,
                                                           vp.end = param_std$leaffalldoy)[,-1, with=F])
     setnames(output_vegper, names(output_vegper), tolower(names(output_vegper)))
-    colnames(output_vegper)[1] <- "ID_custom"
+    colnames(output_vegper)[c(1, 2)] <- c("ID","ID_custom")
 
   }
 
@@ -129,25 +133,25 @@ fnc_write_agg <- function(x,
   # Output-Selection ...
 
   if(!any(is.na(col_select_vp))){
-    keep <- c("ID_custom", "coords_x", "coords_y", "yr", "vpstartdoy", "vpenddoy",
+    keep <- c("ID", "ID_custom", "coords_x", "coords_y", "yr", "vpstartdoy", "vpenddoy",
               col_select_vp)
     output_vegper <- output_vegper[, keep, with = FALSE]
   }
 
   if(!any(is.na(col_select_mon))){
-    keep <- c("ID_custom", "coords_x", "coords_y", "yr", "mo",
+    keep <- c("ID", "ID_custom", "coords_x", "coords_y", "yr", "mo",
               col_select_mon)
     output_monthly <- output_monthly[, keep, with = FALSE]
   }
 
   if(!any(is.na(col_select_yr))){
-    keep <- c("ID_custom", "coords_x", "coords_y", "yr",
+    keep <- c("ID", "ID_custom", "coords_x", "coords_y", "yr",
               col_select_yr)
     output_yearly <- output_yearly[, keep, with = FALSE]
   }
 
   if(!any(is.na(col_select_day))){
-    keep <- c("ID_custom", "coords_x", "coords_y", "yr", "mo", "da",
+    keep <- c("ID", "ID_custom", "coords_x", "coords_y", "yr", "mo", "da",
               col_select_day)
     output_daily <- output_daily[, keep, with = FALSE]
   }
@@ -174,13 +178,13 @@ fnc_write_agg <- function(x,
     return(ls.out)
   }else{
     # write to tmp
-    if(stringr::str_detect(aggr_tp, "yearly")){
+    if(stringr::str_detect(aggr_tp, "daily")){
 
-      if(!dir.exists(paste0(dir_name, "yearly/"))){
-        dir.create(paste0(dir_name, "yearly/"), recursive = T)}
+      if(!dir.exists(paste0(dir_name, "daily/"))){
+        dir.create(paste0(dir_name, "daily/"), recursive = T)}
 
-      saveRDS(output_yearly,
-              file = paste0(dir_name, "yearly/", id_run, ".rds"))
+      saveRDS(output_daily,
+              file = paste0(dir_name, "daily/", id_num, ".rds"))
 
     }
 
@@ -190,7 +194,7 @@ fnc_write_agg <- function(x,
         dir.create(paste0(dir_name, "yearly/"), recursive = T)}
 
       saveRDS(output_yearly,
-              file = paste0(dir_name, "yearly/", id_run, ".rds"))
+              file = paste0(dir_name, "yearly/", id_num, ".rds"))
 
     }
 
@@ -200,7 +204,7 @@ fnc_write_agg <- function(x,
         dir.create(paste0(dir_name, "monthly/"), recursive = T)}
 
       saveRDS(output_monthly,
-              file = paste0(dir_name, "monthly/", id_run, ".rds"))
+              file = paste0(dir_name, "monthly/", id_num, ".rds"))
 
     }
 
@@ -210,7 +214,7 @@ fnc_write_agg <- function(x,
         dir.create(paste0(dir_name, "vegper/"), recursive = T)}
 
       saveRDS(output_vegper,
-              file = paste0(dir_name, "vegper/", id_run, ".rds"))
+              file = paste0(dir_name, "vegper/", id_num, ".rds"))
 
     }
   }
