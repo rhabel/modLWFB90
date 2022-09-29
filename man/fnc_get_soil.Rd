@@ -16,8 +16,6 @@ fnc_get_soil(
   bze_buffer = 12,
   meta.out = NA,
   limit_bodtief = NA,
- 
-    pth_df.LEIT = "H:/FVA-Projekte/P01540_WHHKW/Daten/Ergebnisse/Modellierung_Testregionen/Leitprofile/Modul1DB.Rdata",
   ...
 )
 }

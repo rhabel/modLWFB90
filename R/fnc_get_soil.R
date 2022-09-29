@@ -49,7 +49,6 @@ fnc_get_soil <- function(df.ids,
                          bze_buffer = 12,
                          meta.out = NA,
                          limit_bodtief = NA,
-                         pth_df.LEIT = "H:/FVA-Projekte/P01540_WHHKW/Daten/Ergebnisse/Modellierung_Testregionen/Leitprofile/Modul1DB.Rdata",
 
                          ...
 
@@ -74,6 +73,8 @@ fnc_get_soil <- function(df.ids,
   # choice of data origin:  ---------------------------------- ####
   cat("Gathering soil data...\n")
   if (soil_option == "STOK") {
+    # load df.LEIT
+    load(file = path_df.LEIT)
 
     df.ids <- df.ids %>%
       dplyr::left_join(df.dgm, by = "ID")
