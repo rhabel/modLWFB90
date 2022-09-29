@@ -168,7 +168,7 @@ params_douglasfir <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                                   lwidth = 0.001,
                                                   rhotp = 2.6,
                                                   #glmax = 0.00414,
-                                                  glmax = 0.0035,
+                                                  glmax = 0.0025,
                                                   radex = 0.45,
                                                   glmin = 0.0001,
                                                   mxkpl = 8,
@@ -204,32 +204,56 @@ save(params_beech, params_oak, params_pine, params_spruce, params_douglasfir, pa
 
 # paths ####
 
+# ... to wuchsgebiet-Shapefile:
 path_WGB_diss_shp = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/WUGEB/"
-path_STOK_pieces = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/STOK/"
-path_GEOLA_pieces = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/GEOLA/"
-path_DGM = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/DGM/"
-path_BZEreg = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/BZE_REG/"
-path_pdur = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/PDUR/"
-path_wald = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/WALD_LY/"
-#path_hang = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/HANG/"
 
-save(path_WGB_diss_shp, path_STOK_pieces, path_GEOLA_pieces, path_DGM, path_BZEreg, path_pdur, path_wald, #path_hang,
+# ...to STOK in 7 wuchsgebiets-splits:
+path_STOK_pieces = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/STOK/"
+
+# ...to GEOLA in 7 wuchsgebiets-splits:
+path_GEOLA_pieces = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/GEOLA/"
+
+# ...to altitude, slope and aspect:
+path_DGM = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/DGM/"
+
+
+# ...to original BZE-reg data:
+path_models_in = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/BZE_REG_filled/original/"
+
+# ...to filled BZE_reg data:
+path_BZEreg = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/BZE_REG_filled/filled/"
+
+# ...to PDUR-layer:
+path_pdur = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/PDUR/"
+
+# ...to BSK-forest-area (continuously updated):
+path_bsk_forest = "H:/FVA-Projekte/P01715_BSK_ToolBox/Daten/aufbereiteteDaten/01_bsk_toolbox/data/02_Inputdaten_formatieren_und_verarbeiten/Waldbesitz_und_waldmaske_filter_10000_m2.shp"
+
+# ... to LeitprofilDB
+path_df.LEIT = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/LEIT_DB/Modul1DB.Rdata"
+
+
+save(path_WGB_diss_shp,
+     path_STOK_pieces, path_GEOLA_pieces, path_DGM,
+     path_models_in, path_BZEreg,
+     path_pdur, path_bsk_forest,
+     path_df.LEIT,
      file = "./data/paths.rda")
 
-# bonitaet
-df.boni <- data.frame("tree_species" = rep(c("beech", "oak", "spruce", "pine"),each = 3),
-                      "boni" = rep(1:3, 4),
-                      "maxlai" = c(6,5,4,
-                                   5.4, 5.0, 4.5,
-                                   7,6,5,
-                                   3.5, 3, 2.5),
-                      "sai" = c(1,0.9,0.8,
-                                0.9, 0.8, 0.7,
-                                2,1.5,1,
-                                0.8,0.7,0.6),
-                      "height" = c(34, 25, 20,
-                                   26, 20, 15,
-                                   36, 25, 20,
-                                   30, 20, 15))
-save(df.boni,
-     file = "./data/boni.rda")
+# # bonitaet
+# df.boni <- data.frame("tree_species" = rep(c("beech", "oak", "spruce", "pine"),each = 3),
+#                       "boni" = rep(1:3, 4),
+#                       "maxlai" = c(6,5,4,
+#                                    5.4, 5.0, 4.5,
+#                                    7,6,5,
+#                                    3.5, 3, 2.5),
+#                       "sai" = c(1,0.9,0.8,
+#                                 0.9, 0.8, 0.7,
+#                                 2,1.5,1,
+#                                 0.8,0.7,0.6),
+#                       "height" = c(34, 25, 20,
+#                                    26, 20, 15,
+#                                    36, 25, 20,
+#                                    30, 20, 15))
+# save(df.boni,
+#      file = "./data/boni.rda")
