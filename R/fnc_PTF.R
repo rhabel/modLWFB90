@@ -18,7 +18,29 @@
 
 fnc_PTF <- function(df, PTF_used){
 
-  # limits to humus layer
+  if("humusform" %in% colnames(df)){
+    df <- df %>%
+      dplyr::mutate(humus = case_when(humusform == "Mull" ~ 0.03,
+                                      humusform == "Mullmoder" ~ 0.067,
+                                      humusform == "Moder" ~ 0.045,
+                                      humusform == "Rohhumusartiger Moder" ~ 0.06,
+                                      humusform == "Rohhumus" ~ 0.07,
+                                      T ~ 0)) %>%
+      dplyr::select(-humusform)
+  }
+
+  if(!all(c("sand","clay", "silt") %in% names(df)) & "texture" %in% colnames(df)){
+    df <- df %>%
+      rowwise() %>%
+      mutate(sand = fnc_make_ssc(texture)[1],
+             silt = fnc_make_ssc(texture)[2],
+             clay = fnc_make_ssc(texture)[3]) %>%
+    ungroup() %>%
+      dplyr::select(-texture)
+  }
+
+
+  # thickness limits to humus layer
   df$humus <- ifelse(unique(df$humus) <= 0.02, 0,
                      ifelse(unique(df$humus) <= 0.04, 0.04, unique(df$humus)))
 
@@ -90,7 +112,7 @@ fnc_PTF <- function(df, PTF_used){
 
     }else{
       missingcol <- c("sand", "clay", "silt")[!c("sand", "clay", "silt") %in% names(df)]
-      stop(paste0("\n", missingcol, "is missing in df for PTF-application of ", PTF_used))
+      stop(paste0("ID ", df$ID[1], "\n", missingcol, " is missing in df for PTF-application of ", PTF_used))
     }
 
   } else {
@@ -125,7 +147,7 @@ fnc_PTF <- function(df, PTF_used){
   df <- df %>%
     dplyr::mutate(nl = 1:nrow(df)) %>%
     dplyr::select(-humus) %>%
-    dplyr::mutate(across(cols, round, 3))
+    dplyr::mutate(across(any_of(cols), round, 3))
 
   return(df)
 }
