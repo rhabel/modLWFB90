@@ -36,6 +36,12 @@ fnc_get_soil(
 \item \code{mat} - number of soil layer starting with 1 counting upwards
 \item \code{upper} and \code{lower} - upper and lower boundaries of soil layers in cm
 \item \code{humus} - thickness of the humuslayer in m
+\item \code{gravel} - gravel content in volumetric percent
+\item \code{sand} - optional - sand content in volumetric percent
+\item \code{silt} - optional - silt content in volumetric percent
+\item \code{clay} - optional - clay content in volumetric percent
+\item \code{texture} - optional either texture or sand/silt/clay - texture
+
 }
 Caution:\cr
 If PTFs are to be applied, the columns required in \code{\link{fnc_PTF}} must be provided. Else, if \code{PTF_to_use} is set to \code{OWN_PARMS}, the following columns must be provided NA-free: \code{ths, thr, alpha, npar, mpar, ksat}, and \code{tort}.\cr

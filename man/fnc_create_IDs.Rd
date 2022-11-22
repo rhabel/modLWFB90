@@ -10,7 +10,8 @@ fnc_create_IDs(
   ID_pre = "ID_",
   out_dir = NA,
   out_name = "IDs",
-  tranches = NA
+  tranches = NA,
+  reduce_to_forest = T
 )
 }
 \arguments{
@@ -23,6 +24,8 @@ fnc_create_IDs(
 \item{out_dir}{directory where df.ids shall be stored as \code{.rds}, if set to \code{NA}, data frame(s) will be returned to the console}
 
 \item{out_name}{optional, name for ID-files, default is \code{IDs.rds}}
+
+\item{reduce_to_forest}{exclude points that do not lie in forests. Will speed up all following steps like creating soils and parameter sets. Default is \code{TRUE}.}
 
 \item{add_tranches}{when large areas are modelled with a high resolution, it can be useful to model your area as tranches similar to a SUDOKU-field. This way you can calculate the results tranche by tranche and in a 9th of the total computing time you get a result covering the whole modelling area. In this case the IDs are assigned to a number of tranches set by \code{tranches}. Tranches must be square number, such as 4, 9, 16, or 25. Default is \code{NA} without tranches, otherwise several df.ids are stored as tranches named \code{out_name_trX.rds} in \code{out_dir}.}
 }
