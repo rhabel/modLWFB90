@@ -15,20 +15,12 @@
 fnc_soil_bze <- function(df.ids,
 
                          meta.out,
-                         reduce_to_forest = F,
                          limit_bodtief = NA,
                          incl_GEOLA,
                          buffering = F,
                          buff_width = NA){
 
   data(paths)
-
-  # transform to spatVector
-  xy <- sf::st_as_sf(df.ids,
-                     coords = c("easting", "northing"), crs = 32632) %>%
-    sf::st_transform(25832)
-
-  xy_spat <- terra::vect(xy)
 
   # exclude peat areas:
   moore <- df.ids$ID[df.ids$BODENTY == "Moor"][!is.na(df.ids$ID[df.ids$BODENTY == "Moor"])]
@@ -93,7 +85,8 @@ fnc_soil_bze <- function(df.ids,
     }
 
     # missing organic layer only shall not exclude otherwise successfull buffer process
-    buff_data[,c(2,3)][is.nan(buff_data[,c(2,3)])] <- 0
+    buff_data[,2][is.nan(buff_data[,2])] <- 0
+    buff_data[,3][is.nan(buff_data[,3])] <- 0
     buff_data <- as.data.frame(buff_data[complete.cases(buff_data),])
 
     if(nrow(buff_data_complete) > 0){

@@ -23,6 +23,12 @@
 #' \item \code{mat} - number of soil layer starting with 1 counting upwards
 #' \item \code{upper} and \code{lower} - upper and lower boundaries of soil layers in cm
 #' \item \code{humus} - thickness of the humuslayer in m
+#' \item \code{gravel} - gravel content in volumetric percent
+#' \item \code{sand} - optional - sand content in volumetric percent
+#' \item \code{silt} - optional - silt content in volumetric percent
+#' \item \code{clay} - optional - clay content in volumetric percent
+#' \item \code{texture} - optional either texture or sand/silt/clay - texture
+#'
 #' }
 #' Caution:\cr
 #' If PTFs are to be applied, the columns required in \code{\link{fnc_PTF}} must be provided. Else, if \code{PTF_to_use} is set to \code{OWN_PARMS}, the following columns must be provided NA-free: \code{ths, thr, alpha, npar, mpar, ksat}, and \code{tort}.\cr
@@ -281,23 +287,52 @@ fnc_get_soil <- function(df.ids,
     if(!all(df.ids$ID_custom == unique(df.soils$ID_custom))){
       stop("\n not all ID_custom of df.ids and df.soils are equal")
     } else {
+
       ls.soils <- df.soils %>%
         dplyr::left_join(df.ids, by = "ID_custom") %>%
         dplyr::arrange(ID, mat, -upper) %>%
         dplyr::select(ID, ID_custom, everything()) %>%
         dplyr::group_split(ID)
-      ls.soils <- lapply(ls.soils, FUN = fnc_depth_disc, limit_bodtief = limit_bodtief)
-      if(!all(c("slope", "aspect") %in% colnames(df.ids))){
-        ls.soils <- lapply(ls.soils, FUN = dplyr::left_join, y = df.dgm, by = "ID")
-      }
-      ls.soils <- lapply(ls.soils, FUN = dplyr::mutate, upper = upper/-100)
-      ls.soils <- lapply(ls.soils, FUN = dplyr::mutate, lower = lower/-100)
 
-      if("gravel" %in% colnames(df.soils)){
-        ls.soils <- lapply(ls.soils, FUN = dplyr::mutate, gravel = gravel/100)
-      }
+      if(parallel_processing){
 
-      ls.soils <- lapply(ls.soils, function(x){cbind(x[,1:3], "nl" = 1:nrow(x), x[4:ncol(x)])})
+        cl <- parallel::makeCluster(parallel::detectCores())
+        doParallel::registerDoParallel(cl)
+        ls.soils <- foreach::foreach(i = 1:length(ls.soils),
+                                     .packages = c("modLWFB90","dplyr"),
+                                     .export = c("df.dgm")) %dopar% {
+                                       x <- fnc_depth_disc(ls.soils[[i]],
+                                                           limit_bodtief = limit_bodtief)
+
+                                       if(!all(c("slope", "aspect") %in% colnames(x))){
+                                         x <- dplyr::left_join(x = x, y = df.dgm, by = "ID")
+                                       }
+
+                                       x <- x %>%
+                                         dplyr::mutate(dplyr::across(c("upper", "lower"),
+                                                                     ~ . /-100),
+                                                       gravel = gravel/100) %>%
+                                         dplyr::mutate(nl = 1:n(), .after = ID_custom)
+
+                                     }
+        parallel::stopCluster(cl)
+
+      }else{
+
+        ls.soils <- lapply(ls.soils, FUN = fnc_depth_disc, limit_bodtief = limit_bodtief)
+
+        if(!all(c("slope", "aspect") %in% colnames(df.ids))){
+          ls.soils <- lapply(ls.soils, FUN = dplyr::left_join, y = df.dgm, by = "ID")
+        }
+
+        ls.soils <- lapply(ls.soils, FUN = function(x){
+          x %>%
+            dplyr::mutate(dplyr::across(c("upper", "lower"),
+                                        ~ . /-100),
+                          gravel = gravel/100) %>%
+            dplyr::mutate(nl = 1:n(), .after = ID_custom)})
+
+      }
 
       names(ls.soils) <- df.ids$ID_custom
     }
@@ -363,10 +398,10 @@ fnc_get_soil <- function(df.ids,
   # MvG-limitation if desired: ------------------------------- ####
   if(limit_MvG){
 
+
     if(parallel_processing){
       cl <- parallel::makeCluster(parallel::detectCores())
       doParallel::registerDoParallel(cl)
-
       ls.soils <- foreach::foreach(i = 1:length(ls.soils),
                                    .packages = c("modLWFB90")) %dopar% {
                                      x <- modLWFB90:::fnc_limit(ls.soils[[i]])

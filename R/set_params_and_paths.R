@@ -226,6 +226,9 @@ path_BZEreg = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90
 # ...to PDUR-layer:
 path_pdur = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/PDUR/"
 
+# ...to PDUR-layer:
+path_clim = "R:/klima/whh/brook90_input/rds/"
+
 # ...to BSK-forest-area (continuously updated):
 path_bsk_forest = "H:/FVA-Projekte/P01715_BSK_ToolBox/Daten/aufbereiteteDaten/01_bsk_toolbox/data/02_Inputdaten_formatieren_und_verarbeiten/Waldbesitz_und_waldmaske_filter_10000_m2.shp"
 
@@ -238,6 +241,7 @@ save(path_WGB_diss_shp,
      path_models_in, path_BZEreg,
      path_pdur, path_bsk_forest,
      path_df.LEIT,
+     path_clim,
      file = "./data/paths.rda")
 
 # # bonitaet
