@@ -7,6 +7,7 @@
 #' @param out_dir directory where df.ids shall be stored as \code{.rds}, if set to \code{NA}, data frame(s) will be returned to the console
 #' @param ID_pre optional, prefix for ID_custom-name as character. Default is \code{ID_}
 #' @param out_name optional, name for ID-files, default is \code{IDs.rds}
+#' @param reduce_to_forest exclude points that do not lie in forests. Will speed up all following steps like creating soils and parameter sets. Default is \code{TRUE}.
 #' @param add_tranches when large areas are modelled with a high resolution, it can be useful to model your area as tranches similar to a SUDOKU-field. This way you can calculate the results tranche by tranche and in a 9th of the total computing time you get a result covering the whole modelling area. In this case the IDs are assigned to a number of tranches set by \code{tranches}. Tranches must be square number, such as 4, 9, 16, or 25. Default is \code{NA} without tranches, otherwise several df.ids are stored as tranches named \code{out_name_trX.rds} in \code{out_dir}.
 #'
 #' @return returns a list of points with ID_custom (optional), x- and y- coordinates
@@ -32,9 +33,10 @@ fnc_create_IDs <- function(poly,
                            ID_pre = "ID_",
                            out_dir = NA,
                            out_name = "IDs",
-                           tranches = NA){
+                           tranches = NA,
+                           reduce_to_forest = T){
 
-  shptmp <- sf::st_read(poly) %>%
+  shptmp <- sf::st_read(poly, quiet = T) %>%
     sf::st_transform(32632)
 
 
@@ -103,12 +105,37 @@ fnc_create_IDs <- function(poly,
   df.ids <- df.ids %>%
     dplyr::filter(ID %in% ids_in_polygon)
 
+  if(reduce_to_forest){
+    # transform to spatVector
+
+    xy <- sf::st_as_sf(df.ids,
+                       coords = c("easting", "northing"), crs = 32632) %>%
+      sf::st_transform(25832) %>%
+      terra::vect(.)
+
+    # filter whether wald or not:
+
+    spat_wald <-sf::st_read("H:/FVA-Projekte/P01715_BSK_ToolBox/Daten/aufbereiteteDaten/01_bsk_toolbox/data/02_Inputdaten_formatieren_und_verarbeiten/Waldbesitz_und_waldmaske_filter_10000_m2.shp", quiet = T) %>%
+      dplyr::select(FID) %>%
+      terra::vect(.)
+
+    ids_in_polygon_spatial <- terra::intersect(x = xy, y = spat_wald)
+    ids_in_polygon <- ids_in_polygon_spatial$ID
+
+    df.ids <- df.ids %>%
+      dplyr::filter(ID %in% ids_in_polygon)
+   }
+
   # add complete IDs-column
   df.ids$ID <- 1:nrow(df.ids)
   df.ids$ID_custom <- paste0(ID_pre,
                              stringr::str_pad(1:nrow(df.ids),
                                               width = nchar(nrow(df.ids)),
                                               pad = "0"))
+
+  df.ids <- df.ids %>%
+    mutate(id_standard = paste0(easting, northing),
+           tranche = fnc_relateCoords(.)$tranche)
   # # # plot
   # sf.ids <- sf::st_as_sf(df.ids,
   #                        coords = c("easting", "northing"),
