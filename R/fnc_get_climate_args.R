@@ -9,7 +9,8 @@
 #' @param store_as when the file should be stored somewhere, a complete path with file ending \code{".rds"} must be provided, else if \code{NA}, list will be returned to the console
 #'
 #' @return list of climate arguments as needed by \code{\link[LWFBrook90R]{run_multisite_LWFB90}}
-#'
+#' @export
+
 
 fnc_get_climate_args <- function(df.ids,
                                  mindate,
