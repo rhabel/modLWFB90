@@ -16,6 +16,7 @@ fnc_get_soil(
   bze_buffer = 12,
   meta.out = NA,
   limit_bodtief = NA,
+  maxcores = NA,
   ...
 )
 }
@@ -59,6 +60,8 @@ If the nFK shall be calculated at some point, this will be done for the first 1m
 \item{bze_buffer}{whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur in {m}, default is \code{12}, because that way only the closest of the 25m raster cells gets found and we don't get multiple points from the same cell}
 
 \item{limit_bodtief}{max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}, \code{BZE} or the GEOLA-dataset. If not \code{NA}, soil-dfs are created down to the depth specified here as depth in \code{m}, negative}
+
+\item{maxcores}{when using a computer with multiple cores and \code{parallel_processing = T}, too many busy cores will kill the process because it creates too much data for the RAM. For 32GB RAM a maximum of 30 cores are recommended (when no other applications are open).}
 
 \item{...}{further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}. \cr Only exception is the roots functions' parameter \code{maxrootdepth}, which, if desired, has to be specified here as  \code{roots_max}, because maximal root depth setting according to vegetation parameters will be complemented by root limitations from soil conditions. \cr Settings can be either single values, applied to all soil data frames equally, or vector with the same length as \code{df.ids} specifying the roots setting for each modelling point. see example. If roots are counted and provided in \code{df.soils} as column \code{rootden}, set to \code{table}.}
 }

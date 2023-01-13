@@ -9,6 +9,7 @@
 #' @param out_name optional, name for ID-files, default is \code{IDs.rds}
 #' @param reduce_to_forest exclude points that do not lie in forests. Will speed up all following steps like creating soils and parameter sets. Default is \code{TRUE}.
 #' @param add_tranches when large areas are modelled with a high resolution, it can be useful to model your area as tranches similar to a SUDOKU-field. This way you can calculate the results tranche by tranche and in a 9th of the total computing time you get a result covering the whole modelling area. In this case the IDs are assigned to a number of tranches set by \code{tranches}. Tranches must be square number, such as 4, 9, 16, or 25. Default is \code{NA} without tranches, otherwise several df.ids are stored as tranches named \code{out_name_trX.rds} in \code{out_dir}.
+#' @param with_clim_meta whether the columns \code{tranche} and \code{id_standard} shall be added if the WHH-KW Climate Data is to be used. These columns are needed by \code{\link{fnc_get_climate_args}}.
 #'
 #' @return returns a list of points with ID_custom (optional), x- and y- coordinates
 #' @examples
@@ -34,7 +35,8 @@ fnc_create_IDs <- function(poly,
                            out_dir = NA,
                            out_name = "IDs",
                            tranches = NA,
-                           reduce_to_forest = T){
+                           reduce_to_forest = T,
+                           with_clim_meta = T){
 
   shptmp <- sf::st_read(poly, quiet = T) %>%
     sf::st_transform(32632)
@@ -132,16 +134,11 @@ fnc_create_IDs <- function(poly,
                              stringr::str_pad(1:nrow(df.ids),
                                               width = nchar(nrow(df.ids)),
                                               pad = "0"))
-
-  df.ids <- df.ids %>%
-    mutate(id_standard = paste0(easting, northing),
-           tranche = fnc_relateCoords(.)$tranche)
-  # # # plot
-  # sf.ids <- sf::st_as_sf(df.ids,
-  #                        coords = c("easting", "northing"),
-  #                        crs = 32632)
-  # plot(sf.ids["ID"])
-
+  if(with_clim_meta){
+    df.ids <- df.ids %>%
+      mutate(id_standard = fnc_relateCoords(.)$tranche,
+             tranche = fnc_relateCoords(.)$tranche)
+  }
 
   if(is.na(tranches)){
 
@@ -178,9 +175,9 @@ fnc_create_IDs <- function(poly,
                                               each = length(get(paste0("y", count_y[i])))),
                                 northing = rep(get(paste0("y", count_y[i])),
                                                length(get(paste0("x", count_x[i])))),
-                                Tranche = rep(as.numeric(i),
-                                              length(rep(get(paste0("x",count_x[i])),
-                                                         each = length(get(paste0("y", count_y[i])))))))
+                                mod_tranche = rep(as.numeric(i),
+                                                  length(rep(get(paste0("x",count_x[i])),
+                                                             each = length(get(paste0("y", count_y[i])))))))
     }
 
     ids2 <- do.call(rbind, ls_emp)
