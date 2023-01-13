@@ -14,6 +14,7 @@
 #' @param parallel_processing the lists of dataframes are processed several times (adding roots, adding nFK information etc.). Default is \code{F} and runs with normal \code{lapply} statements. If many points are modelled, it is advised to set this to \code{T}, to activate parallel processing on several cores (as many as available). A BZE-based testrun with 32 GB RAM and 8 cores revealed a higher performance of parallel processing starting at the threshold of 250 points.
 #' @param PTF_to_use the PTF to be used in the modeling process. Options are \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}. Alternatively, if MvG parameters have been retrieved elsewhere (i.e. by lab analyses), \code{OWN_PARMS} can be selected to skip this.
 #' @param limit_MvG should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit}}. Default is \code{FALSE}.
+#' @param maxcores when using a computer with multiple cores and \code{parallel_processing = T}, too many busy cores will kill the process because it creates too much data for the RAM. For 32GB RAM a maximum of 30 cores are recommended (when no other applications are open).
 #' @param limit_bodtief max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}, \code{BZE} or the GEOLA-dataset. If not \code{NA}, soil-dfs are created down to the depth specified here as depth in \code{m}, negative
 #' @param ... further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}. \cr Only exception is the roots functions' parameter \code{maxrootdepth}, which, if desired, has to be specified here as  \code{roots_max}, because maximal root depth setting according to vegetation parameters will be complemented by root limitations from soil conditions. \cr Settings can be either single values, applied to all soil data frames equally, or vector with the same length as \code{df.ids} specifying the roots setting for each modelling point. see example. If roots are counted and provided in \code{df.soils} as column \code{rootden}, set to \code{table}.
 #' @param bze_buffer whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur in {m}, default is \code{12}, because that way only the closest of the 25m raster cells gets found and we don't get multiple points from the same cell
@@ -55,10 +56,16 @@ fnc_get_soil <- function(df.ids,
                          bze_buffer = 12,
                          meta.out = NA,
                          limit_bodtief = NA,
+                         maxcores = NA,
 
                          ...
 
                          ){
+
+
+  if(parallel_processing & is.na(maxcores)){
+    maxcores = parallel::detectCores()-1
+  }
 
   argg <- c(as.list(environment()), list(...))
   `%dopar%` <- foreach::`%dopar%`
@@ -268,7 +275,7 @@ fnc_get_soil <- function(df.ids,
 
     }
 
-    cat("starting BZE extraction.../n")
+    cat("starting BZE extraction...\n")
     ls.soils <- fnc_soil_bze(df.ids = df.ids,
                              buffering = (!is.na(bze_buffer)),
                              buff_width = bze_buffer,
@@ -379,12 +386,12 @@ fnc_get_soil <- function(df.ids,
   } else {
 
     if(parallel_processing){
-      cl <- parallel::makeCluster(parallel::detectCores())
+      cl <- parallel::makeCluster(maxcores)
       doParallel::registerDoParallel(cl)
       ls.soils <- foreach::foreach(i = 1:length(ls.soils),
                                    .packages = "modLWFB90") %dopar% {
-                                     x <- fnc_PTF(ls.soils[[i]],
-                                                  PTF_used = PTF_to_use)
+                                     x <- modLWFB90::fnc_PTF(ls.soils[[i]],
+                                                              PTF_used = PTF_to_use)
                                    }
       parallel::stopCluster(cl)
     }else{
@@ -400,7 +407,7 @@ fnc_get_soil <- function(df.ids,
 
 
     if(parallel_processing){
-      cl <- parallel::makeCluster(parallel::detectCores())
+      cl <- parallel::makeCluster(maxcores)
       doParallel::registerDoParallel(cl)
       ls.soils <- foreach::foreach(i = 1:length(ls.soils),
                                    .packages = c("modLWFB90")) %dopar% {
@@ -489,7 +496,7 @@ fnc_get_soil <- function(df.ids,
     cat("Applying STOK and GEOLA...\n")
 
     if(parallel_processing){
-      cl <- parallel::makeCluster(parallel::detectCores())
+      cl <- parallel::makeCluster(maxcores)
       doParallel::registerDoParallel(cl)
 
       ls.soils <- foreach::foreach(i = 1:length(ls.soils),
@@ -660,7 +667,7 @@ fnc_get_soil <- function(df.ids,
     cat("Adding soil info...\n")
 
     if(parallel_processing){
-      cl <- parallel::makeCluster(parallel::detectCores())
+      cl <- parallel::makeCluster(maxcores)
       doParallel::registerDoParallel(cl)
 
       ls.soils <- foreach::foreach(i = 1:length(ls.soils),
@@ -682,7 +689,7 @@ fnc_get_soil <- function(df.ids,
   cat("almost done...\n\n")
 
   if(parallel_processing){
-    cl <- parallel::makeCluster(parallel::detectCores())
+    cl <- parallel::makeCluster(maxcores)
     doParallel::registerDoParallel(cl)
 
     ls.soils <- foreach::foreach(i = 1:length(ls.soils),

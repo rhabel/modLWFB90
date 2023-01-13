@@ -134,7 +134,7 @@ fnc_create_IDs <- function(poly,
                                               pad = "0"))
 
   df.ids <- df.ids %>%
-    mutate(id_standard = paste0(easting, northing),
+    mutate(id_standard = fnc_relateCoords(.)$tranche,
            tranche = fnc_relateCoords(.)$tranche)
   # # # plot
   # sf.ids <- sf::st_as_sf(df.ids,
