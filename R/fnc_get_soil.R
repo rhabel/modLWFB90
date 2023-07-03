@@ -7,7 +7,7 @@
 #' \itemize{
 #' \item \code{ID_custom} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to.
 #' \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
-#' }
+#' } \cr OR: A simple feature with at the ID_custom-column. If df.ids is a simple feature, the polygon's centroids will be intersected with the Standortskartierung. A merging of information of partial coverage fractions of different STOK-polygons is not supported. So it is recommended to only use STOKA-Data as polygon-input layers, or to only use polygons that are small enough for the intersection process to not be an issue.
 #' @param soil_option whether regionalised BZE, STOK Leitprofil data (\code{BZE}), or own data should be used for modelling. While option \code{BZE} with a buffer of 50 shouldn't create many NAs. \cr With option \code{OWN}, inusers can enter their own soil data (i.e. from lab or field experiments). If the option \code{OWN} is selected, the dataframes must be passed at \code{df.soils}.
 #' @param add_BodenInfo shall further soil info (nFK, PWP, FK, texture ...) be added to the soil-df, default is \code{TRUE}
 #' @param incl_GEOLA information from the \emph{Geowissenschaftliche Landesaufnahme} will be used to get additional data on soil depth and max root depth. On top of that,  \emph{Standortskartierung} and  \emph{GEOLA} will be used for identifying soil types that will be modelled differently to include the effect of groundwater (Gleye / Auenboeden) or alternating Saturation (Stauwasserboeden). Default is \code{TRUE}
@@ -42,6 +42,9 @@
 #' @example inst/examples/fnc_get_soil_ex.R
 #' @export
 
+# df.ids <- st_read("J:/FVA-Projekte/P01765_StWM_KPW/Daten/Urdaten/GIS/Exkursionsgebiet/Stoka.shp")[1:5,] %>%
+#   mutate(ID_custom = paste0("ID_0", 1:nrow(.))) %>% select(ID_custom)
+#
 fnc_get_soil <- function(df.ids,
                          soil_option,
                          PTF_to_use,
@@ -51,7 +54,7 @@ fnc_get_soil <- function(df.ids,
                          limit_MvG = T,
                          add_BodenInfo = T,
                          incl_GEOLA = T,
-                         parallel_processing= F,
+                         parallel_processing = F,
 
                          bze_buffer = 12,
                          meta.out = NA,
@@ -75,27 +78,53 @@ fnc_get_soil <- function(df.ids,
   df.ids$ID <- 1:nrow(df.ids)
 
   # transformation of ids to GK3 for slope & aspect ---------- ####
+
+  # calculation of centroids or points on surface:
+  if(all(c("sf", "data.frame") %in% class(df.ids))){
+    df.ids <- sf::st_transform(df.ids, 32632)
+
+    sf_cent <- sf::st_centroid(df.ids[,c("ID", "ID_custom")]) %>%
+      sf::st_transform(32632) %>%
+      dplyr::mutate(easting = round(st_coordinates(.)[, "X"]),
+                    northing = round(st_coordinates(.)[, "Y"]))
+
+    cents_on_polys <- sf::st_intersection(sf_cent, df.ids) %>%
+      dplyr::filter(ID == ID.1) %>% pull(ID)
+
+    sf_points <- sf::st_point_on_surface(df.ids[,c("ID", "ID_custom")]) %>%
+      sf::st_transform(32632) %>%
+      dplyr::filter(!ID %in% cents_on_polys)
+    if(nrow(sf_points) > 0){
+      sf_points <- sf_points %>%
+        dplyr::mutate(easting = round(st_coordinates(.)[, "X"]),
+                      northing = round(st_coordinates(.)[, "Y"]))
+    }
+
+    df.ids <- sf_cent %>%
+      dplyr::filter(ID %in% cents_on_polys) %>%
+      dplyr::bind_rows(., sf_points) %>% dplyr::arrange(ID) %>% sf::st_drop_geometry()
+  }
+
   df.dgm <- sf::st_as_sf(df.ids,
                          coords = c("easting", "northing"), crs = 32632) %>%
-    sf::st_transform(31467)
+    sf::st_transform(25832)
   df.dgm <- terra::vect(df.dgm)
-  dgm_spat <- terra::rast(list.files(path_DGM, pattern = "aspect.sdat|slope.sdat", full.names=T))
+  dgm_spat <- terra::rast(list.files(path_DGM, pattern = "aspect.tif|slope.tif", full.names=T))
   df.dgm <- round(terra::extract(dgm_spat, df.dgm), 0)
 
 
   # choice of data origin:  ---------------------------------- ####
   cat("Gathering soil data...\n")
   if (soil_option == "STOK") {
+
     # load df.LEIT
-    load(file = path_df.LEIT)
+    df.LEIT.BW <- readRDS(path_df.LEIT)
 
     df.ids <- df.ids %>%
       dplyr::left_join(df.dgm, by = "ID")
 
-
-
       # create sf
-      sf.ids <- sf::st_as_sf(df.ids,
+      sf.ids <- sf::st_as_sf(df.ids[,c("ID", "ID_custom", "aspect","slope","easting", "northing")],
                              coords = c("easting", "northing"), crs = 32632)
 
       # check which wuchsgebiete are needed
@@ -106,26 +135,44 @@ fnc_get_soil <- function(df.ids,
                                          recursive = F)), ".shp"),
                     decreasing = F)
 
-      #Read required GEOLA and STOKA shapefiles
-      cl <- parallel::makeCluster(ifelse(length(wugeb) < parallel::detectCores(),
-                                         length(wugeb),
-                                         parallel::detectCores()))
-      doParallel::registerDoParallel(cl)
+      if(length(wugeb) > 4 ){
+        #Read required GEOLA and STOKA shapefiles
+        cl <- parallel::makeCluster(ifelse(length(wugeb) < parallel::detectCores(),
+                                           length(wugeb),
+                                           parallel::detectCores()))
+        doParallel::registerDoParallel(cl)
 
-      sf.geola <- foreach::foreach(i = wugeb,
-                                   .packages = "sf",
-                                   .combine = rbind) %dopar% {
-                                     sf::st_read(paste0(path_GEOLA_pieces, i),
-                                                 quiet = T)
-                                   }
-      sf.stoka <- foreach::foreach(i = wugeb,
-                                   .packages = "sf",
-                                   .combine = rbind) %dopar% {
-                                     sf::st_read(paste0(path_STOK_pieces, i),
-                                                 quiet = T)
-                                   }
+        sf.geola <- foreach::foreach(i = wugeb,
+                                     .packages = "sf",
+                                     .combine = rbind) %dopar% {
+                                       sf::st_read(paste0(path_GEOLA_pieces, i),
+                                                   quiet = T)
+                                     }
+        sf.stoka <- foreach::foreach(i = wugeb,
+                                     .packages = "sf",
+                                     .combine = rbind) %dopar% {
+                                       sf::st_read(paste0(path_STOK_pieces, i),
+                                                   quiet = T)
+                                     }
 
-      parallel::stopCluster(cl)
+        parallel::stopCluster(cl)
+      }else{
+        for(i in wugeb){
+
+          stoka.tmp <- sf::st_read(paste0(path_STOK_pieces, i),
+                                   quiet = T)
+
+          if(i == wugeb[1]){sf.stoka <- stoka.tmp}else{sf.stoka <- rbind(sf.stoka, stoka.tmp)}
+
+          geola.tmp <- sf::st_read(paste0(path_GEOLA_pieces, i),
+                                   quiet = T)
+
+          if(i == wugeb[1]){sf.geola <- geola.tmp}else{sf.geola <- rbind(sf.geola, geola.tmp)}
+
+        }
+        rm(list = c("stoka.tmp", "geola.tmp"))
+      }
+
 
       sf.ids <-  sf.ids %>%
         sf::st_join(sf.geola) %>%
@@ -135,43 +182,25 @@ fnc_get_soil <- function(df.ids,
         dplyr::distinct() %>%
         dplyr::mutate(GRUND_C = as.numeric(GRUND_C),
                       BODENTY = case_when(str_detect(BODENTY, "Moor") & !str_detect(FMO_KU, "vermoort") ~ "sonstige",
-                                          str_detect(FMO_KU, "vermoort") ~ "Moor",
-                                          str_detect(WHH_broad, "G") ~ "Gleye/Auenboeden",
-                                          str_detect(WHH_broad, "S") ~ "Stauwasserboeden",
-                                          str_detect(BODENTY, "Gleye/Auenboeden") & !str_detect(WHH_broad, "G") ~ "sonstige",
-                                          str_detect(BODENTY, "Stauwasserboeden") & !str_detect(WHH_broad, "S") ~ "sonstige",
-                                          T ~ BODENTY)) %>%
-        dplyr::select(-c(WHH, FMO_KU, WHH_broad))
+                                          str_detect(WHH_brd, "G") ~ "Gleye/Auenboeden",
+                                          str_detect(WHH_brd, "S") ~ "Stauwasserboeden",
+                                          str_detect(BODENTY, "Gleye/Auenboeden") & !str_detect(WHH_brd, "G") ~ "sonstige",
+                                          str_detect(BODENTY, "Stauwasserboeden") & !str_detect(WHH_brd, "S") ~ "sonstige",
+                                          T ~ BODENTY),
+                      humus = hmsmcht/100,
+                      RST_F = as.character(RST_F)) %>%
+        # Swamps - via FMO_KU of STOKA
+        dplyr::filter(FMO_KU != "vermoort") %>%
+        dplyr::select(any_of(c("ID", "ID_custom", "aspect", "slope", "GRUND_C", "BODENTY", "RST_F", "WugebNr", "humus")))
 
 
+      df.ids <- dplyr::left_join(df.ids, sf.ids)
 
-      df.ids <- df.ids %>%
-        dplyr::left_join(sf.ids)
-
-
-      # Identify missing and non-forest RST_F
-      #no forest
-      RST_noforest <- df.ids %>%
-        dplyr::filter(is.na(OA_ID))  %>%
-        dplyr::pull(RST_F) %>%
-        unique(.)
-
-      #missing RST_F in df.LEIT
-      RST_LEIT <- unique(sf.ids$RST_F[!sf.ids$RST_F %in% df.LEIT.BW$RST_F])
-
-      #Swamps
-      RST_moor <- df.LEIT.BW %>%
-        dplyr::filter(humusform == "Moor") %>%
-        dplyr::pull(RST_F)%>%
-        as.numeric(.) %>%
-        unique(.)
-
-      RST_miss <- c(RST_noforest, RST_LEIT, RST_moor)
-      RST_miss <- RST_miss[!is.na(RST_miss)]
+      # remove missing RST_F in df.LEIT
+      RST_miss <- unique(sf.ids$RST_F[!sf.ids$RST_F %in% df.LEIT.BW$RST_F])
 
       # clear up space
-      rm(sf.gebiet, sf.geola, sf.wugeb, RST_noforest, RST_moor, RST_LEIT); gc()
-
+      rm(list = c("sf.geola", "sf.wugeb", "sf.stoka")); gc()
 
       IDs_miss <- df.ids$ID[(is.na(df.ids$RST_F) | df.ids$RST_F %in% RST_miss)] # remove non-forest-rst_fs
       IDs_good <- df.ids$ID[!df.ids$ID %in% IDs_miss] # IDs good
@@ -183,7 +212,8 @@ fnc_get_soil <- function(df.ids,
                                   df.LEIT = df.LEIT.BW,
                                   PTF_to_use = PTF_to_use,
                                   limit_bodtief = limit_bodtief,
-                                  incl_GEOLA = incl_GEOLA)
+                                  incl_GEOLA = incl_GEOLA,
+                                  parallel_processing = parallel_processing)
         if(length(ls.soils) == 0){
           stop("none of the given points has STOKA data")
         }
@@ -201,7 +231,8 @@ fnc_get_soil <- function(df.ids,
                                     df.LEIT = df.LEIT.BW,
                                     PTF_to_use = PTF_to_use,
                                     limit_bodtief = limit_bodtief,
-                                    incl_GEOLA = incl_GEOLA)
+                                    incl_GEOLA = incl_GEOLA,
+                                    parallel_processing = parallel_processing)
           if(length(ls.soils) == 0){
             stop("none of the given points has STOKA data")
           }
@@ -296,7 +327,7 @@ fnc_get_soil <- function(df.ids,
     } else {
 
       ls.soils <- df.soils %>%
-        dplyr::left_join(df.ids, by = "ID_custom") %>%
+        dplyr::left_join(df.ids) %>%
         dplyr::arrange(ID, mat, -upper) %>%
         dplyr::select(ID, ID_custom, everything()) %>%
         dplyr::group_split(ID)
@@ -591,7 +622,6 @@ fnc_get_soil <- function(df.ids,
         ls.soils,
         bodentypen,
         SIMPLIFY = F)
-
       }
       if(soil_option == "BZE"){
 
