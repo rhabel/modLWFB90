@@ -200,40 +200,40 @@ params_default <- LWFBrook90R::set_paramLWFB90()
 
 save(params_beech, params_oak, params_pine, params_spruce, params_douglasfir, params_default,
      file = "./data/params_species.rda")
-# load("H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90/data/params_species.rda")
+# load("J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90/data/params_species.rda")
 
 # paths ####
 
 # ... to wuchsgebiet-Shapefile:
-path_WGB_diss_shp = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/WUGEB/"
+path_WGB_diss_shp = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/WUGEB/"
 
 # ...to STOK in 7 wuchsgebiets-splits:
-path_STOK_pieces = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/STOK/"
+path_STOK_pieces = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/STOK/"
 
 # ...to GEOLA in 7 wuchsgebiets-splits:
-path_GEOLA_pieces = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/GEOLA/"
+path_GEOLA_pieces = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/GEOLA/"
 
 # ...to altitude, slope and aspect:
-path_DGM = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/DGM/"
+path_DGM = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/DGM/"
 
 
 # ...to original BZE-reg data:
-path_models_in = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/BZE_REG_filled/original/"
+path_models_in = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/BZE_REG_filled/original/"
 
 # ...to filled BZE_reg data:
-path_BZEreg = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/BZE_REG_filled/filled/"
+path_BZEreg = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/BZE_REG_filled/filled/"
 
 # ...to PDUR-layer:
-path_pdur = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/PDUR/"
+path_pdur = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/PDUR/"
 
 # ...to PDUR-layer:
 path_clim = "R:/klima/whh/brook90_input/rds/"
 
 # ...to BSK-forest-area (continuously updated):
-path_bsk_forest = "H:/FVA-Projekte/P01715_BSK_ToolBox/Daten/aufbereiteteDaten/01_bsk_toolbox/data/02_Inputdaten_formatieren_und_verarbeiten/Waldbesitz_und_waldmaske_filter_10000_m2.shp"
+path_bsk_forest = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/WALD_LY/Waldbesitz_und_waldmaske_filter_10000_m2.shp"
 
 # ... to LeitprofilDB
-path_df.LEIT = "H:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/LEIT_DB/Modul1DB.Rdata"
+path_df.LEIT = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/LEIT_DB/LP_DB.rds"
 
 
 save(path_WGB_diss_shp,
@@ -243,21 +243,3 @@ save(path_WGB_diss_shp,
      path_df.LEIT,
      path_clim,
      file = "./data/paths.rda")
-
-# # bonitaet
-# df.boni <- data.frame("tree_species" = rep(c("beech", "oak", "spruce", "pine"),each = 3),
-#                       "boni" = rep(1:3, 4),
-#                       "maxlai" = c(6,5,4,
-#                                    5.4, 5.0, 4.5,
-#                                    7,6,5,
-#                                    3.5, 3, 2.5),
-#                       "sai" = c(1,0.9,0.8,
-#                                 0.9, 0.8, 0.7,
-#                                 2,1.5,1,
-#                                 0.8,0.7,0.6),
-#                       "height" = c(34, 25, 20,
-#                                    26, 20, 15,
-#                                    36, 25, 20,
-#                                    30, 20, 15))
-# save(df.boni,
-#      file = "./data/boni.rda")
