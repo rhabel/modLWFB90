@@ -25,7 +25,7 @@ fnc_get_soil(
 \itemize{
 \item \code{ID_custom} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to.
 \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
-}}
+} \cr OR: A simple feature with at the ID_custom-column. If df.ids is a simple feature, the polygon's centroids will be intersected with the Standortskartierung. A merging of information of partial coverage fractions of different STOK-polygons is not supported. So it is recommended to only use STOKA-Data as polygon-input layers, or to only use polygons that are small enough for the intersection process to not be an issue.}
 
 \item{soil_option}{whether regionalised BZE, STOK Leitprofil data (\code{BZE}), or own data should be used for modelling. While option \code{BZE} with a buffer of 50 shouldn't create many NAs. \cr With option \code{OWN}, inusers can enter their own soil data (i.e. from lab or field experiments). If the option \code{OWN} is selected, the dataframes must be passed at \code{df.soils}.}
 

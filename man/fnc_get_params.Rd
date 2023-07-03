@@ -4,12 +4,7 @@
 \alias{fnc_get_params}
 \title{Parameter-list creation}
 \usage{
-fnc_get_params(
-  df.ids,
-  tree_species = "spruce",
-  df.ind.info = NULL,
-  wuchsmaechtigkeit = F
-)
+fnc_get_params(df.ids, tree_species = "spruce", df.ind.info = NULL)
 }
 \arguments{
 \item{df.ids}{a data frame that contains at least the following columns:
@@ -22,7 +17,7 @@ fnc_get_params(
 \item \code{aspect} - aspect of the modelling points in degree
 \item \code{coord_x} - longitude of points in degree, will be calculated automatically if missing
 \item \code{coord_y} - latitude of points in degree, will be calculated automatically if missing
-}}
+} \cr OR: A simple feature with any of the columns above. If df.ids is a simple feature, site information "aspect" and "slope" will be averaged over the polygon area. Coord_y and coord_x will be taken from the centroid.}
 
 \item{tree_species}{name of the tree species to be modelled with. Either a single species name that is then used for all points in \code{df.ids}, or a vector of the same length as \code{df.ids$ID} if the main tree species of each point is known and differs. Must be one of \code{beech}, \code{oak}, \code{spruce}, \code{pine}, \code{larch}, \code{douglasfir}. \cr It is  recommended (findings of project WHH-KW) to use the settings of spruce for fir and the settings of pine for larch. If certain tree specific parameters should be changed permanently, the corresponding object \code{params_...} should be overwritten manually before running the function.}
 
