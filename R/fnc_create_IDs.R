@@ -117,7 +117,7 @@ fnc_create_IDs <- function(poly,
 
     # filter whether wald or not:
 
-    spat_wald <-sf::st_read("H:/FVA-Projekte/P01715_BSK_ToolBox/Daten/aufbereiteteDaten/01_bsk_toolbox/data/02_Inputdaten_formatieren_und_verarbeiten/Waldbesitz_und_waldmaske_filter_10000_m2.shp", quiet = T) %>%
+    spat_wald <-sf::st_read(path_bsk_forest, quiet = T) %>%
       dplyr::select(FID) %>%
       terra::vect(.)
 
@@ -136,7 +136,7 @@ fnc_create_IDs <- function(poly,
                                               pad = "0"))
   if(with_clim_meta){
     df.ids <- df.ids %>%
-      mutate(id_standard = fnc_relateCoords(.)$tranche,
+      mutate(id_standard = fnc_relateCoords(.)$id_standard,
              tranche = fnc_relateCoords(.)$tranche)
   }
 

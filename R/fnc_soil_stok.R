@@ -13,109 +13,202 @@ fnc_soil_stok <- function(df,
                           df.LEIT,
                           PTF_to_use,
                           limit_bodtief,
-                          incl_GEOLA){
+                          incl_GEOLA,
+                          parallel_processing = F){
 
 
-  # get Leitprofile info through parallel processing
-  cl <- parallel::makeCluster(parallel::detectCores())
-  doParallel::registerDoParallel(cl)
+  if(parallel_processing){
+    # get Leitprofile info through parallel processing
+    cl <- parallel::makeCluster(parallel::detectCores())
+    doParallel::registerDoParallel(cl)
 
-  ls.soil.par <- foreach::foreach(i = 1:nrow(df),
-                                  .packages = c("dplyr", "modLWFB90")) %dopar% {
-                                    tryCatch({
+    ls.soil.par <- foreach::foreach(i = 1:nrow(df),
+                                    .packages = c("dplyr", "modLWFB90")) %dopar% {
+                                      tryCatch({
 
-                                      df.tmp <- df.LEIT %>%
-                                        dplyr::filter(RST_F == df$RST_F[i]) %>%
-                                        dplyr::mutate("ID" = df$ID[i],
-                                                      "ID_custom" = as.character(df$ID_custom[i])) %>%
-                                        dplyr::mutate(TRD = round(as.numeric(TRD), 3)) %>%
+                                        df.tmp <- df.LEIT %>%
+                                          dplyr::filter(RST_F == df$RST_F[i]) %>%
+                                          dplyr::mutate("ID" = df$ID[i],
+                                                        "ID_custom" = as.character(df$ID_custom[i]),
+                                                        "humus" = df$humus[i]) %>%
 
-                                        dplyr::select(ID, ID_custom, HORIZONT, LAGENUM, TIEFE_OG, TIEFE_UG, SAND, SCHLUFF, TON, SKELETT, TRD, SOC, humusform) %>%
-                                        setNames(c("ID", "ID_custom", "horizont", "mat", "upper", "lower", "sand", "silt", "clay", "gravel", "bd", "oc.pct", "humusform")) %>%
+                                          #dplyr::select(ID, ID_custom, Horizont, HNr, TIEFE_OG, TIEFE_UG, SAND, SCHLUFF, TON, SKELETT, TRD, SOC, humusform) %>%
+                                          dplyr::select(ID, ID_custom, Horizont, HNr, Tiefe_OG, Tiefe_UG, Sand, Schluff, Ton, Skelett, TRD, SOC, humus) %>%
+                                          setNames(c("ID", "ID_custom", "horizont", "mat", "upper", "lower", "sand", "silt", "clay", "gravel", "bd", "oc.pct", "humus"))# %>%
 
-                                        dplyr::mutate_at(vars(-all_of(c("ID_custom", "humusform", "horizont"))), as.numeric) %>%
-                                        dplyr::mutate(horizont = stringr::str_sub(stringr::str_replace_all(horizont, " 1| 2| 3", ""), -3, -1))
-                                      df.tmp[df.tmp == -9999] <- NA
+                                        # dplyr::mutate_at(vars(-all_of(c("ID_custom", "horizont"))), as.numeric) %>%
+                                        # dplyr::mutate(horizont = stringr::str_sub(stringr::str_replace_all(horizont, " 1| 2| 3", ""), -3, -1))
+                                        df.tmp[df.tmp == -9999] <- NA
 
-                                      # remove roots from Sd/Gr-Horizons
-                                      noroots <- which(stringr::str_detect(df.tmp$horizont,"Sd|Srd|Gor|Gr"))
-                                      if(length(noroots)>0){rootslim_soil <- df.tmp$lower[min(noroots)-1]}else{rootslim_soil <- max(df.tmp$lower)}
-                                      df.tmp$dpth_ini <- rootslim_soil
-                                      df.tmp$BODENTYP <- "unknown"
+                                        # remove roots from Sd/Gr-Horizons
+                                        noroots <- which(stringr::str_detect(df.tmp$horizont,"Sd|Srd|Gor|Gr"))
+                                        if(length(noroots)>0){rootslim_soil <- df.tmp$lower[min(noroots)-1]}else{rootslim_soil <- max(df.tmp$lower)}
 
-                                      if(incl_GEOLA){
+                                        df.tmp$dpth_ini <- rootslim_soil
+                                        df.tmp$BODENTYP <- "unknown"
 
-                                        if(!is.na(df$BODENTY[i])){
-                                          df.tmp$BODENTYP <-  df$BODENTY[i]
-                                        }
+                                        if(incl_GEOLA){
 
-                                        # if no Sd/Gr Horizon, take deepest depth GEOLA/STOK as roots and profile limit
-
-                                        if(length(noroots) == 0 & !is.na(df$GRUND_C[i])){
-                                          whichmax <- as.numeric(max(df$GRUND_C[i], rootslim_soil))
-                                          df.tmp[nrow(df.tmp), "lower"] <-  whichmax
-                                          df.tmp$dpth_ini <- whichmax
-
-                                        }
-
-                                      }
-
-                                      # Tiefendiskretisierung, limit if wanted
-                                      if(!all(is.na(df.tmp[c("mat", "upper", "lower")]))){
-                                        if(is.na(limit_bodtief) == TRUE){
-
-                                          if(incl_GEOLA){
-                                            df.tmp <- modLWFB90::fnc_depth_disc(df = df.tmp,
-                                                                                limit_bodtief = ifelse(df$BODENTY[i] == "Gleye/Auenboeden",
-                                                                                                       -3,NA))
-                                          }else{
-                                            df.tmp <- modLWFB90::fnc_depth_disc(df = df.tmp,
-                                                                                limit_bodtief = NA)
+                                          if(!is.na(df$BODENTY[i])){
+                                            df.tmp$BODENTYP <-  df$BODENTY[i]
                                           }
 
+                                          # if no Sd/Gr Horizon, take deepest depth GEOLA/STOK as roots and profile limit
 
-                                        }else{
+                                          if(length(noroots) == 0 & !is.na(df$GRUND_C[i])){
+                                            whichmax <- as.numeric(max(df$GRUND_C[i], rootslim_soil))
+                                            df.tmp[nrow(df.tmp), "lower"] <-  whichmax
+                                            df.tmp$dpth_ini <- whichmax
 
-                                          df.tmp <- modLWFB90::fnc_depth_disc(df = df.tmp,
-                                                                              limit_bodtief = limit_bodtief)
+                                          }
 
                                         }
+
+                                        # Tiefendiskretisierung, limit if wanted
+                                        if(!all(is.na(df.tmp[,c("mat", "upper", "lower")]))){
+                                          if(is.na(limit_bodtief) == TRUE){
+
+                                            if(incl_GEOLA){
+                                              df.tmp <- modLWFB90::fnc_depth_disc(df = df.tmp,
+                                                                                  limit_bodtief = ifelse(df$BODENTY[i] == "Gleye/Auenboeden",
+                                                                                                         -3,NA))
+                                            }else{
+                                              df.tmp <- modLWFB90::fnc_depth_disc(df = df.tmp,
+                                                                                  limit_bodtief = NA)
+                                            }
+
+
+                                          }else{
+
+                                            df.tmp <- modLWFB90::fnc_depth_disc(df = df.tmp,
+                                                                                limit_bodtief = limit_bodtief)
+
+                                          }
+                                        }
+
+
+                                        # translate humusform to humus-cm
+                                        df.tmp <- df.tmp %>%
+                                          dplyr::mutate(oc.pct = case_when((is.na(oc.pct)|(oc.pct < 0)) & PTF_to_use == "PTFPUH2" ~ 0.5,
+                                                                           (is.na(oc.pct)|(oc.pct < 0)) & PTF_to_use %in% c("HYPRES", "WESSOLEK") ~ 0.1,
+                                                                           T ~ oc.pct),
+                                                        upper = upper/-100,
+                                                        lower = lower/-100,
+                                                        gravel = gravel / 100)
+
+                                        # add and prepare
+                                        df.tmp <- df.tmp %>%
+                                          dplyr::mutate(nl = 1:nrow(df.tmp)) %>%
+                                          dplyr::left_join(df[i,c("ID", "aspect", "slope")]) %>%
+                                          dplyr::select(-horizont) %>%
+                                          dplyr::select(ID, ID_custom, mat, nl, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, everything()) %>%
+                                          dplyr::mutate(ID_custom = as.character(ID_custom))
+
+                                      },
+                                      error = function(cond){
+                                        out <- data.frame("ID" = df$ID[i],
+                                                          "ID_custom" = as.character(df$ID_custom[i]))
+                                        return(out)
+
+                                      })
+                                    }
+
+    parallel::stopCluster(cl)
+  }else{
+    ls.soil.par <- apply(df, 1, FUN = function(x){
+
+                                    out <- tryCatch(
+
+                                      {
+                                        df.tmp <- df.LEIT %>%
+                                          dplyr::filter(RST_F == x[["RST_F"]]) %>%
+                                          dplyr::mutate("ID" = x[["ID"]],
+                                                        "ID_custom" = as.character(x[["ID_custom"]]),
+                                                        "humus" = x[["humus"]]) %>%
+
+                                          dplyr::select(ID, ID_custom, Horizont, HNr, Tiefe_OG, Tiefe_UG, Sand, Schluff, Ton, Skelett, TRD, SOC, humus) %>%
+                                          setNames(c("ID", "ID_custom", "horizont", "mat", "upper", "lower", "sand", "silt", "clay", "gravel", "bd", "oc.pct", "humus"))
+
+                                        df.tmp[df.tmp == -9999] <- NA
+
+                                        # remove roots from Sd/Gr-Horizons
+                                        noroots <- which(stringr::str_detect(df.tmp$horizont,"Sd|Srd|Gor|Gr"))
+                                        if(length(noroots)>0){rootslim_soil <- df.tmp$lower[min(noroots)-1]}else{rootslim_soil <- max(df.tmp$lower)}
+
+                                        df.tmp$dpth_ini <- rootslim_soil
+                                        df.tmp$BODENTYP <- "unknown"
+
+                                        if(incl_GEOLA){
+
+                                          if(!is.na(x[["BODENTY"]])){
+                                            df.tmp$BODENTYP <-  x[["BODENTY"]]
+                                          }
+
+                                          # if no Sd/Gr Horizon, take deepest depth GEOLA/STOK as roots and profile limit
+
+                                          if(length(noroots) == 0 & !is.na(x[["GRUND_C"]])){
+                                            whichmax <- as.numeric(max(x[["GRUND_C"]], rootslim_soil))
+                                            df.tmp[nrow(df.tmp), "lower"] <-  whichmax
+                                            df.tmp$dpth_ini <- whichmax
+
+                                          }
+
+                                        }
+
+                                        # Tiefendiskretisierung, limit if wanted
+                                        if(!all(is.na(df.tmp[,c("mat", "upper", "lower")]))){
+                                          if(is.na(limit_bodtief) == TRUE){
+
+                                            if(incl_GEOLA){
+                                              df.tmp <- modLWFB90::fnc_depth_disc(df = df.tmp,
+                                                                                  limit_bodtief = ifelse( x[["BODENTY"]] == "Gleye/Auenboeden",
+                                                                                                         -3,NA))
+                                            }else{
+                                              df.tmp <- modLWFB90::fnc_depth_disc(df = df.tmp,
+                                                                                  limit_bodtief = NA)
+                                            }
+
+
+                                          }else{
+
+                                            df.tmp <- modLWFB90::fnc_depth_disc(df = df.tmp,
+                                                                                limit_bodtief = limit_bodtief)
+
+                                          }
+                                        }
+
+
+                                        # translate humusform to humus-cm
+                                        df.tmp <- df.tmp %>%
+                                          dplyr::mutate(oc.pct = case_when((is.na(oc.pct)|(oc.pct < 0)) & PTF_to_use == "PTFPUH2" ~ 0.5,
+                                                                           (is.na(oc.pct)|(oc.pct < 0)) & PTF_to_use %in% c("HYPRES", "WESSOLEK") ~ 0.1,
+                                                                           T ~ oc.pct),
+                                                        upper = upper/-100,
+                                                        lower = lower/-100,
+                                                        gravel = gravel / 100)
+
+                                        # add and prepare
+                                        df.tmp <- df.tmp %>%
+                                          dplyr::mutate(nl = 1:nrow(df.tmp),
+                                                        slope = as.numeric(x[["slope"]]),
+                                                        aspect = as.numeric(x[["aspect"]]),
+                                                        ID = as.numeric(ID),
+                                                        humus = as.numeric(humus)) %>%
+                                          dplyr::select(-horizont) %>%
+                                          dplyr::select(ID, ID_custom, mat, nl, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, everything()) %>%
+                                          dplyr::mutate(ID_custom = as.character(ID_custom))
+
+                                      },
+                                      error = function(cond){
+                                        out <- data.frame("ID" = x[["ID"]],
+                                                          "ID_custom" = as.character(x[["ID_custom"]]))
+                                        return(out)
+
                                       }
+                                    )
+      })
+  }
 
-
-                                      # translate humusform to humus-cm
-                                      df.tmp <- df.tmp %>%
-                                        dplyr::mutate(oc.pct = case_when((is.na(oc.pct)|(oc.pct < 0)) & PTF_to_use == "PTFPUH2" ~ 0.5,
-                                                                         (is.na(oc.pct)|(oc.pct < 0)) & PTF_to_use %in% c("HYPRES", "WESSOLEK") ~ 0.1,
-                                                                         T ~ oc.pct),
-                                                      humus = case_when(humusform == "Mull" ~ 0.03,
-                                                                        humusform == "Mullmoder" ~ 0.067,
-                                                                        humusform == "Moder" ~ 0.045,
-                                                                        humusform == "Rohhumusartiger Moder" ~ 0.06,
-                                                                        humusform == "Rohhumus" ~ 0.07,
-                                                                        T ~ 0),
-                                                      upper = upper/-100,
-                                                      lower = lower/-100,
-                                                      gravel = gravel / 100)
-
-                                      # add and prepare
-                                      df.tmp <- df.tmp %>%
-                                        dplyr::mutate(nl = 1:nrow(df.tmp)) %>%
-                                        dplyr::left_join(df[i,c("ID", "aspect", "slope")]) %>%
-                                        dplyr::select(-humusform, -horizont) %>%
-                                        dplyr::select(ID, ID_custom, mat, nl, upper, lower, sand, silt, clay, gravel, bd, oc.pct, aspect, slope, humus, everything()) %>%
-                                        dplyr::mutate(ID_custom = as.character(ID_custom))
-
-                                    },
-                                    error = function(cond){
-                                      out <- data.frame("ID" = df$ID[i],
-                                                        "ID_custom" = as.character(df$ID_custom[i]))
-                                      return(out)
-
-                                    })
-                                  }
-
-  parallel::stopCluster(cl)
 
   names(ls.soil.par) <- unlist(lapply(ls.soil.par, function(x) unique(x$ID_custom)))
   # set NULL to missing data
