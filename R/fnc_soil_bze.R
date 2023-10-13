@@ -39,7 +39,7 @@ fnc_soil_bze <- function(df.ids,
   xy_spat <- terra::vect(xy)
 
   # einlesen aller BZEraster:
-  a <- c("lof_cm", "oh_cm", "bodtief",
+  a <- c("bodtief", "humus",
          "corg0", "corg1", "corg2", "corg3", "corg4",
          "trdfb0", "trdfb1", "trdfb2", "trdfb3", "trdfb4",
          "grobv0", "grobv1", "grobv2", "grobv3", "grobv4",
@@ -84,9 +84,6 @@ fnc_soil_bze <- function(df.ids,
       buff_data_complete$complete <- "yes"
     }
 
-    # missing organic layer only shall not exclude otherwise successfull buffer process
-    buff_data[,2][is.nan(buff_data[,2])] <- 0
-    buff_data[,3][is.nan(buff_data[,3])] <- 0
     buff_data <- as.data.frame(buff_data[complete.cases(buff_data),])
 
     if(nrow(buff_data_complete) > 0){
@@ -231,7 +228,7 @@ fnc_soil_bze <- function(df.ids,
   skltn1 <- data.table::data.table(upper = c(0,cumsum(thick1[1:length(thick1)-1])), lower = cumsum(thick1))
 
   data.table::setkey(skltn1, upper, lower)
-  soilsdiscrete1 <- fnc_MakeSoil_BZE(soil, skltn1)
+  soilsdiscrete1 <- modLWFB90:::fnc_MakeSoil_BZE(soil, skltn1)
   # soilsdiscrete1 <- lay_long
   data.table::setkey(soilsdiscrete1, ID)
 #
@@ -240,7 +237,7 @@ fnc_soil_bze <- function(df.ids,
 #   soilsdiscrete1[, i.upper := c(0,i.lower[1:.N-1]), by = ID]
   soilsdiscrete1[, mat := as.numeric(depth)+1] # make room for depth_0 - Humus
 
-  soilsdiscrete1[, c("upper", "lower", "profile_top", "aspect", "slope") := list(
+  soilsdiscrete1[, c("upper", "lower", "humus", "aspect", "slope") := list(
     i.upper/-100,
     i.lower/-100,
     profile_top/100,
@@ -248,9 +245,10 @@ fnc_soil_bze <- function(df.ids,
     round(slope, 1)
   )]
   soilsdiscrete1[, "nl" := 1:.N, by = ID]
+  soilsdiscrete1[, "profile_top" := NULL]
 
   # join to get ID_custom
-  df.ids <- as.data.table(df.ids[,-which(colnames(df.ids) %in% c("aspect", "slope", "WugebNr"))])
+  df.ids <- as.data.table(df.ids[, c("ID", "ID_custom", "WugebNr", "BODENTY", "GRUND_C")])
   setkey(df.ids, ID)
   ls.soils.tmp <- df.ids[soilsdiscrete1]
 
@@ -272,12 +270,18 @@ fnc_soil_bze <- function(df.ids,
     if(incl_GEOLA){
 
      ls.soils.tmp <- lapply(ls.soils.tmp, function(x){
+
        x <- as.data.frame(x)
+
         if(!is.na(unique(x$BODENTY)) & unique(x$BODENTY) == "Gleye/Auenboeden"){
-          x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
+
+          x$dpth_ini <- as.numeric(pmax(x$GRUND_C, x$roots_bottom_rnd))
+
         }else if(!is.na(unique(x$BODENTY)) & unique(x$BODENTY) == "Stauwasserboeden"){
+
           x <- x[x$i.upper < as.numeric(unique(x$roots_bottom_rnd)),]
           x$dpth_ini <- as.numeric(unique(x$roots_bottom_rnd))
+
         }else{
           whichmax <- as.numeric(max(unique(x$GRUND_C), unique(x$roots_bottom_rnd), na.rm = T))
           x <- x[which(x$i.upper < whichmax),]
@@ -322,7 +326,7 @@ fnc_soil_bze <- function(df.ids,
 
     x <- x[,c("ID", "ID_custom", "WugebNr", "mat", "nl", "upper", "lower",
              "sand", "schluff", "ton", "gba", "trd", "corg",
-             "aspect", "slope", "profile_top", "BODENTY", "dpth_ini")]
+             "aspect", "slope", "humus", "BODENTY", "dpth_ini")]
     colnames(x) <- c("ID", "ID_custom", "WugebNr", "mat", "nl","upper", "lower",
                      "sand", "silt", "clay", "gravel", "bd", "oc.pct",
                      "aspect" ,"slope" ,"humus", "BODENTYP", "dpth_ini")

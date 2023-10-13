@@ -10,8 +10,8 @@
 
 fnc_MakeSoil_BZE <- function(soil, skltn){
 
-  limits <- soil[,list(ID, lof_cm, oh_cm, bodtief, slope, aspect, WugebNr)]
-  layers <- soil[,-which(names(soil) %in% c("lof_cm", "oh_cm", "bodtief", "slope", "aspect", "WugebNr")), with=F]
+  limits <- soil[,list(ID, humus, bodtief, slope, aspect, WugebNr)]
+  layers <- soil[,-which(names(soil) %in% c("humus", "bodtief", "slope", "aspect", "WugebNr")), with=F]
 
   #Layers umformen nach lang
   layers_m <- melt(data.table(layers), id.vars = "ID")
@@ -28,9 +28,10 @@ fnc_MakeSoil_BZE <- function(soil, skltn){
                                 ifelse(depth =="1", 10,
                                        ifelse(depth =="2",30,
                                               ifelse(depth =="3", 60, max(skltn$lower)))))]
+
   #breite layers wieder mit den limits und infos verschneiden
   setkey(layers_wide, ID)
-  limits[,profile_top := round((ifelse(is.na(lof_cm),0,lof_cm)+ifelse(is.na(oh_cm),0,oh_cm))*0.1)]
+  limits[,profile_top := humus]
 
   limits[,roots_bottom := bodtief]
   limits[,roots_bottom_rnd := ifelse(roots_bottom<10, 10,5*ceiling(roots_bottom/5))] # auf 5 cm aufrunden, mindestens 10 cm

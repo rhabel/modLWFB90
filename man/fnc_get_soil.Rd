@@ -16,6 +16,7 @@ fnc_get_soil(
   bze_buffer = 12,
   meta.out = NA,
   limit_bodtief = NA,
+  force_reg_rootsdepth = F,
   maxcores = NA,
   ...
 )
@@ -60,6 +61,9 @@ If the nFK shall be calculated at some point, this will be done for the first 1m
 \item{bze_buffer}{whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur in {m}, default is \code{12}, because that way only the closest of the 25m raster cells gets found and we don't get multiple points from the same cell}
 
 \item{limit_bodtief}{max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}, \code{BZE} or the GEOLA-dataset. If not \code{NA}, soil-dfs are created down to the depth specified here as depth in \code{m}, negative}
+
+\item{force_reg_rootsdepth}{there is a regionalised max-rootdepth, that takes into account certain soil conditions. However, it reduces the soil depth with roots significantly. Hence, by default, it is deactivated. If set to \code{T}, it will limit the lower roots depth to the regionalised values.
+#' @param meta.out if \code{soil_option = "BZE"} and \code{bze_buffer != NA}, this is a way to save the meta-information of the buffering process. \code{meta.out} must be a path to a .csv-file, where for each point the coordinates and distance of the buffered cell will be stored.}
 
 \item{maxcores}{when using a computer with multiple cores and \code{parallel_processing = T}, too many busy cores will kill the process because it creates too much data for the RAM. For 32GB RAM a maximum of 30 cores are recommended (when no other applications are open).}
 
