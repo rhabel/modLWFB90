@@ -100,7 +100,7 @@ fnc_PTF <- function(df, PTF_used){
   } else if (PTF_used == "WESSOLEK") {
     if(all(c("sand","clay", "silt") %in% names(df))){
       #Texture - from package "soiltexture":
-      sscdata <- setNames(df[c("sand", "silt", "clay")], c("SAND", "SILT", "CLAY"))
+      sscdata <- setNames(df[,c("sand", "silt", "clay")], c("SAND", "SILT", "CLAY"))
       sscdata <- sscdata[complete.cases(sscdata),]
 
       texture <- soiltexture::TT.points.in.classes(tri.data = as.data.frame(sscdata), class.sys = "DE.BK94.TT", text.tol = 0.01)
@@ -139,6 +139,8 @@ fnc_PTF <- function(df, PTF_used){
 
     df <- df %>% dplyr::bind_rows(., rowtobind )
     df <- df[c(nrow(df), 1:(nrow(df)-1)),]
+    df <- as.data.frame(df)
+
     df[1,which(is.na(df[1,]))] <- df[2,which(is.na(df[1,]))]
 
   }

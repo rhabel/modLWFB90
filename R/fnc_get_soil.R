@@ -18,6 +18,8 @@
 #' @param limit_bodtief max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}, \code{BZE} or the GEOLA-dataset. If not \code{NA}, soil-dfs are created down to the depth specified here as depth in \code{m}, negative
 #' @param ... further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}. \cr Only exception is the roots functions' parameter \code{maxrootdepth}, which, if desired, has to be specified here as  \code{roots_max}, because maximal root depth setting according to vegetation parameters will be complemented by root limitations from soil conditions. \cr Settings can be either single values, applied to all soil data frames equally, or vector with the same length as \code{df.ids} specifying the roots setting for each modelling point. see example. If roots are counted and provided in \code{df.soils} as column \code{rootden}, set to \code{table}.
 #' @param bze_buffer whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur in {m}, default is \code{12}, because that way only the closest of the 25m raster cells gets found and we don't get multiple points from the same cell
+#' @param force_reg_rootsdepth there is a regionalised max-rootdepth, that takes into account certain soil conditions. However, it reduces the soil depth with roots significantly. Hence, by default, it is deactivated. If set to \code{T}, it will limit the lower roots depth to the regionalised values.
+#' #' @param meta.out if \code{soil_option = "BZE"} and \code{bze_buffer != NA}, this is a way to save the meta-information of the buffering process. \code{meta.out} must be a path to a .csv-file, where for each point the coordinates and distance of the buffered cell will be stored.
 #' @param df.soils if \code{OWN} is selected at soil_option, a data frame must be given here that contains the following columns
 #' \itemize{
 #' \item \code{ID} - a unique ID matching the IDs of df.ids
@@ -59,6 +61,7 @@ fnc_get_soil <- function(df.ids,
                          bze_buffer = 12,
                          meta.out = NA,
                          limit_bodtief = NA,
+                         force_reg_rootsdepth = F,
                          maxcores = NA,
 
                          ...
@@ -76,6 +79,7 @@ fnc_get_soil <- function(df.ids,
 
   # sort dfs according to IDs
   df.ids$ID <- 1:nrow(df.ids)
+  npoints <- nrow(df.ids)
 
   # transformation of ids to GK3 for slope & aspect ---------- ####
 
@@ -109,7 +113,7 @@ fnc_get_soil <- function(df.ids,
                          coords = c("easting", "northing"), crs = 32632) %>%
     sf::st_transform(25832)
   df.dgm <- terra::vect(df.dgm)
-  dgm_spat <- terra::rast(list.files(path_DGM, pattern = "aspect.tif|slope.tif", full.names=T))
+  dgm_spat <- terra::rast(list.files(path_DGM, pattern = "aspect.tif$|slope.tif$", full.names=T))
   df.dgm <- round(terra::extract(dgm_spat, df.dgm), 0)
 
 
@@ -120,8 +124,7 @@ fnc_get_soil <- function(df.ids,
     # load df.LEIT
     df.LEIT.BW <- readRDS(path_df.LEIT)
 
-    df.ids <- df.ids %>%
-      dplyr::left_join(df.dgm, by = "ID")
+    df.ids <- dplyr::left_join(df.ids, df.dgm, by = "ID")
 
       # create sf
       sf.ids <- sf::st_as_sf(df.ids[,c("ID", "ID_custom", "aspect","slope","easting", "northing")],
@@ -244,23 +247,21 @@ fnc_get_soil <- function(df.ids,
 
   } else if (soil_option == "BZE") {
 
-    df.ids <- df.ids %>%
-      dplyr::left_join(df.dgm, by = "ID")
+    df.ids <- dplyr::left_join( df.ids, df.dgm, by = "ID")
 
-    if(incl_GEOLA){
+    # create sf
+    sf.ids <- sf::st_as_sf(df.ids[,c("ID", "ID_custom", "aspect","slope","easting", "northing")],
+                           coords = c("easting", "northing"), crs = 32632)
 
-      # create sf
-      sf.ids <- sf::st_as_sf(df.ids,
-                             coords = c("easting", "northing"), crs = 32632)
+    # check which wuchsgebiete are needed
+    sf.wugeb <- sf::st_read(paste0(path_WGB_diss_shp, "wugebs.shp"), quiet = T)
 
-      # check which wuchsgebiete are needed
-      sf.wugeb <- sf::st_read(paste0(path_WGB_diss_shp, "wugebs.shp"), quiet = T)
+    wugeb <- sort(paste0(unique(unlist(sf::st_intersects(sf.ids,
+                                                         sf.wugeb),
+                                       recursive = F)), ".shp"),
+                  decreasing = F)
 
-      wugeb <- sort(paste0(unique(unlist(sf::st_intersects(sf.ids,
-                                                           sf.wugeb),
-                                         recursive = F)), ".shp"),
-                    decreasing = F)
-
+    if(length(wugeb) > 4 ){
       #Read required GEOLA and STOKA shapefiles
       cl <- parallel::makeCluster(ifelse(length(wugeb) < parallel::detectCores(),
                                          length(wugeb),
@@ -273,7 +274,6 @@ fnc_get_soil <- function(df.ids,
                                      sf::st_read(paste0(path_GEOLA_pieces, i),
                                                  quiet = T)
                                    }
-
       sf.stoka <- foreach::foreach(i = wugeb,
                                    .packages = "sf",
                                    .combine = rbind) %dopar% {
@@ -282,32 +282,48 @@ fnc_get_soil <- function(df.ids,
                                    }
 
       parallel::stopCluster(cl)
+    }else{
+      for(i in wugeb){
 
-      sf.ids <-  sf.ids %>%
-        sf::st_join(sf.geola) %>%
-        sf::st_join(sf.wugeb) %>%
-        sf::st_join(sf.stoka) %>%
-        sf::st_drop_geometry() %>%
-        dplyr::distinct() %>%
-        dplyr::mutate(GRUND_C = as.numeric(GRUND_C),
-                      BODENTY = case_when(str_detect(BODENTY, "Moor") & !str_detect(FMO_KU, "vermoort") ~ "sonstige",
-                                          str_detect(FMO_KU, "vermoort") ~ "Moor",
-                                          str_detect(WHH_broad, "G") ~ "Gleye/Auenboeden",
-                                          str_detect(WHH_broad, "S") ~ "Stauwasserboeden",
-                                          str_detect(BODENTY, "Gleye/Auenboeden") & !str_detect(WHH_broad, "G") ~ "sonstige",
-                                          str_detect(BODENTY, "Stauwasserboeden") & !str_detect(WHH_broad, "S") ~ "sonstige",
-                                          T ~ BODENTY)) %>%
-        dplyr::select(-c(WHH, FMO_KU, WHH_broad, RST_F, OA_ID))
+        stoka.tmp <- sf::st_read(paste0(path_STOK_pieces, i),
+                                 quiet = T)
 
+        if(i == wugeb[1]){sf.stoka <- stoka.tmp}else{sf.stoka <- rbind(sf.stoka, stoka.tmp)}
 
+        geola.tmp <- sf::st_read(paste0(path_GEOLA_pieces, i),
+                                 quiet = T)
 
-      df.ids <- df.ids %>%
-        dplyr::left_join(sf.ids)
+        if(i == wugeb[1]){sf.geola <- geola.tmp}else{sf.geola <- rbind(sf.geola, geola.tmp)}
 
+      }
+      rm(list = c("stoka.tmp", "geola.tmp"))
     }
 
+
+    sf.ids <-  sf.ids %>%
+      sf::st_join(sf.geola) %>%
+      sf::st_join(sf.stoka) %>%
+
+      sf::st_drop_geometry() %>%
+      dplyr::distinct() %>%
+      dplyr::mutate(GRUND_C = as.numeric(GRUND_C),
+                    BODENTY = case_when(str_detect(BODENTY, "Moor") & !str_detect(FMO_KU, "vermoort") ~ "sonstige",
+                                        str_detect(WHH_brd, "G") ~ "Gleye/Auenboeden",
+                                        str_detect(WHH_brd, "S") ~ "Stauwasserboeden",
+                                        str_detect(BODENTY, "Gleye/Auenboeden") & !str_detect(WHH_brd, "G") ~ "sonstige",
+                                        str_detect(BODENTY, "Stauwasserboeden") & !str_detect(WHH_brd, "S") ~ "sonstige",
+                                        T ~ BODENTY),
+                    humus = hmsmcht/100,
+                    RST_F = as.character(RST_F)) %>%
+      # Swamps - via FMO_KU of STOKA
+      dplyr::filter(FMO_KU != "vermoort") %>%
+      dplyr::select(any_of(c("ID", "ID_custom", "aspect", "slope", "GRUND_C", "BODENTY", "RST_F", "WugebNr")))
+
+
+    df.ids <- dplyr::left_join(df.ids, sf.ids)
+
     cat("starting BZE extraction...\n")
-    ls.soils <- fnc_soil_bze(df.ids = df.ids,
+    ls.soils <- fnc_soil_bze(df.ids = df.ids[,c("ID_custom", "ID","easting","northing", "BODENTY", "aspect", "slope", "GRUND_C", "WugebNr")],
                              buffering = (!is.na(bze_buffer)),
                              buff_width = bze_buffer,
 
@@ -421,8 +437,7 @@ fnc_get_soil <- function(df.ids,
       doParallel::registerDoParallel(cl)
       ls.soils <- foreach::foreach(i = 1:length(ls.soils),
                                    .packages = "modLWFB90") %dopar% {
-                                     x <- modLWFB90::fnc_PTF(ls.soils[[i]],
-                                                              PTF_used = PTF_to_use)
+                                     x <- fnc_PTF(ls.soils[[i]], PTF_used = PTF_to_use)
                                    }
       parallel::stopCluster(cl)
     }else{
@@ -433,6 +448,11 @@ fnc_get_soil <- function(df.ids,
 
   }
 
+  # for(i in 1:length(ls.soils)){
+  #   x <- modLWFB90::fnc_PTF(ls.soils[[i]],
+  #                           PTF_used = PTF_to_use)
+  #   print(x)
+  # }
   # MvG-limitation if desired: ------------------------------- ####
   if(limit_MvG){
 
@@ -459,12 +479,18 @@ fnc_get_soil <- function(df.ids,
 
     # roots limited by soil conditions and/or vegetation parameters
     if(any(stringr::str_detect(names(argg), "roots_max"))){
+
       roots_max <- argg[[which(names(argg) == "roots_max")]]
       roots_max_cm <- roots_max*-100
 
       if(length(roots_max) == 1){
         dpth_lim_veg <- rep(roots_max_cm, length(ls.soils))
       }else{
+
+        if(npoints != length(roots_max)){
+          stop("Number of points and length of maxdepth-vector not the same.")
+        }
+
         if(length(all.nas) != 0){
           dpth_lim_veg <- roots_max_cm[!all.nas]
         }else{
@@ -472,10 +498,22 @@ fnc_get_soil <- function(df.ids,
         }
       }
 
-      maxdepth <- pmin(dpth_lim_soil, dpth_lim_veg, na.rm = T)/-100
+      if((soil_option == "BZE" & force_reg_rootsdepth == T)|
+         soil_option == "STOK"){
+        maxdepth <- pmin(dpth_lim_soil, dpth_lim_veg, na.rm = T)/-100
+      }else{
+        maxdepth <- dpth_lim_veg/-100
+      }
 
     } else {
-      maxdepth <- dpth_lim_soil/-100
+
+      if((soil_option == "BZE" & force_reg_rootsdepth == T)|
+         soil_option == "STOK"){
+        maxdepth <- dpth_lim_soil/-100
+      }else{
+        maxdepth <- sapply(ls.soils, function(x){min(x$lower)})
+      }
+
     }
 
 
@@ -490,6 +528,7 @@ fnc_get_soil <- function(df.ids,
                        ...,
 
                        SIMPLIFY = F)
+
   }else{
     if(any(stringr::str_detect(names(argg), "roots_max"))){
       roots_max <- argg[[which(names(argg) == "roots_max")]]
