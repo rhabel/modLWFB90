@@ -10,7 +10,7 @@
 #' \itemize{
 #' \item alpha - between 0.1 and 500 m-1
 #' \item gravel - max 95% if gravel > 95%
-#' \item npar - max 2 if npar > 2
+#' \item npar - npar between 2 and 1.1 (the latter reducing error: 'FWETK failed to determine wetness at KF')
 #' \item ksat - min 0.01 mm/d if ksat < 0.01
 #' \item tort - between -3 and 6
 #' }
@@ -34,7 +34,7 @@ fnc_limit <- function(df){
   if("npar" %in% colnames(df)){
     df <- df %>%
       mutate(npar = case_when(npar > 2 ~ 2,
-                              npar < 1.055 ~ 1.055,
+                              npar < 1.1 ~ 1.1,
                               T ~ npar))
   }
   if("ksat" %in% colnames(df)){

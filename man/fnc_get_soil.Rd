@@ -39,10 +39,12 @@ fnc_get_soil(
 \item \code{upper} and \code{lower} - upper and lower boundaries of soil layers in cm
 \item \code{humus} - thickness of the humuslayer in m
 \item \code{gravel} - gravel content in volumetric percent
-\item \code{sand} - optional - sand content in volumetric percent
-\item \code{silt} - optional - silt content in volumetric percent
-\item \code{clay} - optional - clay content in volumetric percent
-\item \code{texture} - optional either texture or sand/silt/clay - texture
+\item \code{bd} - bulk density of fine earth in g/cm³ (not needed if PTF = "WESSOLEK")
+\item \code{oc.pct} - organic carbon content in mass percent
+\item \code{sand} - sand content in volumetric percent
+\item \code{silt} - silt content in volumetric percent
+\item \code{clay} - clay content in volumetric percent
+\item \code{texture} - optional - either texture or sand/silt/clay-percentages are needed
 
 }
 Caution:\cr
