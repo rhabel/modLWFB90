@@ -32,6 +32,6 @@ fnc_get_climate_args <- function(df.ids,
   if(!is.na(store_as)){
     saveRDS(object = clim_args, file = store_as)
   }else{
-    return(df.final)
+    return(clim_args)
   }
 }
