@@ -22,7 +22,7 @@ fnc_get_soil(
 )
 }
 \arguments{
-\item{df.ids}{a data frame containing the following columns:
+\item{df.ids}{either a data frame containing the following columns:
 \itemize{
 \item \code{ID_custom} - a unique ID-column for assignment that all intermediate products as well as the output will be assigned to.
 \item \code{easting} and \code{northing} - coordinates in UTM EPSG:32632
@@ -32,19 +32,22 @@ fnc_get_soil(
 
 \item{PTF_to_use}{the PTF to be used in the modeling process. Options are \code{HYPRES}, \code{PTFPUH2}, or \code{WESSOLEK}. Alternatively, if MvG parameters have been retrieved elsewhere (i.e. by lab analyses), \code{OWN_PARMS} can be selected to skip this.}
 
-\item{df.soils}{if \code{OWN} is selected at soil_option, a data frame must be given here that contains the following columns
+\item{df.soils}{if \code{OWN} is selected at soil_option, a data frame must be provided here with data for each point or polygon in df.ids. The following columns are necessary:
 \itemize{
-\item \code{ID} - a unique ID matching the IDs of df.ids
+\item \code{ID_custom} - a unique ID matching the IDs of df.ids
 \item \code{mat} - number of soil layer starting with 1 counting upwards
 \item \code{upper} and \code{lower} - upper and lower boundaries of soil layers in cm
 \item \code{humus} - thickness of the humuslayer in m
 \item \code{gravel} - gravel content in volumetric percent
-\item \code{sand} - optional - sand content in volumetric percent
-\item \code{silt} - optional - silt content in volumetric percent
-\item \code{clay} - optional - clay content in volumetric percent
-\item \code{texture} - optional either texture or sand/silt/clay - texture
+\item \code{bd} - bulk density of fine earth in g/cm³ (not needed if PTF = "WESSOLEK")
+\item \code{oc.pct} - organic carbon content in mass percent
+\item \code{sand} - sand content in volumetric percent
+\item \code{silt} - silt content in volumetric percent
+\item \code{clay} - clay content in volumetric percent
+\item \code{texture} - optional - either texture or sand/silt/clay-percentages are needed
 
 }
+
 Caution:\cr
 If PTFs are to be applied, the columns required in \code{\link{fnc_PTF}} must be provided. Else, if \code{PTF_to_use} is set to \code{OWN_PARMS}, the following columns must be provided NA-free: \code{ths, thr, alpha, npar, mpar, ksat}, and \code{tort}.\cr
 If roots are to be calculated, the columns required in \code{\link{fnc_roots}} must be provided. Otherwise they need to be stored in a column called \code{rootden}.\cr

@@ -29,41 +29,44 @@ fnc_relateCoords <- function(df.ids,
                              path_std = "R:/klima/whh/brook90_input/locations") {
 
   # create df to store standard locations ----
-  standard_locations <- data.frame(id_standard = character(),
-                                   tranche = numeric(),
-                                   x_standard = numeric(),
-                                   y_standard = numeric(),
-                                   stringsAsFactors = FALSE)
+  # standard_locations <- data.frame(id_standard = character(),
+  #                                  tranche = numeric(),
+  #                                  x_standard = numeric(),
+  #                                  y_standard = numeric(),
+  #                                  stringsAsFactors = FALSE)
+  #
+  # # loop tranches ----
+  # for (tranche in 1:9) {
+  #
+  #   # testing
+  #   # tranche <- 1
+  #
+  #   # read coordinates of standard locations ----
+  #   xy_standard <- read.csv(file = paste0(path_std,
+  #                                         "/x_y_tr",
+  #                                         tranche,
+  #                                         ".txt"),
+  #                           header = FALSE,
+  #                           sep = "\t",
+  #                           col.names = c("x_standard",
+  #                                         "y_standard"))
+  #
+  #   # create coordinates based id ----
+  #   id_standard <- paste0(xy_standard$x_standard,
+  #                         xy_standard$y_standard)
+  #
+  #   # concatenate id, tranche, coordinates ----
+  #   standard_locations_loop <- cbind(id_standard,
+  #                                    xy_standard,
+  #                                    tranche)
+  #
+  #   # append current df (current tr) to final df (all tr) ----
+  #   standard_locations <- rbind.data.frame(standard_locations,
+  #                                          standard_locations_loop)
+  # }
+  # saveRDS(standard_locations, paste0(path_UHH, "std_locations.rds"))
+  standard_locations <- readRDS(paste0(path_UHH, "std_locations.rds"))
 
-  # loop tranches ----
-  for (tranche in 1:9) {
-
-    # testing
-    # tranche <- 1
-
-    # read coordinates of standard locations ----
-    xy_standard <- read.csv(file = paste0(path_std,
-                                          "/x_y_tr",
-                                          tranche,
-                                          ".txt"),
-                            header = FALSE,
-                            sep = "\t",
-                            col.names = c("x_standard",
-                                          "y_standard"))
-
-    # create coordinates based id ----
-    id_standard <- paste0(xy_standard$x_standard,
-                          xy_standard$y_standard)
-
-    # concatenate id, tranche, coordinates ----
-    standard_locations_loop <- cbind(id_standard,
-                                     xy_standard,
-                                     tranche)
-
-    # append current df (current tr) to final df (all tr) ----
-    standard_locations <- rbind.data.frame(standard_locations,
-                                           standard_locations_loop)
-  }
 
   # standard locations to sf-object ----
   standard_locations_sf <- sf::st_as_sf(standard_locations,
@@ -82,7 +85,6 @@ fnc_relateCoords <- function(df.ids,
                                                   y = standard_locations_sf)
 
   # get sample of std-locations nearest to cst-locations ----
-  standard_locations_sf_sample <- standard_locations_sf[standard_locations_ix,]
   standard_locations_sample <- standard_locations[standard_locations_ix,]
 
 

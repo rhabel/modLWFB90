@@ -50,24 +50,25 @@ fnc_get_params <- function(df.ids,
   }
 
   if(is_sf){
-    sf_cent <- st_centroid(df.ids[,"ID"])%>%
-      mutate(X = round(st_coordinates(.)[, "X"]),
-             Y = round(st_coordinates(.)[, "Y"]))
+    sf_cent <- sf::st_centroid(df.ids[,"ID"])%>%
+      dplyr::mutate(X = round(sf::st_coordinates(.)[, "X"]),
+                    Y = round(sf::st_coordinates(.)[, "Y"]))
 
-    cents_on_polys <- st_intersection(sf_cent, df.ids) %>%
-      filter(ID == ID.1) %>% pull(ID)
+    cents_on_polys <- sf::st_intersection(sf_cent, df.ids) %>%
+      dplyr::filter(ID == ID.1) %>% pull(ID)
 
-    sf_points <- st_point_on_surface(df.ids[,"ID"]) %>%
-      filter(!ID %in% cents_on_polys)
+    sf_points <- sf::st_point_on_surface(df.ids[,"ID"]) %>%
+      dplyr::filter(!ID %in% cents_on_polys)
     if(nrow(sf_points) > 0){
       sf_points <- sf_points %>%
-        mutate(X = round(st_coordinates(.)[, "X"]),
-               Y = round(st_coordinates(.)[, "Y"]))
+        dplyr::mutate(X = round(sf::st_coordinates(.)[, "X"]),
+                      Y = round(sf::st_coordinates(.)[, "Y"]))
     }
 
     sf_cent <- sf_cent %>%
-      filter(ID %in% cents_on_polys) %>%
-      bind_rows(., sf_points) %>% arrange(ID)
+      dplyr::filter(ID %in% cents_on_polys) %>%
+      dplyr::bind_rows(., sf_points) %>%
+      dplyr::arrange(ID)
 
   }
 
@@ -76,29 +77,24 @@ fnc_get_params <- function(df.ids,
   if(is_sf){
 
     # df.ids as polygons -> exactextractr::exact_extract
-    # transform to GK3-terra object
-    df.dgm <- df.ids[,"ID"] %>% sf::st_transform(25832)
-    #df.dgm <- terra::vect(df.dgm)
+    if(!all(c("slope", "aspect") %in% colnames(df.ids))){
 
-    # extract
-    aspect <- terra::rast(paste0(path_DGM, "aspect.tif"))
-    slope <- terra::rast(paste0(path_DGM, "slope.tif"))
+      # load slope and aspect
+      aspect <- terra::rast(paste0(path_DGM, "aspect.tif"))
+      slope <- terra::rast(paste0(path_DGM, "slope.tif"))
 
-    df.dgm$slope <- round(exactextractr::exact_extract(slope, df.dgm, 'mean'))
-    options(warn = -1)
-    df.dgm$aspect <- round(exactextractr::exact_extract(aspect, df.dgm, summarize_df = FALSE,
-                                                  fun = custom_aspect_func))
+      # exact extract:
+      df.ids$slope <- round(exactextractr::exact_extract(slope, df.ids, 'mean'))
+      df.ids$aspect <- round(exactextractr::exact_extract(aspect, df.ids, summarize_df = FALSE,
+                                                          fun = custom_aspect_func))
 
-    df.dgm <- df.dgm %>% st_drop_geometry()
-
-    # append dgm
-    df.ids <- dplyr::left_join(df.ids, df.dgm, by = "ID")
-
+    }
 
   }else{
 
     # df.ids as df -> simple extract
     if(!all(c("slope", "aspect") %in% colnames(df.ids))){
+
       # transform to GK3-terra object
       df.dgm <- sf::st_as_sf(df.ids,
                              coords = c("easting", "northing"), crs = 32632) %>%
@@ -114,6 +110,19 @@ fnc_get_params <- function(df.ids,
 
     }
 
+  }
+
+  # remove IDs outside DGM:
+  outside <- which(is.na(df.ids$slope))
+
+  if(length(outside)>0){
+    message(paste0("\nIDs: \n",
+                   paste(df.ids %>% st_drop_geometry() %>% slice(outside) %>% pull(ID_custom), collapse = ", "),
+                   "\n\nlie outside BW/forest area and won't be modelled. \n\n"))
+    df.ids <- df.ids[-outside, ]
+    if(is_sf){
+      sf_cent <- sf_cent[-outside, ]
+    }
   }
 
 
@@ -176,8 +185,7 @@ fnc_get_params <- function(df.ids,
 
     # transform points to spatvect
     if(is_sf){
-      sf.ids <- sf_cent %>%
-        sf::st_transform(25832)
+      sf.ids <- sf_cent
     }else{
       sf.ids <- sf::st_as_sf(df.ids, coords = c("easting", "northing"), crs = 32632) %>%
         sf::st_transform(25832)
@@ -211,9 +219,13 @@ fnc_get_params <- function(df.ids,
 
 # function for mean aspect ---------------------------------------------------- ####
 custom_aspect_func <- function(values, cov_frac){
-  out <- circular::weighted.mean.circular(rad(values), cov_frac, modulo = "2pi", na.rm = T) *180/pi
-  if(out<0){
-    out <-out+360
+  if( all(is.nan(values)) | length(values) == 0 ){
+    return(NA)
+  }else{
+    out <- circular::weighted.mean.circular(rad(values), cov_frac, modulo = "2pi", na.rm = T) *180/pi
+    if(out<0){
+      out <-out+360
+    }
+    return(out)
   }
-  return(out)
 }

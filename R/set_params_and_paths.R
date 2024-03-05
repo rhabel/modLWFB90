@@ -235,6 +235,9 @@ path_bsk_forest = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLW
 # ... to LeitprofilDB
 path_df.LEIT = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/LEIT_DB/LP_DB.rds"
 
+# ... to UHH_empty
+path_UHH = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/UHH/"
+
 
 save(path_WGB_diss_shp,
      path_STOK_pieces, path_GEOLA_pieces, path_DGM,
@@ -242,4 +245,6 @@ save(path_WGB_diss_shp,
      path_pdur, path_bsk_forest,
      path_df.LEIT,
      path_clim,
+     path_UHH,
      file = "./data/paths.rda")
+
