@@ -18,6 +18,8 @@ fnc_get_soil(
   limit_bodtief = NA,
   force_reg_rootsdepth = F,
   maxcores = NA,
+  path_df.LEIT =
+    "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/LEIT_DB/LP_DB.rds",
   ...
 )
 }

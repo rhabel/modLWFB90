@@ -22,16 +22,6 @@ fnc_soil_bze <- function(df.ids,
 
   data(paths)
 
-  # exclude peat areas:
-  moore <- df.ids$ID[df.ids$BODENTY == "Moor"][!is.na(df.ids$ID[df.ids$BODENTY == "Moor"])]
-  if(length(moore) > 0){
-    message(paste0("ID: ", df.ids$ID_custom[moore], " lie within peatlands (Moore). They will not be modelled... \n"))
-  }
-
-  # filter on those which are in the forest:
-  df.ids <- df.ids %>%
-    dplyr::filter(!ID %in% moore)
-
   xy <- sf::st_as_sf(df.ids,
                      coords = c("easting", "northing"), crs = 32632) %>%
     sf::st_transform(25832)
