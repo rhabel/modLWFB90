@@ -4,7 +4,12 @@
 \alias{fnc_get_params}
 \title{Parameter-list creation}
 \usage{
-fnc_get_params(df.ids, tree_species = "spruce", df.ind.info = NULL)
+fnc_get_params(
+  df.ids,
+  tree_species = "spruce",
+  df.ind.info = NULL,
+  BW_or_D = "BW"
+)
 }
 \arguments{
 \item{df.ids}{a data frame that contains at least the following columns:
@@ -17,11 +22,11 @@ fnc_get_params(df.ids, tree_species = "spruce", df.ind.info = NULL)
 \item \code{aspect} - aspect of the modelling points in degree
 \item \code{coord_x} - longitude of points in degree, will be calculated automatically if missing
 \item \code{coord_y} - latitude of points in degree, will be calculated automatically if missing
-} \cr OR: A simple feature with any of the columns above. If df.ids is a simple feature, site information "aspect" and "slope" will be averaged over the polygon area. Coord_y and coord_x will be taken from the centroid.}
+} \cr OR: A simple feature of type "POLYGON" with any of the columns above. If df.ids is a simple feature, site information "aspect" and "slope" will be averaged over the polygon area. Coord_y and coord_x will be taken from the centroid.}
 
 \item{tree_species}{name of the tree species to be modelled with. Either a single species name that is then used for all points in \code{df.ids}, or a vector of the same length as \code{df.ids$ID} if the main tree species of each point is known and differs. Must be one of \code{beech}, \code{oak}, \code{spruce}, \code{pine}, \code{larch}, \code{douglasfir}. \cr It is  recommended (findings of project WHH-KW) to use the settings of spruce for fir and the settings of pine for larch. If certain tree specific parameters should be changed permanently, the corresponding object \code{params_...} should be overwritten manually before running the function.}
 
-\item{df.ind.info}{a data frame containing individual site information for each ID or if parameters are presumed to be different than the default settings of \code{\link[LWFBrook90R]{set_paramLWFB90}}. They need to be given here in the form of a data frame containing the column \code{ID}, which should be identical to the \code{ID}-column of\code{df.ids}, and additional columns that are named exactly like the parameters in \code{\link[LWFBrook90R]{set_paramLWFB90}}.}
+\item{df.ind.info}{a data frame containing individual site information for each ID or if parameters are presumed to be different than the default settings of \code{\link[LWFBrook90R]{set_paramLWFB90}}. They need to be given here in the form of a data frame containing the column \code{ID_custom}, which should be identical to the \code{ID_custom}-column of\code{df.ids}, and additional columns that are named exactly like the parameters in \code{\link[LWFBrook90R]{set_paramLWFB90}}.}
 
 \item{wuchsmaechtigkeit}{function in progress. provides an approximation for the mean growth of an area in BW. Adjusts LAI, SAI and max height of the vegetation. Default is \code{F}, as still in progress.}
 }

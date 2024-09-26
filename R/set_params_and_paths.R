@@ -194,13 +194,63 @@ params_douglasfir <- LWFBrook90R::set_paramLWFB90(zw = 10,
                                                   betaroot = 0.976)
 
 
+# MRS-beech ---- ####
+params_MRS_beech <- LWFBrook90R::set_paramLWFB90(winlaifrac = 0.1,
+                                                 maxlai = 6,
+                                                 sai = 1,
+                                                 height = 30,
+                                                 frintlai = 0.12,
+                                                 frintsai = 0.2,
+                                                 cintrl = 0.1,
+                                                 cintrs = 0.6,
+                                                 fsintlai = 0.2,
+                                                 fsintsai = 0.6,
+                                                 cintss = 0.6,
+                                                 cintsl = 0.6,
+                                                 alb = 0.18,
+                                                 albsn = 0.23,
+                                                 lwidth = 0.05,
+                                                 glmax = 0.0042,
+                                                 infexp = 0.66,
+
+                                                 budburst_species = "Fagus sylvatica")
+# MRS-spruce --- ####
+params_MRS_spruce <- LWFBrook90R::set_paramLWFB90(winlaifrac = 0.8,
+                                                  maxlai = 5.5,
+                                                  sai = 1,
+                                                  height = 30,
+                                                  frintlai = 0.12, #0.1
+                                                  frintsai = 0.14, #0.15
+                                                  cintrl = 0.2, #0.1
+                                                  cintrs = 0.4, #0.8
+                                                  fsintlai = 0.12,
+                                                  fsintsai = 0.14,
+                                                  cintss = 0.6,
+                                                  cintsl = 0.6,
+                                                  alb = 0.14,
+                                                  albsn = 0.14,
+                                                  lwidth = 0.004,
+                                                  glmax = 0.0035,
+                                                  infexp = 0.66,
+
+                                                  budburst_species = "Picea abies (frueh)")
 
 # save ####
 params_default <- LWFBrook90R::set_paramLWFB90()
 
 save(params_beech, params_oak, params_pine, params_spruce, params_douglasfir, params_default,
+     params_MRS_beech, params_MRS_spruce,
      file = "./data/params_species.rda")
 # load("J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90/data/params_species.rda")
+
+# df.output
+df.output <- LWFBrook90R::set_outputLWFB90()
+df.output[,] <- 0L
+df.output[c("Budg","Evap", "Flow", "Swat"), c("Day")] <- 1
+df.output[c("Flow"), c("Mon")] <- 1
+
+save(df.output,
+     file = "./data/df_output.rda")
 
 # paths ####
 
@@ -216,6 +266,9 @@ path_GEOLA_pieces = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/mod
 # ...to altitude, slope and aspect:
 path_DGM = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/DGM/"
 
+# ...to altitude, slope and aspect:
+path_DGM_D = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/DGM_D/"
+
 
 # ...to original BZE-reg data:
 path_models_in = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/BZE_REG_filled/original/"
@@ -225,6 +278,7 @@ path_BZEreg = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90
 
 # ...to PDUR-layer:
 path_pdur = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/PDUR/"
+path_pdur_D = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/PDUR_D/"
 
 # ...to PDUR-layer:
 path_clim = "R:/klima/whh/brook90_input/rds/"
@@ -240,7 +294,7 @@ path_UHH = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_da
 
 
 save(path_WGB_diss_shp,
-     path_STOK_pieces, path_GEOLA_pieces, path_DGM,
+     path_STOK_pieces, path_GEOLA_pieces, path_DGM, path_DGM_D,
      path_models_in, path_BZEreg,
      path_pdur, path_bsk_forest,
      path_df.LEIT,
