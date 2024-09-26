@@ -50,27 +50,48 @@ fnc_get_clim <- function(df.ids,
 
       # load and convert to data.table
       dt.clim.tmp <- readRDS(paste0(clim_dir_tmp, id_standard, ".rds"))
+
+      if(str_detect(clim_dir_tmp, "ECE")){
+        dates_missing = readRDS("J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/UHH/datesmis.rds")
+        dt.clim.tmp[34333:34698,"date"] <- as.numeric(dates_missing)
+      }
+
       dt.clim.tmp <- as.data.table(dt.clim.tmp)
 
       # add ID_custom and dates, remove sddm
       # dt.clim.tmp[,"ID_custom" := rep(ID_custom, nrow(dt.clim.tmp))]
       # dt.clim.tmp[,"ID" := rep(ID, nrow(dt.clim.tmp))]
       dt.clim.tmp[,"id_standard" := id_standard]
-      dt.clim.tmp[,"dates" := as.Date(paste(year, month, day, sep = "-"))]
-      setorder(dt.clim.tmp, dates)
-      dt.clim.tmp[,c("sddm", "year", "month", "day") := NULL]
+
+      if(maxdate > as.Date("2020-12-31")){
+        dt.clim.tmp[,"dates" := as.Date(paste(str_sub(date, 1,4),
+                                               str_sub(date, 5,6),
+                                               str_sub(date, 7,8),
+                                               sep = "-"))]
+        dt.clim.tmp[,c("date") := NULL]
+
+        setnames(dt.clim.tmp,
+                 old = c("sgz_cor", "prz_cor", "tmx_cor", "tav_cor", "tmn_cor", "wsp_cor", "vap_cor"),
+                 new = c("globrad", "prec", "tmax", "tmean", "tmin", "windspeed", "vappres"))
+
+      }else{
+        dt.clim.tmp[,"dates" := as.Date(paste(year, month, day, sep = "-"))]
+        dt.clim.tmp[,c("sddm", "year", "month", "day") := NULL]
+
+        setnames(dt.clim.tmp,
+                 old = c("grhds", "rrds", "tadx", "tadm", "tadn", "wsdm"),
+                 new = c("globrad", "prec", "tmax", "tmean", "tmin", "windspeed"))
+      }
 
       # filter dates
-        dt.clim.tmp <- dt.clim.tmp[dates>= mindate & dates <= maxdate]
+      dt.clim.tmp <- dt.clim.tmp[dates>= mindate & dates <= maxdate]
 
       # names and units
       cols_0_1 <- c("globrad", "prec", "tmean", "tmax", "tmin", "windspeed")
-      setnames(dt.clim.tmp,
-               old = c("grhds", "rrds", "tadx", "tadm", "tadn", "wsdm"),
-               new = c("globrad", "prec", "tmax", "tmean", "tmin", "windspeed"))
       dt.clim.tmp[ , (cols_0_1) := lapply(.SD, "*", 0.1), .SDcols = cols_0_1]
       dt.clim.tmp[ , vappres := vappres * 0.01]
 
+      setorder(dt.clim.tmp, dates)
       dt.clim.tmp <- dt.clim.tmp[,.(id_standard, dates, globrad, prec, tmean, tmin, tmax, windspeed, vappres)]
       dt.out <- rbind(dt.out, dt.clim.tmp)
     }

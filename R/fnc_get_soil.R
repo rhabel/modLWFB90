@@ -64,6 +64,7 @@ fnc_get_soil <- function(df.ids,
                          limit_bodtief = NA,
                          force_reg_rootsdepth = F,
                          maxcores = NA,
+                         path_df.LEIT = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/LEIT_DB/LP_DB.rds",
 
                          ...
 
@@ -237,7 +238,7 @@ fnc_get_soil <- function(df.ids,
     rm(list = c("sf.wugeb", "sf.stoka")); gc()
 
     # remove missing RST_F in df.LEIT
-    RST_miss <- unique(sf.ids$RST_F[!sf.ids$RST_F %in% df.LEIT.BW$RST_F])
+    RST_miss <- unique(df.ids$RST_F[!df.ids$RST_F %in% df.LEIT.BW$RST_F])
 
     IDs_miss <- df.ids$ID[(is.na(df.ids$RST_F) | df.ids$RST_F %in% RST_miss)] # remove non-forest-rst_fs
     IDs_good <- df.ids$ID[!df.ids$ID %in% IDs_miss] # IDs good
@@ -290,10 +291,10 @@ fnc_get_soil <- function(df.ids,
 
     # check which wuchsgebiete are needed
     sf.wugeb <- sf::st_read(paste0(path_WGB_diss_shp, "wugebs.shp"), quiet = T)
+    sf.ids <- sf.ids %>% sf::st_join(sf.wugeb)
 
-    wugeb <- sort(paste0(unique(unlist(sf::st_intersects(sf.ids,
-                                                         sf.wugeb),
-                                       recursive = F)), ".shp"),
+    wugeb <- sort(
+      paste0(unique(sf.ids$WugebNr), ".shp"),
                   decreasing = F)
 
     if(length(wugeb) > 4 ){
@@ -333,7 +334,7 @@ fnc_get_soil <- function(df.ids,
       }
       rm(list = c("stoka.tmp", "geola.tmp"))
     }
-
+    sf.stoka <- sf.stoka %>% select(-WugebNr)
 
     sf.ids <-  sf.ids %>%
       sf::st_join(sf.geola) %>%
@@ -345,20 +346,27 @@ fnc_get_soil <- function(df.ids,
                     BODENTY = case_when(str_detect(BODENTY, "Moor") & !str_detect(FMO_KU, "vermoort") ~ "sonstige",
                                         str_detect(WHH_brd, "G") ~ "Gleye/Auenboeden",
                                         str_detect(WHH_brd, "S") ~ "Stauwasserboeden",
+                                        str_detect(FMO_KU, "vermoort") ~ "Moor",
                                         str_detect(BODENTY, "Gleye/Auenboeden") & !str_detect(WHH_brd, "G") ~ "sonstige",
                                         str_detect(BODENTY, "Stauwasserboeden") & !str_detect(WHH_brd, "S") ~ "sonstige",
                                         T ~ BODENTY),
-                    humus = hmsmcht/100,
-                    RST_F = as.character(RST_F)) %>%
-      # Swamps - via FMO_KU of STOKA
-      dplyr::filter(FMO_KU != "vermoort") %>%
-      dplyr::select(any_of(c("ID", "ID_custom", "aspect", "slope", "GRUND_C", "BODENTY", "RST_F", "WugebNr")))
-
+                    humus = hmsmcht/100) %>%
+      dplyr::select(any_of(c("ID", "ID_custom", "aspect", "slope", "GRUND_C", "BODENTY", "WugebNr")))
 
     df.ids <- dplyr::left_join(df.ids, sf.ids)
 
+    # remove peatlands:
+    moore <- df.ids$ID[df.ids$BODENTY == "Moor"][!is.na(df.ids$ID[df.ids$BODENTY == "Moor"])]
+    if(length(moore) > 0){
+      message("\n\nIDs: \n", paste(df.ids$ID_custom[moore], collapse = " "), "\nlie within peatlands (Moore). They will not be modelled... \n")
+
+      df.ids <- df.ids %>%
+        dplyr::filter(!ID %in% moore)
+    }
+
+
     cat("starting BZE extraction...\n")
-    ls.soils <- fnc_soil_bze(df.ids = df.ids[,c("ID_custom", "ID","easting","northing", "BODENTY", "aspect", "slope", "GRUND_C", "WugebNr")],
+    ls.soils <- fnc_soil_bze(df.ids = df.ids[,c("ID_custom", "ID","easting","northing", "aspect", "slope", "BODENTY", "GRUND_C", "WugebNr")],
                              buffering = (!is.na(bze_buffer)),
                              buff_width = bze_buffer,
 
@@ -377,7 +385,8 @@ fnc_get_soil <- function(df.ids,
       df.ids <- df.ids %>% sf::st_drop_geometry()
     }
 
-    ls.soils <- df.ids[,c("ID", "ID_custom")] %>%
+    ls.soils <- df.ids %>%
+      dplyr::select(any_of(c("ID", "ID_custom", "slope", "aspect"))) %>%
       dplyr::left_join(df.soils, by = "ID_custom") %>%
       dplyr::arrange(ID, mat, -upper) %>%
       dplyr::group_split(ID)

@@ -16,7 +16,7 @@
 fnc_make_ssc <- function(texture){
 
   if (!texture %in% as.data.frame(soiltexture::TT.classes.tbl("DE.BK94.TT"))[,1] ){
-    stop("Error. Please provide valid soil texture class... See ?fnc_make_ssc")
+    stop(paste0("Error. Can't use texture class \"", texture, "\". Please provide valid soil texture class... See ?fnc_make_ssc"))
   }
 
   sicl <-  case_when(texture == "Ss" ~  c(5,    2.5),

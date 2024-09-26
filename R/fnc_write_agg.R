@@ -54,6 +54,7 @@ fnc_write_agg <- function(x,
   colnames(x$SWATDAY.ASC) <- toupper(colnames(x$SWATDAY.ASC))
   colnames(x$FLOWDAY.ASC) <- toupper(colnames(x$FLOWDAY.ASC))
   colnames(x$BUDGDAY.ASC) <- toupper(colnames(x$BUDGDAY.ASC))
+  colnames(x$ABOVDAY.ASC) <- toupper(colnames(x$ABOVDAY.ASC))
 
   # Aggregierung: ...
   x$swat.profile <- modLWFB90:::Aggregate.SWAT.ASC(SWATi = x$SWATDAY.ASC, soil = soil.df)
@@ -70,21 +71,6 @@ fnc_write_agg <- function(x,
                                x$swat.profile[,-c(1:4), with=F])
     setnames(output_daily, names(output_daily), tolower(names(output_daily)))
     colnames(output_daily)[c(1, 2)] <- c("ID","ID_custom")
-  }
-
-  if(stringr::str_detect(aggr_tp, "yearly")){
-    output_yearly <- data.table(ID = id_num,
-                                ID_custom = id_name,
-                                coords_x = param_std$coords_x,
-                                coords_y = param_std$coords_y,
-                                Prec.DailyToYearly(dat = x$BUDGDAY.ASC),
-                                Flow.MonthlyToYearly(dat = x$FLOWMON.ASC,
-                                               bypar = param_std$bypar)[,-1, with=F],
-                                Evap.DailyToYearly(dat = x$EVAPDAY.ASC)[,-1, with=F],
-                                SWATProfile.DailyToYearly(dat = x$swat.profile)[,-1, with=F])
-    setnames(output_yearly, names(output_yearly), tolower(names(output_yearly)))
-    colnames(output_yearly)[c(1, 2)] <- c("ID","ID_custom")
-
   }
 
   if(stringr::str_detect(aggr_tp, "monthly")){
@@ -130,6 +116,20 @@ fnc_write_agg <- function(x,
 
   }
 
+  if(stringr::str_detect(aggr_tp, "yearly")){
+    output_yearly <- data.table(ID = id_num,
+                                ID_custom = id_name,
+                                coords_x = param_std$coords_x,
+                                coords_y = param_std$coords_y,
+                                Prec.DailyToYearly(dat = x$ABOVDAY.ASC)[,list(YR, PREC, BSTN)],
+                                Flow.MonthlyToYearly(dat = x$FLOWMON.ASC,
+                                                     bypar = param_std$bypar)[,-1, with=F],
+                                Evap.DailyToYearly(dat = x$EVAPDAY.ASC)[,-1, with=F],
+                                SWATProfile.DailyToYearly(dat = x$swat.profile)[,-1, with=F])
+    setnames(output_yearly, names(output_yearly), tolower(names(output_yearly)))
+    colnames(output_yearly)[c(1, 2)] <- c("ID","ID_custom")
+
+  }
 
   # Output-Selection ...
 

@@ -12,10 +12,10 @@
 #' \item \code{aspect} - aspect of the modelling points in degree
 #' \item \code{coord_x} - longitude of points in degree, will be calculated automatically if missing
 #' \item \code{coord_y} - latitude of points in degree, will be calculated automatically if missing
-#' } \cr OR: A simple feature with any of the columns above. If df.ids is a simple feature, site information "aspect" and "slope" will be averaged over the polygon area. Coord_y and coord_x will be taken from the centroid.
+#' } \cr OR: A simple feature of type "POLYGON" with any of the columns above. If df.ids is a simple feature, site information "aspect" and "slope" will be averaged over the polygon area. Coord_y and coord_x will be taken from the centroid.
 #'
 #' @param tree_species name of the tree species to be modelled with. Either a single species name that is then used for all points in \code{df.ids}, or a vector of the same length as \code{df.ids$ID} if the main tree species of each point is known and differs. Must be one of \code{beech}, \code{oak}, \code{spruce}, \code{pine}, \code{larch}, \code{douglasfir}. \cr It is  recommended (findings of project WHH-KW) to use the settings of spruce for fir and the settings of pine for larch. If certain tree specific parameters should be changed permanently, the corresponding object \code{params_...} should be overwritten manually before running the function.
-#' @param df.ind.info a data frame containing individual site information for each ID or if parameters are presumed to be different than the default settings of \code{\link[LWFBrook90R]{set_paramLWFB90}}. They need to be given here in the form of a data frame containing the column \code{ID}, which should be identical to the \code{ID}-column of\code{df.ids}, and additional columns that are named exactly like the parameters in \code{\link[LWFBrook90R]{set_paramLWFB90}}.
+#' @param df.ind.info a data frame containing individual site information for each ID or if parameters are presumed to be different than the default settings of \code{\link[LWFBrook90R]{set_paramLWFB90}}. They need to be given here in the form of a data frame containing the column \code{ID_custom}, which should be identical to the \code{ID_custom}-column of\code{df.ids}, and additional columns that are named exactly like the parameters in \code{\link[LWFBrook90R]{set_paramLWFB90}}.
 #' @param wuchsmaechtigkeit function in progress. provides an approximation for the mean growth of an area in BW. Adjusts LAI, SAI and max height of the vegetation. Default is \code{F}, as still in progress.
 #'
 #' @return Returns a list of parameter settings that can be read and further processed by \code{\link[LWFBrook90R]{run_multisite_LWFB90}} or \code{\link[LWFBrook90R]{run_LWFB90}}
@@ -30,7 +30,10 @@
 fnc_get_params <- function(df.ids,
 
                            tree_species = "spruce",
-                           df.ind.info = NULL){
+                           df.ind.info = NULL,
+
+                           BW_or_D = "BW"
+                           ){
 
   # IDs okay? ------------------------------------------------- ####
   # sort dfs according to IDs
@@ -44,8 +47,8 @@ fnc_get_params <- function(df.ids,
   }
 
   if(!is.null(df.ind.info)){
-    if(!identical(df.ids$ID_custom, df.ind.info$ID_custom)){
-      stop("IDs of df.ids and df.ind.info are not identical.")
+    if(!identical(sort(df.ids$ID_custom), sort(df.ind.info$ID_custom))){
+      message("Careful! IDs of df.ids and df.ind.info are not identical.")
     }
   }
 
@@ -80,8 +83,8 @@ fnc_get_params <- function(df.ids,
     if(!all(c("slope", "aspect") %in% colnames(df.ids))){
 
       # load slope and aspect
-      aspect <- terra::rast(paste0(path_DGM, "aspect.tif"))
-      slope <- terra::rast(paste0(path_DGM, "slope.tif"))
+      aspect <- terra::rast(paste0(ifelse(BW_or_D == "BW", path_DGM, path_DGM_D), "aspect.tif"))
+      slope <- terra::rast(paste0(ifelse(BW_or_D == "BW", path_DGM, path_DGM_D), "slope.tif"))
 
       # exact extract:
       df.ids$slope <- round(exactextractr::exact_extract(slope, df.ids, 'mean'))
@@ -102,11 +105,12 @@ fnc_get_params <- function(df.ids,
       df.dgm <- terra::vect(df.dgm)
 
       # extract
-      dgm_spat <- terra::rast(list.files(path_DGM, pattern = "aspect.tif|slope.tif", full.names=T))
+      dgm_spat <- terra::rast(list.files(ifelse(BW_or_D == "BW", path_DGM, path_DGM_D), pattern = "aspect.tif$|slope.tif$", full.names=T))
       df.dgm <- round(terra::extract(dgm_spat, df.dgm), 0)
 
       # append dgm
-      df.ids <- dplyr::left_join(df.ids, df.dgm, by = "ID")
+      df.ids <- dplyr::left_join(df.ids, df.dgm, by = "ID") %>%
+        dplyr::mutate(aspect = case_when(is.na(aspect) & slope == 0 ~ 0, T ~ aspect))
 
     }
 
@@ -156,11 +160,15 @@ fnc_get_params <- function(df.ids,
                     tree_species = tree_species,
                     budburst_species = case_when(tree_species == "beech" ~ "Fagus sylvatica",
                                                  tree_species == "spruce" ~ "Picea abies (spaet)",
+                                                 tree_species == "MRS_beech" ~ "Fagus sylvatica",
+                                                 tree_species == "MRS_spruce" ~ "Picea abies (frueh)",
                                                  tree_species == "oak" ~ "Quercus robur",
                                                  tree_species == "pine" ~ "Pinus sylvestris",
                                                  tree_species == "larch" ~ "Larix decidua",
                                                  tree_species == "douglasfir" ~ "Picea abies (spaet)",
                                                  T ~ NA_character_))
+
+    if(all(is.na(df.site.infos$budburst_species))){df.site.infos <- df.site.infos %>% select(-budburst_species)}
 
     # add additional data if present ---------------------------- ####
     if(!is.null(df.ind.info)){
@@ -194,7 +202,7 @@ fnc_get_params <- function(df.ids,
     spat.ids <- terra::vect(sf.ids)
 
     # load pdur-rasters.
-    out <- terra::rast(paste0(path_pdur, "pdur.tif"))
+    out <- terra::rast(paste0(ifelse(BW_or_D == "BW", path_pdur, path_pdur_D), "pdur.tif"))
 
     extr_vals <- terra::extract(out, spat.ids)
     extr_vals[is.na(extr_vals)] <- 4

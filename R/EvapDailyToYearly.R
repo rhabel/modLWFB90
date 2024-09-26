@@ -39,6 +39,8 @@ Evap.DailyToYearly <- function(dat) {
     Days_TRATIO_lower80 = sum((ifelse(PTRAN > 0, TRAN / PTRAN, 1)) < 0.8),
     Durations_TRATIO_lower80 = paste((rle((ifelse(PTRAN > 0, TRAN / PTRAN, 1)) < 0.8)
                                       $lengths[rle((ifelse(PTRAN > 0, TRAN / PTRAN, 1)) < 0.8)$values]), collapse = " "),
+    # Max_Durations_TRATIO_lower80 = max((rle((ifelse(PTRAN > 0, TRAN / PTRAN, 1)) < 0.8)
+    #                                       $lengths[rle((ifelse(PTRAN > 0, TRAN / PTRAN, 1)) < 0.8)$values])),
     Defsum_TRATIO_lower80 = round(sum((1 - (ifelse(PTRAN > 0, TRAN / PTRAN, 1) / 0.8)) * (ifelse(PTRAN > 0, TRAN / PTRAN, 1) < 0.8)),3)
   ),
   by = YR]
