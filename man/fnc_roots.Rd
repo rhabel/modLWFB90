@@ -8,7 +8,7 @@ fnc_roots(
   df,
   rootsmethod = "betamodel",
   humus_roots = T,
-  rel_hum_val = NA,
+  rel_hum_val = 0.5,
   ...
 )
 }
@@ -17,9 +17,7 @@ fnc_roots(
 
 \item{rootsmethod}{name of the method for fine roots. Possible options are \code{hartmann},\code{betamodel}, \code{table}, \code{constant}, and \code{linear}. Default is \code{betamodel}.}
 
-\item{humus_roots}{decides whether humus layers get roots too. Default is \code{TRUE}. If \code{FALSE}, humus layer gets a rootden-value of \code{0}. If \code{TRUE} and \code{rel_hum_val = NA}, humus layer gets half the amount of roots as highest soil layer. If \code{rel_hum_val} is a value, humus layer gets this value}
-
-\item{rel_hum_val}{roots in humuslayer as fraction of roots in soil. Default is \code{NA}}
+\item{humus_roots}{roots in humuslayer as fraction of roots in highest mineral soil layer. Default is \code{0.5}}
 
 \item{...}{additional input arguments that are passed on to \code{make_rootden}, see \code{\link[LWFBrook90R]{make_rootden}}.}
 }

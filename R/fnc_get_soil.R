@@ -16,6 +16,7 @@
 #' @param limit_MvG should the hydraulic parameters limited to "reasonable" ranges as described in \code{\link{fnc_limit}}. Default is \code{FALSE}.
 #' @param maxcores when using a computer with multiple cores and \code{parallel_processing = T}, too many busy cores will kill the process because it creates too much data for the RAM. For 32GB RAM a maximum of 30 cores are recommended (when no other applications are open).
 #' @param limit_bodtief max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}, \code{BZE} or the GEOLA-dataset. If not \code{NA}, soil-dfs are created down to the depth specified here as depth in \code{m}, negative
+#' @param limit_humus will be passed to \code{\link{fnc_PTF}}. See documentation for further information.
 #' @param ... further function arguments to be passed down to \code{\link{fnc_roots}}. Includes all adjustment options to be found in \code{\link[LWFBrook90R]{make_rootden}}. \cr Only exception is the roots functions' parameter \code{maxrootdepth}, which, if desired, has to be specified here as  \code{roots_max}, because maximal root depth setting according to vegetation parameters will be complemented by root limitations from soil conditions. \cr Settings can be either single values, applied to all soil data frames equally, or vector with the same length as \code{df.ids} specifying the roots setting for each modelling point. see example. If roots are counted and provided in \code{df.soils} as column \code{rootden}, set to \code{table}.
 #' @param bze_buffer whether buffer should be used in extracting points from BZE raster files if \code{NAs} occur in {m}, default is \code{12}, because that way only the closest of the 25m raster cells gets found and we don't get multiple points from the same cell
 #' @param force_reg_rootsdepth there is a regionalised max-rootdepth, that takes into account certain soil conditions. However, it reduces the soil depth with roots significantly. Hence, by default, it is deactivated. If set to \code{T}, it will limit the lower roots depth to the regionalised values.
@@ -52,11 +53,14 @@ fnc_get_soil <- function(df.ids,
                          soil_option,
                          PTF_to_use,
 
+                         BW_or_D = "BW",
+
                          df.soils = NULL,
 
                          limit_MvG = T,
                          add_BodenInfo = T,
                          incl_GEOLA = T,
+                         limit_humus = T,
                          parallel_processing = F,
 
                          bze_buffer = 12,
@@ -121,8 +125,8 @@ fnc_get_soil <- function(df.ids,
     if(!all(c("slope", "aspect") %in% colnames(df.ids))){
 
       # load slope and aspect
-      aspect <- terra::rast(paste0(path_DGM, "aspect.tif"))
-      slope <- terra::rast(paste0(path_DGM, "slope.tif"))
+      aspect <- terra::rast(paste0(ifelse(BW_or_D == "BW", path_DGM, path_DGM_D), "aspect.tif"))
+      slope <- terra::rast(paste0(ifelse(BW_or_D == "BW", path_DGM, path_DGM_D), "slope.tif"))
 
       # exact extract:
       df.ids$slope <- round(exactextractr::exact_extract(slope, df.ids, 'mean'))
@@ -143,11 +147,12 @@ fnc_get_soil <- function(df.ids,
       df.dgm <- terra::vect(df.dgm)
 
       # extract
-      dgm_spat <- terra::rast(list.files(path_DGM, pattern = "aspect.tif|slope.tif", full.names=T))
+      dgm_spat <- terra::rast(list.files(ifelse(BW_or_D == "BW", path_DGM, path_DGM_D), pattern = "aspect.tif$|slope.tif$", full.names=T))
       df.dgm <- round(terra::extract(dgm_spat, df.dgm), 0)
 
       # append dgm
-      df.ids <- dplyr::left_join(df.ids, df.dgm, by = "ID")
+      df.ids <- dplyr::left_join(df.ids, df.dgm, by = "ID") %>%
+        dplyr::mutate(aspect = case_when(is.na(aspect) & slope == 0 ~ 0, T ~ aspect))
 
     }
 
@@ -484,13 +489,14 @@ fnc_get_soil <- function(df.ids,
       doParallel::registerDoParallel(cl)
       ls.soils <- foreach::foreach(i = 1:length(ls.soils),
                                    .packages = "modLWFB90") %dopar% {
-                                     x <- fnc_PTF(ls.soils[[i]], PTF_used = PTF_to_use)
+                                     x <- fnc_PTF(ls.soils[[i]], PTF_used = PTF_to_use, limit_humus = limit_humus)
                                    }
       parallel::stopCluster(cl)
     }else{
       ls.soils <- lapply(ls.soils,
                          FUN = fnc_PTF,
-                         PTF_used = PTF_to_use)
+                         PTF_used = PTF_to_use,
+                         limit_humus = limit_humus)
     }
 
   }
