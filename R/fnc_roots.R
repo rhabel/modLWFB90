@@ -4,8 +4,7 @@
 #'
 #' @param df a data frame containing soil properties including MvG-alpha (column \code{alpha}), MvG-npar (column \code{npar}), theta_s (column \code{ths}), theta_r (column \code{thr}), and organic carbon in pct (column \code{oc.pct}.
 #' @param rootsmethod name of the method for fine roots. Possible options are \code{hartmann},\code{betamodel}, \code{table}, \code{constant}, and \code{linear}. Default is \code{betamodel}.
-#' @param humus_roots decides whether humus layers get roots too. Default is \code{TRUE}. If \code{FALSE}, humus layer gets a rootden-value of \code{0}. If \code{TRUE} and \code{rel_hum_val = NA}, humus layer gets half the amount of roots as highest soil layer. If \code{rel_hum_val} is a value, humus layer gets this value
-#' @param rel_hum_val roots in humuslayer as fraction of roots in soil. Default is \code{NA}
+#' @param humus_roots  roots in humuslayer as fraction of roots in highest mineral soil layer. Default is \code{0.5}
 #' @param ... additional input arguments that are passed on to \code{make_rootden}, see \code{\link[LWFBrook90R]{make_rootden}}.
 #'
 #' @return Returns the same data frame, but adds a rootden-column that is recognised by LWFBrook90R.
@@ -16,7 +15,7 @@
 fnc_roots <- function(df,
                       rootsmethod = "betamodel",
                       humus_roots = T,
-                      rel_hum_val = NA,
+                      rel_hum_val = 0.5,
                       ...){
 
   if(rootsmethod == "hartmann"){
@@ -40,8 +39,7 @@ fnc_roots <- function(df,
       dplyr::mutate(fwd_brt = case_when(i.upper < 0 ~ NA_real_,
                                         T ~ fwd_brt))
     df <- df %>%
-      dplyr::mutate(fwd_brt = case_when(i.upper < 0 & humus_roots == T & is.na(rel_hum_val) ~ max(fwd_brt, na.rm = T)/2,
-                                        i.upper < 0 & humus_roots == F ~ 0,
+      dplyr::mutate(fwd_brt = case_when(i.upper < 0  ~ max(fwd_brt, na.rm = T)*rel_hum_val,
                                         T ~ fwd_brt)) %>%
       dplyr::select(-nfk, -hum.ka5, -i.upper, -i.lower) %>%
       dplyr::rename(rootden = fwd_brt) %>%
@@ -50,47 +48,30 @@ fnc_roots <- function(df,
     sumroots <- sum(df$rootden)
     df$rootden <- round(df$rootden/sumroots, 5)
 
-    if(df$upper[1] > 0 & humus_roots == T & !is.na(rel_hum_val)){
-      df$rootden[1] <- rel_hum_val
-      sumroots <- sum(df$rootden)
-      df$rootden <- round(df$rootden/sumroots, 5)
-    }
-
     return(df)
   }else{
     rootden <- make_rootden_adj(soilnodes = df$lower,
                                 method = rootsmethod,
                                 ...)
 
-    # rel.values
+    # humus treatment:
+    if(df$upper[1] > 0){
+
+      # humus gets fraction of top soil horizon
+      df$rootden <- c(rootden[1]*rel_hum_val,
+                      rootden)
+
+    }else{
+
+      # humus gets half of top soil horizon
+      df$rootden <- c(rootden, tail(rootden, 1))
+
+    }
+
+    # rel.values - sum of rootden to 1
     sumroots <- sum(rootden)
     rootden <- round(rootden/sumroots, 5)
 
-    # humus treatment:
-    if(df$upper[1] > 0){
-      if(humus_roots == T){
-        if(is.na(rel_hum_val)){
-
-          # humus gets half of top soil horizon
-          df$rootden <- c(round(max(rootden)/2,5),
-                          rootden)
-          # again  - sum of rootden to 1
-          sumroots <- sum(df$rootden)
-          df$rootden <- round(df$rootden/sumroots, 5)
-
-        }else{
-          # humus gets rel_hum_val
-          df$rootden <- c(rel_hum_val,
-                          rootden)
-          # again  - sum of rootden to 1
-          sumroots <- sum(df$rootden)
-          df$rootden <- round(df$rootden/sumroots, 5)
-        }
-      }
-
-    }else{
-      df$rootden <- c(rootden, tail(rootden, 1))
-    }
     return(df)
   }
 

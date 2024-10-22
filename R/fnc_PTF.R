@@ -10,13 +10,16 @@
 #'   \item humus - thickness of the humus-layer (repeated \code{nrow} - times. a bit clumsy, but building on existing code it was the most convenient way) \cr LWFB90 has problems if the first row is too thin and creates surface flow if it becomes saturated, which can happen if the humus layer is too thin. So, if humus is <= 2cm, it will be removed, 3 cm will be turned into 4 cm. Anything above is fine.
 #' }
 #' @param PTF_used PTF-options from the \code{LWFBrook90R} - package. Choices are \code{"HYPRES"}, \code{"PTFPUH2"}, or \code{"WESSOLEK"}.
+#' @param limit_humus if \code{ilayer = 0} and \code{infexp = 0}, which is the default setting in \code{\link[LWFBrook90R]{set_paramLWFB90}}, water can only infiltrate in the first layer. If thin humus layers (e.g. 2 cm) are put on top of the first mineral soil layer, there's a risk of creating unrealisic amounts of surface runoff, when the water storage capacity of the thin humus layer can't take the incoming amount of daily rain. Hence, this parameter deletes humus lazers smaller or equal 2 cm, and increases humus layers of 3 cm to 4 cm. Default is \code{T}. If  \code{ilayer} and \code{infexp} are greater than 0, this issue shouldn't occur and this parameter should be set to \code{F}
 #'
 #' @references Hammel, K., & Kennel, M. (2001). Charakterisierung und Analyse der Wasserverfügbarkeit und des Wasserhaushalts von Waldstandorten in Bayern mit dem Simulationsmodell BROOK90. Frank.
 #'
 #' @return Returns a longer data.table that already includes an earlier version of ls.soils. Further processed in \code{\link{fnc_get_soil}}.
 #' @export
 
-fnc_PTF <- function(df, PTF_used){
+fnc_PTF <- function(df,
+                    PTF_used,
+                    limit_humus){
 
   if("humusform" %in% colnames(df)){
     df <- df %>%
@@ -40,9 +43,12 @@ fnc_PTF <- function(df, PTF_used){
   }
 
 
-  # thickness limits to humus layer
-  df$humus <- ifelse(unique(df$humus) <= 0.02, 0,
-                     ifelse(unique(df$humus) <= 0.04, 0.04, unique(df$humus)))
+  if(limit_humus){
+    # thickness limits to humus layer
+    df$humus <- ifelse(unique(df$humus) <= 0.02, 0,
+                       ifelse(unique(df$humus) <= 0.04, 0.04, unique(df$humus)))
+  }
+
 
   #
   if(PTF_used == "HYPRES"){

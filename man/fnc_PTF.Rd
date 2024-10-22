@@ -4,7 +4,7 @@
 \alias{fnc_PTF}
 \title{PTF application and humus layer creation}
 \usage{
-fnc_PTF(df, PTF_used)
+fnc_PTF(df, PTF_used, limit_humus)
 }
 \arguments{
 \item{df}{data frame containing information on soil physics in the following columns:
@@ -16,6 +16,8 @@ fnc_PTF(df, PTF_used)
 }}
 
 \item{PTF_used}{PTF-options from the \code{LWFBrook90R} - package. Choices are \code{"HYPRES"}, \code{"PTFPUH2"}, or \code{"WESSOLEK"}.}
+
+\item{limit_humus}{if \code{ilayer = 0} and \code{infexp = 0}, which is the default setting in \code{\link[LWFBrook90R]{set_paramLWFB90}}, water can only infiltrate in the first layer. If thin humus layers (e.g. 2 cm) are put on top of the first mineral soil layer, there's a risk of creating unrealisic amounts of surface runoff, when the water storage capacity of the thin humus layer can't take the incoming amount of daily rain. Hence, this parameter deletes humus lazers smaller or equal 2 cm, and increases humus layers of 3 cm to 4 cm. Default is \code{T}. If  \code{ilayer} and \code{infexp} are greater than 0, this issue shouldn't occur and this parameter should be set to \code{F}}
 }
 \value{
 Returns a longer data.table that already includes an earlier version of ls.soils. Further processed in \code{\link{fnc_get_soil}}.
