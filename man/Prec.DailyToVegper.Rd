@@ -4,7 +4,7 @@
 \alias{Prec.DailyToVegper}
 \title{Internal Helper Prec.DailyToVegper}
 \usage{
-Prec.DailyToVegper(dat, vp.year, vp.start, vp.end, bypar)
+Prec.DailyToVegper(dat, vp.year, vp.start, vp.end)
 }
 \arguments{
 \item{...}{}

@@ -9,7 +9,7 @@ fnc_get_clim(
   mindate = as.Date("1961-01-01"),
   maxdate = as.Date("2020-12-31"),
   path_std = "R:/klima/whh/brook90_input/locations",
-  clim_dir = "R:/klima/whh/brook90_input/rds/"
+  clim_dir = "R:/klima/whh/brook90_input/uhh_historische_referenz_v2020/rds/"
 )
 }
 \arguments{

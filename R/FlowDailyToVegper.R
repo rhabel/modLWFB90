@@ -11,7 +11,7 @@
 #' @export
 
 
-Flow.DailyToVegper <- function(dat, vp.year, vp.start, vp.end, bypar) {
+Flow.DailyToVegper <- function(dat, vp.year, vp.start, vp.end) {
 
   setDT(dat)
   vp <- data.table(YR = vp.year, start = vp.start, end = vp.end)
@@ -20,35 +20,20 @@ Flow.DailyToVegper <- function(dat, vp.year, vp.start, vp.end, bypar) {
 
   dat <- dat[vp]
 
-  if(bypar == 0){
-    dat_vp <- dat[which(DOY >= start & DOY <= end),
+  dat <- dat[which(DOY >= start & DOY <= end),
                   list(
                     VPSTARTDOY = start[1],
                     VPENDDOY = end[1],
+
                     FLOW = sum(FLOW),
+                    SRFL = sum(SRFL),
                     SLFL = sum(SLFL),
                     BYFL = sum(BYFL),
-                    VRFLN = sum(VRFLN),
                     DSFL = sum(DSFL),
-                    SURFRUNOFF = sum(BYFL+SRFL)
+                    VRFLN = sum(VRFLN)
                   ),
                   by = list(YR)]
-  }else{
-    dat_vp <- dat[which(DOY >= start & DOY <= end),
-                  list(
-                    VPSTARTDOY = start[1],
-                    VPENDDOY = end[1],
-                    FLOW = sum(FLOW),
-                    SLFL = sum(SLFL),
-                    BYFL = sum(BYFL),
-                    VRFLN = sum(VRFLN),
-                    DSFL = sum(DSFL),
-                    SURFRUNOFF = sum(SRFL)
-                  ),
-                  by = list(YR)]
-  }
 
-
-  return(dat_vp)
+  return(dat)
 
 }

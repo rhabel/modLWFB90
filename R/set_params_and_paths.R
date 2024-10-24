@@ -246,8 +246,7 @@ save(params_beech, params_oak, params_pine, params_spruce, params_douglasfir, pa
 # df.output
 df.output <- LWFBrook90R::set_outputLWFB90()
 df.output[,] <- 0L
-df.output[c("Budg","Evap", "Flow", "Swat"), c("Day")] <- 1
-df.output[c("Flow"), c("Mon")] <- 1
+df.output[c("Abov","Evap", "Flow", "Swat"), c("Day")] <- 1
 
 save(df.output,
      file = "./data/df_output.rda")

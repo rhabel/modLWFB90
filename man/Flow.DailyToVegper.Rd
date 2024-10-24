@@ -4,7 +4,7 @@
 \alias{Flow.DailyToVegper}
 \title{Internal Helper Flow.DailyToVegper}
 \usage{
-Flow.DailyToVegper(dat, vp.year, vp.start, vp.end, bypar)
+Flow.DailyToVegper(dat, vp.year, vp.start, vp.end)
 }
 \arguments{
 \item{...}{}
