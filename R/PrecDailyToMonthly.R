@@ -12,8 +12,13 @@
 
 
 Prec.DailyToMonthly <- function(dat) {
+
   setDT(dat)
-  dat_month <- dat[,list(PREC = sum(PREC)),
+  dat[, PREC := RFAL + SFAL]
+  dat[, BSTN := RFAL + SFAL - RINT - SINT]
+
+  dat_month <- dat[,list(PREC = sum(PREC),
+                         BSTN = sum(BSTN)),
   by = list(YR, MO)]
   return(dat_month)
 }

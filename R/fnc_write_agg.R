@@ -20,8 +20,7 @@
 #' # setting for df.output:
 #' df.output <- set_outputLWFB90()
 #' df.output[,] <- 0L
-#' df.output[c("Budg", "Evap", "Flow", "Swat"), c("Day")] <- 1
-#' df.output[c("Flow"), c("Mon")] <- 1
+#' df.output[c("Abov", "Evap", "Flow", "Swat"), c("Day")] <- 1
 #'
 #' # for full example, see help page of ?fnc_write_to_sql
 #'
@@ -49,11 +48,9 @@ fnc_write_agg <- function(x,
   id_name <- get("soil", envir = parent.frame(3))$id_custom[1]
   id_num <- get("soil", envir = parent.frame(3))$id[1]
 
-  colnames(x$FLOWMON.ASC) <- toupper(colnames(x$FLOWMON.ASC))
   colnames(x$EVAPDAY.ASC) <- toupper(colnames(x$EVAPDAY.ASC))
   colnames(x$SWATDAY.ASC) <- toupper(colnames(x$SWATDAY.ASC))
   colnames(x$FLOWDAY.ASC) <- toupper(colnames(x$FLOWDAY.ASC))
-  colnames(x$BUDGDAY.ASC) <- toupper(colnames(x$BUDGDAY.ASC))
   colnames(x$ABOVDAY.ASC) <- toupper(colnames(x$ABOVDAY.ASC))
 
   # Aggregierung: ...
@@ -64,9 +61,10 @@ fnc_write_agg <- function(x,
                                ID_custom = id_name,
                                coords_x = param_std$coords_x,
                                coords_y = param_std$coords_y,
-                               x$BUDGDAY.ASC[,list(YR, MO, DA, PREC)],
-                               Flow.DailyToDailyAgg(dat = x$FLOWDAY.ASC,
-                                                    bypar = param_std$bypar),
+                               x$ABOVDAY.ASC[,list(YR, MO, DA,
+                                                   PREC = RFAL+SFAL,
+                                                   BSTN = RFAL+SFAL-RINT-SINT)],
+                               x$FLOWDAY.ASC[,list(FLOW, SRFL, SLFL, BYFL, DSFL, VRFLN)],
                                Evap.DailyToDailyAgg(dat = x$EVAPDAY.ASC),
                                x$swat.profile[,-c(1:4), with=F])
     setnames(output_daily, names(output_daily), tolower(names(output_daily)))
@@ -78,11 +76,9 @@ fnc_write_agg <- function(x,
                                  ID_custom = id_name,
                                  coords_x = param_std$coords_x,
                                  coords_y = param_std$coords_y,
-                                 Prec.DailyToMonthly(x$BUDGDAY.ASC),
-                                 x$FLOWMON.ASC[,list(FLOW,SLFL,BYFL,VRFLN,DSFL,
-                                                     SURFRUNOFF = ifelse(param_std$bypar == 0,
-                                                                         BYFL+SRFL, SRFL))],
-                                 Evap.DailyToMonthly(x$EVAPDAY.ASC)[,-c(1,2), with=FALSE],
+                                 Prec.DailyToMonthly(dat = x$ABOVDAY.ASC)[,list(YR, MO, PREC, BSTN)],
+                                 Flow.DailyToMonthly(dat = x$FLOWDAY.ASC)[,-c(1,2), with=FALSE],
+                                 Evap.DailyToMonthly(dat = x$EVAPDAY.ASC)[,-c(1,2), with=FALSE],
                                  SWATProfile.DailyToMonthly(x$swat.profile)[,-c(1,2), with=F])
 
     setnames(output_monthly, names(output_monthly), tolower(names(output_monthly)))
@@ -94,21 +90,20 @@ fnc_write_agg <- function(x,
                                 ID_custom = id_name,
                                 coords_x = param_std$coords_x,
                                 coords_y = param_std$coords_y,
-                                Prec.DailyToVegper(dat = x$BUDGDAY.ASC,
-                                                   vp.year = min(x$FLOWMON.ASC$YR):max(x$FLOWMON.ASC$YR),
+                                Prec.DailyToVegper(dat = x$ABOVDAY.ASC,
+                                                   vp.year = min(x$FLOWDAY.ASC$YR):max(x$FLOWDAY.ASC$YR),
                                                    vp.start = param_std$budburstdoy,
                                                    vp.end = param_std$leaffalldoy),
                                 Flow.DailyToVegper(dat = x$FLOWDAY.ASC,
-                                                   vp.year = min(x$FLOWMON.ASC$YR):max(x$FLOWMON.ASC$YR),
+                                                   vp.year = min(x$FLOWDAY.ASC$YR):max(x$FLOWDAY.ASC$YR),
                                                    vp.start = param_std$budburstdoy,
-                                                   vp.end = param_std$leaffalldoy,
-                                                   bypar = param_std$bypar)[,-c(1:3), with = F],
+                                                   vp.end = param_std$leaffalldoy)[,-c(1:3), with = F],
                                 Evap.DailyToVegper(dat = x$EVAPDAY.ASC,
-                                                   vp.year = min(x$FLOWMON.ASC$YR):max(x$FLOWMON.ASC$YR),
+                                                   vp.year = min(x$FLOWDAY.ASC$YR):max(x$FLOWDAY.ASC$YR),
                                                    vp.start = param_std$budburstdoy,
                                                    vp.end = param_std$leaffalldoy)[,-c(1:3), with = F],
                                 SWATProfile.DailyToVegper(dat = x$swat.profile,
-                                                          vp.year = min(x$FLOWMON.ASC$YR):max(x$FLOWMON.ASC$YR),
+                                                          vp.year = min(x$FLOWDAY.ASC$YR):max(x$FLOWDAY.ASC$YR),
                                                           vp.start = param_std$budburstdoy,
                                                           vp.end = param_std$leaffalldoy)[,-1, with=F])
     setnames(output_vegper, names(output_vegper), tolower(names(output_vegper)))
@@ -121,9 +116,8 @@ fnc_write_agg <- function(x,
                                 ID_custom = id_name,
                                 coords_x = param_std$coords_x,
                                 coords_y = param_std$coords_y,
-                                Prec.DailyToYearly(dat = x$ABOVDAY.ASC)[,list(YR, PREC, BSTN)],
-                                Flow.MonthlyToYearly(dat = x$FLOWMON.ASC,
-                                                     bypar = param_std$bypar)[,-1, with=F],
+                                Prec.DailyToYearly(dat = x$ABOVDAY.ASC),#[,list(YR, PREC, BSTN)],
+                                Flow.DailyToYearly(dat = x$FLOWDAY.ASC)[,-1, with=F],
                                 Evap.DailyToYearly(dat = x$EVAPDAY.ASC)[,-1, with=F],
                                 SWATProfile.DailyToYearly(dat = x$swat.profile)[,-1, with=F])
     setnames(output_yearly, names(output_yearly), tolower(names(output_yearly)))

@@ -16,10 +16,9 @@ Evap.DailyToMonthly <- function(dat) {
   dat_month <- dat[,list(EVAPOTR = sum(EVAP),
                          TRAN = sum(TRAN),
                          INTV = sum(IRVP + ISVP),
-                         SLVP = sum(SLVP + SNVP),
-                         # ISVP = sum(ISVP),
-                         # SLVP = sum(SLVP),
-                         # SNVP = sum(SNVP),
+                         SLVP = sum(SLVP),
+                         SNVP = sum(SNVP),
+
                          PTRAN = sum(PTRAN),
                          PSLVP = sum(PSLVP),
                          TDIFF = round(sum(PTRAN-TRAN),1),

@@ -11,9 +11,12 @@
 #' @export
 
 
-Prec.DailyToVegper <- function(dat, vp.year, vp.start, vp.end, bypar) {
+Prec.DailyToVegper <- function(dat, vp.year, vp.start, vp.end) {
 
   setDT(dat)
+  dat[, PREC := RFAL + SFAL]
+  dat[, BSTN := RFAL + SFAL - RINT - SINT]
+
   vp <- data.table(YR = vp.year, start = vp.start, end = vp.end)
   setkey(dat, YR)
   setkey(vp, YR)
@@ -24,7 +27,8 @@ Prec.DailyToVegper <- function(dat, vp.year, vp.start, vp.end, bypar) {
              list(
                VPSTARTDOY = start[1],
                VPENDDOY = end[1],
-               PREC = sum(PREC)
+               PREC = sum(PREC),
+               BSTN = sum(BSTN)
              ),
              by = list(YR)]
 
