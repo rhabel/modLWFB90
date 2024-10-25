@@ -27,18 +27,13 @@
 #' @import data.table
 #' @export
 
-fnc_write_agg <- function(x,
+fnc_write_agg_depr <- function(x,
                           aggr_tp,
                           col_select_day = NA,
                           col_select_mon = NA,
                           col_select_vp = NA,
                           col_select_yr = NA,
                           dir_name = NA){
-
-
-  df.output <- LWFBrook90R::set_outputLWFB90()
-  df.output[,] <- 0L
-  df.output[c("Abov", "Evap", "Flow", "Swat"), c("Day")] <- 1
 
   # soil.df <- soil
   # colnames(soil.df) <- tolower(colnames(soil.df))
@@ -51,8 +46,6 @@ fnc_write_agg <- function(x,
   param_std <- get("param_b90", envir = parent.frame(3))
   id_name <- get("soil", envir = parent.frame(3))$id_custom[1]
   id_num <- get("soil", envir = parent.frame(3))$id[1]
-
-  x <- LWFBrook90R::process_outputs_LWFB90(x, selection = df.output)
 
   colnames(x$EVAPDAY.ASC) <- toupper(colnames(x$EVAPDAY.ASC))
   colnames(x$SWATDAY.ASC) <- toupper(colnames(x$SWATDAY.ASC))
