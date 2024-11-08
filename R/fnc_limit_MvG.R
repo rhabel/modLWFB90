@@ -44,7 +44,7 @@ fnc_limit <- function(df){
   }
   if("tort" %in% colnames(df)){
     df <- df %>%
-      mutate( tort = case_when(tort < -3 ~ -3,
+      mutate( tort = case_when(tort < -2 ~ -2,
                                tort > 6 ~ 6,
                                T ~ tort))
   }
