@@ -201,9 +201,13 @@ fnc_depth_disc <- function(df,
   df.soil <- data.frame("thickness" = thickness,
                         "mat" = material) %>%
     left_join(df, by = "mat")
-  for(i in 1:(nrow(df.soil)-1)){
-    df.soil[i+1, "upper"] <- round(df.soil[i, "upper"]+df.soil[i, "thickness"], 3)
+
+  if(nrow(df.soil) > 1){
+    for(i in 1:(nrow(df.soil)-1)){
+      df.soil[i+1, "upper"] <- round(df.soil[i, "upper"]+df.soil[i, "thickness"], 3)
+    }
   }
+
   df.soil <- df.soil %>%
     dplyr::mutate(lower = upper+thickness) %>%
     dplyr::select(-thickness)
