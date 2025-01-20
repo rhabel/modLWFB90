@@ -9,8 +9,8 @@ fnc_soil_stok(
   df.LEIT,
   PTF_to_use,
   limit_bodtief,
-  incl_GEOLA,
-  parallel_processing = F
+  parallel_processing = F,
+  maxcores = parallel::detectCores() - 1
 )
 }
 \arguments{
@@ -21,6 +21,10 @@ fnc_soil_stok(
 \item{PTF_to_use}{which PTF will later be used in \code{\link{fnc_get_soil}} has an impact on the setting of oc.pct, so this information is passed down from \code{\link{fnc_get_soil}} here.}
 
 \item{limit_bodtief}{max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}. If not \code{NA} soil-dfs are created down to the depth specified here as depth in \code{m}, negative. Might be used to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. In this case, soil depth may be reduced significantly.}
+
+\item{parallel_processing}{shall the process be run parallely}
+
+\item{maxcores}{if \code{parallel_processing = T}, on how many cores shall the process be run parallely}
 }
 \value{
 Returns a list of soil data frames.

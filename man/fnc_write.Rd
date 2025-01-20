@@ -4,99 +4,180 @@
 \alias{fnc_write}
 \title{Function to reduce data output from automated LWFB90-Runs}
 \usage{
-fnc_write(x, layercols = NA, dailycols = NA, dir_name = NA)
+fnc_write(
+  x,
+  aggr_tp,
+  out_tables,
+  col_select_outputs = NA,
+  col_select_layer = NA,
+  depths = NA,
+  dir_name = NA,
+  soil_nm
+)
 
-fnc_write(x, layercols = NA, dailycols = NA, dir_name = NA)
+fnc_write(
+  x,
+  aggr_tp,
+  out_tables,
+  col_select_outputs = NA,
+  col_select_layer = NA,
+  depths = NA,
+  dir_name = NA,
+  soil_nm
+)
 }
 \arguments{
-\item{x}{one of the intermediate producs of \code{\link[LWFBrook90R]{run_LWFB90}} or  \code{\link[LWFBrook90R]{run_multisite_LWFB90}}, which is further processed internally. Can't be adjusted.}
+\item{x}{one of the intermediate products of \code{\link[LWFBrook90R]{run_LWFB90}} or  \code{\link[LWFBrook90R]{run_multisite_LWFB90}}, which is further processed internally. Can't be adjusted.}
+
+\item{aggr_tp}{a string containing the desired aggregation time period. Can be \code{daily},  \code{monthly}, \code{vegper}, \code{yearly}, \code{complete} (average over complete time period modelled), or any combination of the four (i.e. \code{monthly_vegper}). The latter creates one result-table for each aggregation term  detectable within the string.
+\cr If aggregation periods other than \code{daily} are selected, all unitless balance terms of the "Outputs"-table of \code{\link[LWFBrook90R]{run_LWFB90}} will be averaged using \code{mean} (i.e. relawat will be aggreated to "mean relawat within each years vegetation period"). All other terms will be summed up over the desired time period (i.e. rfal will be aggreated to "sum of rainfall within each years time period"). \cr
+\cr If aggregation periods other than \code{daily} are selected, all wetnes-related terms of the "Layer"-table of \code{\link[LWFBrook90R]{run_LWFB90}} (swati, theta, wetnes and psimi) will be averaged using \code{mean} (i.e. relawat will be aggreated to "mean relawat within each years vegetation period in the respective layer"). All flow-related terms will be summed up over the desired time period (i.e. vrfl will be aggreated to "sum of vertical flow within each years time period").}
+
+\item{out_tables}{which tables of the \code{\link[LWFBrook90R]{run_LWFB90}}- tables will information be required from:  \code{layer}, \code{outputs}, or \code{outputs_layer}}
+
+\item{col_select_outputs}{a string containing the desired columns from the "outputs"-outputs-list of \code{\link[LWFBrook90R]{run_LWFB90}}. BETTER MAKE A SELECTION or RAM and result-size will go through the roof! Plus be honest - you won't need everything.}
+
+\item{col_select_layer}{a string containing the desired columns from the "layer"-outputs-list of \code{\link[LWFBrook90R]{run_LWFB90}}. BETTER MAKE A SELECTION or RAM and result-size will go through the roof! Plus be honest - you won't need everything}
+
+\item{depths}{dephts for which layer-discrete results shall be processed. Must be a vector of depths in cm (i.e. \code{ c(10, 30, 60) }). If kept at \code{NA}, all depths will be processed, so better make a selection. If the respective soil data frame isn't deep enough to get all data requested here, all valid depths will be created.}
+
+\item{dir_name}{directory for tmp files, if \code{NA} as in default, results are returned to console}
+
+\item{soil_nm}{name of the modelled site. If the function is used in \code{\link[LWFBrook90R]{run_multisite_LWFB90}} will be processed internally. Must be provided if only one site is modelled with  \code{\link[LWFBrook90R]{run_LWFB90}}. This function argument will set the name of the result-files.}
 
 \item{layercols}{a sting containing the desired output products. Full list of possible output columns can be find on the help page of \code{\link[LWFBrook90R]{run_LWFB90}} under \code{Layer outputs}}
 
 \item{dailycols}{same as layercols but for daily output. For possible options see \code{\link[LWFBrook90R]{run_LWFB90}}}
-
-\item{dir_name}{directory for tmp files, if \code{NA} (default), output will be returned to console}
 
 \item{db_name}{name and file path of the SQL-database}
 }
 \value{
 Returns the desired output to the database directly.
 
-writes output to
+Returns the desired output to .rds files, or, the console
 }
 \description{
 LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it to a database. This is what this function is made for.
 
-LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it. This is what this function is made for. It writes .rds files with the desired output for each point. \code{\link{fnc_write_to_sql}} can be used to convert these files into a SQLite-DB. \cr This "step-in-between" is necessary because SQLite does not support parallel writing.
+LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it. This is what this function is made for. Since v.0.5.0 LWFBrook90R changed the output/default settings. \cr \code{\link{fnc_write}} reduces and aggregates all columns returned by \code{\link[LWFBrook90R]{run_LWFB90}} (see help page). \cr \code{fnc_write_agg}  enables an even more detailed selection of drought indices. See detail section for a full list. Because many indices are calculated, this function will be significantly slower, so check, if you can get the necessary information from the standard list of output variables. \cr Both functions write .rds files with the desired output for each point. \code{\link{fnc_write_to_sql}} can be used to convert these files into a SQLite-DB. \cr This "step-in-between" is necessary because SQLite does not support parallel writing. Processed can be all output-values listed in \code{\link[LWFBrook90R]{run_LWFB90}}.
 }
+\section{Output column selection}{
+
+IT IS HIGHLY RECOMMENDED TO MAKE A SUBSELECTION, OR THERE WILL BE A LOT OF COLUMNS.
+For a complete list of possible output types plus description, see the details sections of \code{\link[LWFBrook90R]{run_LWFB90}}
+}
+
 \examples{
-df.ids <- test_ids_bze
+# create simple sample data:
+param_b90 <- set_paramLWFB90()
+options_b90 <- set_optionsLWFB90()
 
-meta <- data.frame("ID_custom" = df.ids$ID_custom,
-                   modelled = 0,
-                   err.code = "no error",
-                   sim_dur_s = NA_integer_)
+# Set start and end Dates for the simulation
+options_b90$startdate <- as.Date("2003-01-01")
+options_b90$enddate <- as.Date("2006-12-31")
 
-ls.soil <- fnc_get_soil(df.ids,
+# Derive soil hydraulic properties from soil physical properties
+# using pedotransfer functions
+soil <- cbind(slb1_soil, hydpar_wessolek_tab(slb1_soil$texture))
+
+# Run LWF-Brook90
+x <- run_LWFB90(
+
+  # run_LWFB90-function arguments:
+  options_b90 = options_b90,
+  param_b90 = param_b90,
+  climate = slb1_meteo,
+  soil = soil,
+
+  # keep it easy to read
+  rtrn_input = F,
+  rtrn_output = F,
+
+  output_fun = fnc_write,
+  # fnc_write-function arguments:
+
+  aggr_tp = c("daily_monthly_vegper_yearly_complete"),                            # all aggregation options for demonstration purposes
+  out_tables = c("outputs_layer"),                                                # all output sources for demonstration purposes
+  col_select_outputs =  c("yr", "mo", "da", "doy", "stres", "relawat", "vrfln"),  # subset from both mean and sum-aggregation
+  col_select_layer = c("yr", "mo", "da", "doy", "nl", "theta", "swati", "tran"),  # subset from both mean and sum-aggregation
+  depths = c(10,30,600),                                                          # last one won't be calculated
+  dir_name = NA,                                                                  # return to console
+  soil_nm = "test_soil"
+)
+
+
+
+# multiple Plots:
+# set soil-list
+ls.soil <- fnc_get_soil(df.ids = test.ids.bds,
                         soil_option = "BZE",
-                        PTF_to_use = "WESSOLEK")
-
-ls.parms <- fnc_get_params(df.ids = df.ids,
+                        PTF_to_use = "WESSOLEK",
+                        add_BodenInfo = F)
+ls.parms <- fnc_get_params(df.ids = test.ids.bds,
                            tree_species = "spruce")
-
-ls.clim <- fnc_get_clim(df.ids = df.ids,
+ls.clim <- fnc_get_clim(df.ids = test.ids.bds,
                         mindate = as.Date("2002-01-01"),
-                        maxdate = as.Date("2003-12-31"))
+                        maxdate = as.Date("2004-12-31"))
 
-# keep info which points have no soil info...
-no_soil_data <- which(unlist(lapply(ls.soil, is.null))==T)
-with_soil_data <- which(unlist(lapply(ls.soil, is.null))==F)
-meta[no_soil_data, "err.code"] <- "no soil data"
-
-# ...but remove for modelling...
-ls.parms <- ls.parms[with_soil_data]
-ls.soil <- ls.soil[with_soil_data]
-ls.clim <- ls.clim[with_soil_data]
-
-res <- run_multisite_LWFB90(options_b90 = set_optionsLWFB90(),
-
+# run multiple points back to console:
+results <- run_multisite_LWFB90(options_b90 = options_b90,
                             param_b90 = ls.parms,
                             soil = ls.soil,
+
                             climate = ls.clim,
 
-                            output = -1,
 
-                            cores = parallel::detectCores()-1,
+                            all_combinations = F,
+                            cores = 5,
 
                             rtrn_output = F,
                             rtrn_input = F,
 
-                            timelimit = 15,
 
                             output_fun = fnc_write,
-                            dailycols = c("rfal", "tran"),
-                            dir_name= "./tmp/")
 
-meta <- fnc_check_errors(res = res, meta = meta)
+                            aggr_tp = c("daily_monthly_vegper_yearly_complete"),                            # all aggregation options for demonstration purposes
+                            out_tables = c("outputs_layer"),                                                # all output sources for demonstration purposes
+                            col_select_outputs =  c("yr", "mo", "da", "doy", "stres", "relawat", "vrfln"),  # subset from both mean and sum-aggregation
+                            col_select_layer = c("yr", "mo", "da", "doy", "nl", "theta", "swati", "tran"),  # subset from both mean and sum-aggregation
+                            depths = c(10,30,600),                                                          # last one won't be calculated
 
-# can be written to sql as follows (see fnc_write_to_sql)
-if(!dir.exists("./tmp/meta/")){
-  dir.create("./tmp/meta/", recursive = T)
-}
+                            dir_name= NA                                                            # write to ./tmp/
 
-saveRDS(meta, file = "./tmp/meta/meta.rds")
+                            )
+results[[1]]
 
-# write to db
-fnc_write_to_sql(db_name = "./tmp/testdb.sqlite",
-                 dir_tmp = "./tmp/")
+# run multiple points and write output
+run_multisite_LWFB90(options_b90 = options_b90,
+                            param_b90 = ls.parms,
+                            soil = ls.soil,
 
-# check results
-con <- dbConnect(drv = RSQLite::SQLite(), dbname =  "./tmp/testdb.sqlite")
-dbListTables(conn = con)
-dbGetQuery(con,
-           "SELECT * FROM meta")
-dbDisconnect(con)
+                            climate = ls.clim,
 
-# # delete example tmp file
-# unlink("./tmp/", recursive = T)
+
+                            all_combinations = F,
+                            cores = 5,
+
+                            rtrn_output = F,
+                            rtrn_input = F,
+
+
+                            output_fun = fnc_write,
+
+                            aggr_tp = c("daily_monthly_vegper_yearly_complete"),                            # all aggregation options for demonstration purposes
+                            out_tables = c("outputs_layer"),                                                # all output sources for demonstration purposes
+                            col_select_outputs =  c("yr", "mo", "da", "doy", "stres", "relawat", "vrfln"),  # subset from both mean and sum-aggregation
+                            col_select_layer = c("yr", "mo", "da", "doy", "nl", "theta", "swati", "tran"),  # subset from both mean and sum-aggregation
+                            depths = c(10,30,600),                                                          # last one won't be calculated
+
+                            dir_name= "./tmp/"                                                              # write to ./tmp/
+
+                            )
+
+
+# delete example tmp file
+unlink("./tmp/", recursive = T)
+
+
+
 }
