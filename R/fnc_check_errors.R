@@ -22,16 +22,6 @@
 fnc_check_errors <- function(res,
                              meta = NA){
 
-  if(is.na(meta)){
-    ids_modelled <- unlist(lapply(stringr::str_split(names(res), " "), `[[`, 1))
-
-    meta <- data.frame("ID_custom" = ids_modelled,
-                       modelled = 0,
-                       err.code = "no error",
-                       sim_dur_s = NA_integer_)
-
-  }
-
   # which worked, which didn't
   suc.mod <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(lapply(res, function(x) names(x)), "simulation_duration")],
                                      " "), `[[`, 1))
@@ -43,14 +33,21 @@ fnc_check_errors <- function(res,
                            "sim_dur_s" = as.numeric(lapply(res, function(x) round(as.numeric(x$simulation_duration), 2))))
 
   # retrieve potential errorcodes
-  err.mod.1 <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(res, "initial matrix")], " "), `[[`, 1))
-  err.mod.2 <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(res, "FWETK failed")], " "), `[[`, 1))
-  err.mod.3 <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(res, "inconsistent dates in climate")], " "), `[[`, 1))
-  err.mod.4 <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(res, "inconsistent dates in precipitation")], " "), `[[`, 1))
-  err.mod.5 <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(res, "wrong precipitation")], " "), `[[`, 1))
-  err.mod.6 <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(res, "negative soil water storage")], " "), `[[`, 1))
-  err.mod.7 <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(res, "water storage exceeds water capacity")], " "), `[[`, 1))
-  err.mod.8 <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(res, "Zeitlimit erreicht")], " "), `[[`, 1))
+  if(length(err.mod) > 0){
+    # retrieve potential errorcodes
+    err.mod.1 <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(res, "initial matrix")], " "), `[[`, 1))
+    err.mod.2 <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(res, "FWETK failed")], " "), `[[`, 1))
+    err.mod.3 <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(res, "inconsistent dates in climate")], " "), `[[`, 1))
+    err.mod.4 <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(res, "inconsistent dates in precipitation")], " "), `[[`, 1))
+    err.mod.5 <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(res, "wrong precipitation")], " "), `[[`, 1))
+    err.mod.6 <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(res, "negative soil water storage")], " "), `[[`, 1))
+    err.mod.7 <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(res, "water storage exceeds water capacity")], " "), `[[`, 1))
+    err.mod.8 <- unlist(lapply(stringr::str_split(names(res)[stringr::str_detect(res, "Zeitlimit erreicht")], " "), `[[`, 1))
+  }else{
+    for (i in 1:8){
+      assign(paste0("err.mod.", i), "")
+    }
+  }
 
   # change meta
   meta <- meta %>%

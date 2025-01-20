@@ -20,12 +20,6 @@ writes the output to a database
 Parallel writing is not supported for SQLite. To end with a SQLite-DB \code{\link{fnc_write}} and \code{\link{fnc_write_agg}} now create temporary .rds files that this function reads, writes to an SQLite-Database, and then deletes. \cr For every folder in \code{dir_tmp}, one table will be added to the SQL-Database, with tables named after folder names in \code{dir_tmp}. This procedure has been selected due to the default settings of \code{\link{fnc_write_agg}} and \code{\link{fnc_write}}, which create one folder for each aggregation. For example, meta files and soil-dfs can be stored accordingly (see example).
 }
 \examples{
-# set df.output
-df.output <- set_outputLWFB90()
-df.output[,] <- 0L
-df.output[c("Budg","Evap", "Swat", "Flow"), c("Day")] <- 1
-df.output[c("Flow"), c("Mon")] <- 1
-
 # set soil-list
 ls.soil <- fnc_get_soil(df.ids = test.ids.bds,
                         soil_option = "BZE",
@@ -41,7 +35,6 @@ res <- run_multisite_LWFB90(options_b90 = set_optionsLWFB90(),
                                                    mindate = as.Date("2002-01-01"),
                                                    maxdate = as.Date("2003-12-31")),
 
-                            output = df.output,
 
                             all_combinations = F,
                             cores = parallel::detectCores()-1,

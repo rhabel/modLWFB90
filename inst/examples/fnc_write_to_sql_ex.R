@@ -1,9 +1,3 @@
-# set df.output
-df.output <- set_outputLWFB90()
-df.output[,] <- 0L
-df.output[c("Budg","Evap", "Swat", "Flow"), c("Day")] <- 1
-df.output[c("Flow"), c("Mon")] <- 1
-
 # set soil-list
 ls.soil <- fnc_get_soil(df.ids = test.ids.bds,
                         soil_option = "BZE",
@@ -19,7 +13,6 @@ res <- run_multisite_LWFB90(options_b90 = set_optionsLWFB90(),
                                                    mindate = as.Date("2002-01-01"),
                                                    maxdate = as.Date("2003-12-31")),
 
-                            output = df.output,
 
                             all_combinations = F,
                             cores = parallel::detectCores()-1,

@@ -6,6 +6,8 @@
 #' @param df.LEIT a data frame containing LEITPROFILE. At this stage of development, the comprehensive BW-wide database is not complete yet, so the test area needs to be assigned here. However, this is done automatically in  \code{\link{fnc_get_soil}}.
 #' @param PTF_to_use which PTF will later be used in \code{\link{fnc_get_soil}} has an impact on the setting of oc.pct, so this information is passed down from \code{\link{fnc_get_soil}} here.
 #' @param limit_bodtief max soil depth, default is \code{NA} and uses max soil depth as defined in \code{df.LEIT}. If not \code{NA} soil-dfs are created down to the depth specified here as depth in \code{m}, negative. Might be used to give room for different \code{maxrootdepth} - settings in \link{fnc_get_params}. In this case, soil depth may be reduced significantly.
+#' @param parallel_processing shall the process be run parallely
+#' @param maxcores if \code{parallel_processing = T}, on how many cores shall the process be run parallely
 #'
 #' @return Returns a list of soil data frames.
 
@@ -13,13 +15,13 @@ fnc_soil_stok <- function(df,
                           df.LEIT,
                           PTF_to_use,
                           limit_bodtief,
-                          incl_GEOLA,
-                          parallel_processing = F){
+                          parallel_processing = F,
+                          maxcores = parallel::detectCores()-1){
 
 
   if(parallel_processing){
     # get Leitprofile info through parallel processing
-    cl <- parallel::makeCluster(parallel::detectCores())
+    cl <- parallel::makeCluster(maxcores)
     doParallel::registerDoParallel(cl)
 
     ls.soil.par <- foreach::foreach(i = 1:nrow(df),

@@ -1,27 +1,22 @@
 #' Function to aggregate and write data from automated LWFB90-Runs
 #'
-#' LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it to a database. This is what this function is made for. \cr In comparison to \code{\link{fnc_write}}, which only reduces the columns returned by \code{\link[LWFBrook90R]{run_LWFB90}} (see help page), this function enables aggregation over vegperiod and monthly, plus a more detailed selection of drought indices. See detail section.\cr\cr IMPORTANT: FOR RUNNING THIS AGGREGATE FUNCTION, \code{output} in \code{run_multiside_LWFB90} MUST BE SET TO A \code{df.output} AS SET BY THE CODE IN THE EXAMPLE SECTION \cr The function writes .rds files with the desired output for each point. \code{\link{fnc_write_to_sql}} can be used to convert these files into a SQLite-DB. This "step-in-between" is necessary because SQLite does not support parallel writing.
+#' LWFBrook90 creates a lot of output files. In order to keep data storage to a minimum, both \code{\link[LWFBrook90R]{run_LWFB90}} and \code{\link[LWFBrook90R]{run_multisite_LWFB90}} provide an \code{output_fun} - argument that can be used to reduce the output and directly write it to a database. This is what this function is made for. \cr Since v.0.5.0 LWFBrook90R changed the output/default settings. \cr \code{\link{fnc_write}} reduces and aggregates all columns returned by \code{\link[LWFBrook90R]{run_LWFB90}} (see help page). \cr \code{fnc_write_agg}  enables an even more detailed selection of drought indices. See detail section for a full list. Because many indices are calculated, this function will be significantly slower, so check, if you can get the necessary information from the standard list of output variables. \cr Both functions write .rds files with the desired output for each point. \code{\link{fnc_write_to_sql}} can be used to convert these files into a SQLite-DB. This "step-in-between" is necessary because SQLite does not support parallel writing.
 #'
 #' @param x one of the intermediate producs of \code{\link[LWFBrook90R]{run_LWFB90}} or  \code{\link[LWFBrook90R]{run_multisite_LWFB90}}, which is further processed internally. Can't be adjusted.
-#' @param aggr_tp a string containing the desired aggregation time period. Can be \code{daily},  \code{monthly}, \code{vegper}, \code{yearly}, or any combination of the four (i.e. \code{monthly_vegper}). The latter does all terms that are detectable within the string.
+#' @param aggr_tp a string containing the desired aggregation time period. Can be \code{daily},  \code{monthly}, \code{vegper}, \code{yearly}, or any combination of the four (i.e. \code{monthly_vegper}). The latter creates results for all aggregation terms detectable within the string.
 #' @param col_select_day a string containing the desired columns from the daily-aggregation (see details)
 #' @param col_select_mon a string containing the desired columns from the monthly-aggregation (see details)
 #' @param col_select_vp a string containing the desired columns from the vegperiod-aggregation (see details)
 #' @param col_select_yr a string containing the desired columns from the yearly-aggregation (see details)
 #' @param dir_name directory for tmp files, if \code{NA} as in default, results are returned to console
 #'
-#' @return Returns the desired output to .rds files
+#' @return Returns the desired output to .rds files, or, the console
 #'
 #' @section Output column selection:
 #' IT IS HIGHLY RECOMMENDED TO MAKE A SUBSELECTION, OR THERE WILL BE A LOT (>100) OF COLUMNS.
 #' For a complete list of possible output types plus description, see \code{"U:/db_brook90_output/whh_db_documentation"}
 #'
 #' @examples
-#' # setting for df.output:
-#' df.output <- set_outputLWFB90()
-#' df.output[,] <- 0L
-#' df.output[c("Abov", "Evap", "Flow", "Swat"), c("Day")] <- 1
-#'
 #' # for full example, see help page of ?fnc_write_to_sql
 #'
 #' @import data.table
@@ -220,13 +215,3 @@ fnc_write_agg <- function(x,
     }
   }
 }
-#
-# b90.result <- run_LWFB90(options_b90 = options_b90,
-#                          param_b90 = param_b90,
-#                          climate = ls.clim[[1]],
-#                          soil = ls.soil[[1]],
-#                          output = df.output,
-#                          output_fun = fnc_write_agg,
-#
-#                          aggr_tp = "daily",
-#                          dir_name = NA)

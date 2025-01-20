@@ -61,13 +61,14 @@ fnc_get_soil <- function(df.ids,
                          add_BodenInfo = T,
                          incl_GEOLA = T,
                          limit_humus = T,
+
                          parallel_processing = F,
+                         maxcores = NA,
 
                          bze_buffer = 12,
                          meta.out = NA,
                          limit_bodtief = NA,
                          force_reg_rootsdepth = F,
-                         maxcores = NA,
                          path_df.LEIT = "J:/FVA-Projekte/P01540_WHHKW/Programme/Eigenentwicklung/modLWFB90_data/LEIT_DB/LP_DB.rds",
 
                          ...
@@ -196,9 +197,13 @@ fnc_get_soil <- function(df.ids,
 
     # load only required STOKA shapefiles
     if(length(wugeb) > 4 ){
-      cl <- parallel::makeCluster(ifelse(length(wugeb) < parallel::detectCores(),
-                                         length(wugeb),
-                                         parallel::detectCores()))
+
+      cores_to_use <- ifelse(length(wugeb) < maxcores,
+                             length(wugeb),
+                             ifelse(maxcores > 7, 7,maxcores))
+
+      #Read required GEOLA and STOKA shapefiles
+      cl <- parallel::makeCluster(cores_to_use)
       doParallel::registerDoParallel(cl)
 
       sf.stoka <- foreach::foreach(i = wugeb,
@@ -259,7 +264,8 @@ fnc_get_soil <- function(df.ids,
                                 df.LEIT = df.LEIT.BW,
                                 PTF_to_use = PTF_to_use,
                                 limit_bodtief = limit_bodtief,
-                                parallel_processing = parallel_processing)
+                                parallel_processing = parallel_processing,
+                                maxcores = ifelse(maxcores > nrow(df.ids), maxcores, nrow(df.ids)))
 
       bodentypen <- unlist(lapply(ls.soils, function(x) unique(x$BODENTYP)))
       dpth_lim_soil <- unlist(lapply(ls.soils, function(x) unique(x$dpth_ini)))
@@ -277,7 +283,8 @@ fnc_get_soil <- function(df.ids,
                                 df.LEIT = df.LEIT.BW,
                                 PTF_to_use = PTF_to_use,
                                 limit_bodtief = limit_bodtief,
-                                parallel_processing = parallel_processing)
+                                parallel_processing = parallel_processing,
+                                maxcores = ifelse(maxcores > nrow(df.ids), maxcores, nrow(df.ids)))
 
       if(length(ls.soils) == 0){
         stop("none of the given points has valid STOKA data")
@@ -303,10 +310,13 @@ fnc_get_soil <- function(df.ids,
                   decreasing = F)
 
     if(length(wugeb) > 4 ){
+
+      cores_to_use <- ifelse(length(wugeb) < maxcores,
+                             length(wugeb),
+                             ifelse(maxcores > 7, 7,maxcores))
+
       #Read required GEOLA and STOKA shapefiles
-      cl <- parallel::makeCluster(ifelse(length(wugeb) < parallel::detectCores(),
-                                         length(wugeb),
-                                         parallel::detectCores()))
+      cl <- parallel::makeCluster(cores_to_use)
       doParallel::registerDoParallel(cl)
 
       sf.geola <- foreach::foreach(i = wugeb,
@@ -412,7 +422,9 @@ fnc_get_soil <- function(df.ids,
 
     if(parallel_processing){
 
-      cl <- parallel::makeCluster(parallel::detectCores())
+      cores_to_use = ifelse(maxcores > length(ls.soils), maxcores, length(ls.soils))
+
+      cl <- parallel::makeCluster(cores_to_use)
       doParallel::registerDoParallel(cl)
       ls.soils <- foreach::foreach(i = 1:length(ls.soils),
                                    .packages = c("modLWFB90","dplyr")) %dopar% {
@@ -485,7 +497,10 @@ fnc_get_soil <- function(df.ids,
   } else {
 
     if(parallel_processing){
-      cl <- parallel::makeCluster(maxcores)
+
+      cores_to_use = ifelse(maxcores > length(ls.soils), maxcores, length(ls.soils))
+
+      cl <- parallel::makeCluster(cores_to_use)
       doParallel::registerDoParallel(cl)
       ls.soils <- foreach::foreach(i = 1:length(ls.soils),
                                    .packages = "modLWFB90") %dopar% {
@@ -511,7 +526,10 @@ fnc_get_soil <- function(df.ids,
 
 
     if(parallel_processing){
-      cl <- parallel::makeCluster(maxcores)
+
+      cores_to_use = ifelse(maxcores > length(ls.soils), maxcores, length(ls.soils))
+
+      cl <- parallel::makeCluster(cores_to_use)
       doParallel::registerDoParallel(cl)
       ls.soils <- foreach::foreach(i = 1:length(ls.soils),
                                    .packages = c("modLWFB90")) %dopar% {
@@ -619,7 +637,11 @@ fnc_get_soil <- function(df.ids,
     cat("Applying STOK and GEOLA...\n")
 
     if(parallel_processing){
-      cl <- parallel::makeCluster(maxcores)
+
+      cores_to_use = ifelse(maxcores > length(ls.soils), maxcores, length(ls.soils))
+
+      cl <- parallel::makeCluster(cores_to_use)
+
       doParallel::registerDoParallel(cl)
 
       ls.soils <- foreach::foreach(i = 1:length(ls.soils),
@@ -789,7 +811,11 @@ fnc_get_soil <- function(df.ids,
     cat("Adding soil info...\n")
 
     if(parallel_processing){
-      cl <- parallel::makeCluster(maxcores)
+
+      cores_to_use = ifelse(maxcores > length(ls.soils), maxcores, length(ls.soils))
+
+      cl <- parallel::makeCluster(cores_to_use)
+
       doParallel::registerDoParallel(cl)
 
       ls.soils <- foreach::foreach(i = 1:length(ls.soils),
@@ -811,7 +837,11 @@ fnc_get_soil <- function(df.ids,
   cat("almost done...\n\n")
 
   if(parallel_processing){
-    cl <- parallel::makeCluster(maxcores)
+
+    cores_to_use = ifelse(maxcores > length(ls.soils), maxcores, length(ls.soils))
+
+    cl <- parallel::makeCluster(cores_to_use)
+
     doParallel::registerDoParallel(cl)
 
     ls.soils <- foreach::foreach(i = 1:length(ls.soils),

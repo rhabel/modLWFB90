@@ -35,7 +35,7 @@
 #'
 
 
-fnc_compare_soil <- function(df.ids,
+fnc_compare_ptfs <- function(df.ids,
                             testgebiet = "BDS",
                             what_to_test = "PTF",
                             depths_to_test = c(-0.15, -0.30, -0.60),
@@ -61,7 +61,7 @@ fnc_compare_soil <- function(df.ids,
   how_to_proceed = 2
   if(nrow(df.ids) >= 10){
     cat("This function will create one PNG-file in ", output_path, " for each point in df.ids.\n" )
-    cat("So you expect ", nrow(df.ids), " images to be crated. This might take a while.\n How you wish to proceed? \nPress \"1\" for aborting the process.\nPress \"2\" to continue.")
+    cat("So you expect ", nrow(df.ids), " images to be created. This might take a while.\n How you wish to proceed? \nPress \"1\" for aborting the process.\nPress \"2\" to continue.")
     how_to_proceed <- readline(prompt = "Continue with ")
   }
 
